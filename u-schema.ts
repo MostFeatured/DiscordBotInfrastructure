@@ -15,12 +15,9 @@ dbi.client;
 //CONFIG
 dbi.config;
 
+
 dbi.register((api) => {
-  new api.ChatInput({
-    name: "",
-    async onExecute(ctx) {
-      ctx.interaction;
-    },
-    options: []
-  });
-});
+
+
+  
+})
