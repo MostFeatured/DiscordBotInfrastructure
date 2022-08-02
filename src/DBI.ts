@@ -1,17 +1,24 @@
 import Discord from "discord.js";
 import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput";
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
-import { EventEmitter } from "eventemitter3";
 import { publishInteractions } from "./methods/publishInteractions";
+import { DBIEvent } from "./types/Event";
 
 export interface DBIConfig {
   discord: {
     token: string;
     options?: Discord.ClientOptions
   }
-  sharding: null | {
+  sharding?: {
     clusterCount: "auto" | number,
     shardCountPerCluster: number
+  }
+
+  store?: {
+    get(key: string, defaultValue: any): Promise<any>;
+    set(key: string): Promise<void>;
+    del(key: string): Promise<void>;
+    has(key: string): Promise<boolean>;
   }
 }
 
@@ -20,18 +27,17 @@ export interface DBIRegisterAPI {
   ChatInputOptions: typeof DBIChatInputOptions;
 }
 
-export class DBI extends EventEmitter {
+export class DBI {
   namespace: string;
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
     interactions: Discord.Collection<string, DBIChatInput>;
-    events: Discord.Collection<string, any>;
+    events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
+    other: Record<string, any>;
   };
   constructor(namespace: string, config: DBIConfig) {
-    super();
-
     this.namespace = namespace;
     this.config = config;
 

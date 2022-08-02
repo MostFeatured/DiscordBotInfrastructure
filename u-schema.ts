@@ -8,6 +8,20 @@ let dbi = createDBI("namespace", {
     clusterCount: 4,
     shardCountPerCluster: 4
   },
+  store: {
+    async get(key, defaultValue) {
+      return "";
+    },
+    async del(key) {
+      return;
+    },
+    async has(key) {
+      return true;
+    },
+    async set(key) {
+      return;
+    },
+  }
 });
 
 //DJS CLIENT
