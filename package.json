@@ -5,5 +5,23 @@
     "discord.js": "^14.1.2",
     "eventemitter3": "^4.0.7",
     "snakecase-keys": "^5.4.2"
-  }
+  },
+  "name": "@mostfeatured/dbi",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MostFeatured/DiscordBotInfrastructure.git"
+  },
+  "author": "Kıraç Armağan Önal",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/MostFeatured/DiscordBotInfrastructure/issues"
+  },
+  "homepage": "https://github.com/MostFeatured/DiscordBotInfrastructure#readme",
+  "description": ""
 }
