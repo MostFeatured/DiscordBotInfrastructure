@@ -3,7 +3,7 @@ import path from "path";
 
 export let dbi = createDBI("namespace", {
   discord: {
-    token: "ODI0MjEwMTMyMzUwMDA5MzY2.YFsDgA.6mhpQwJb2Rev5vxvUj59mOjS3EI",
+    token: "",
     options: {
       intents: [
         "Guilds"
