@@ -4,6 +4,7 @@ import { REST } from "@discordjs/rest";
 import { Routes, RESTGetAPIUserResult, RESTPutAPIApplicationCommandsJSONBody, ApplicationCommandType, ApplicationCommandOptionType } from "discord-api-types/v9";
 import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
+import util from "util";
 
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 
@@ -33,7 +34,7 @@ export async function publishInteractions(
                 name: nameSplitted[0],
                 default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                 dm_permission: current.directMessages,
-                options: snakecaseKeys(current.options)
+                options: snakecaseKeys(current.options || [])
               });
               break;
             }
@@ -45,12 +46,13 @@ export async function publishInteractions(
                 description: current.description,
                 default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                 dm_permission: current.directMessages,
-                options: snakecaseKeys(current.options)
+                options: snakecaseKeys(current.options || [])
               };
               if (!baseItem) {
                 all.push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
+                  description: "...",
                   options: [
                     option
                   ]
@@ -66,10 +68,12 @@ export async function publishInteractions(
                 all.push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
+                  description: "...",
                   options: [
                     {
                       type: ApplicationCommandOptionType.SubcommandGroup,
                       name: nameSplitted[1],
+                      description: "...",
                       options: [
                         {
                           type: ApplicationCommandOptionType.Subcommand,
@@ -77,7 +81,7 @@ export async function publishInteractions(
                           description: current.description,
                           default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                           dm_permission: current.directMessages,
-                          options: snakecaseKeys(current.options)
+                          options: snakecaseKeys(current.options || [])
                         }
                       ]
                     }
@@ -89,6 +93,7 @@ export async function publishInteractions(
                   level1Item.options.push({
                     type: ApplicationCommandOptionType.SubcommandGroup,
                     name: nameSplitted[1],
+                    description: "...",
                     options: [
                       {
                         type: ApplicationCommandOptionType.Subcommand,
@@ -96,7 +101,7 @@ export async function publishInteractions(
                         description: current.description,
                         default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                         dm_permission: current.directMessages,
-                        options: snakecaseKeys(current.options)
+                        options: snakecaseKeys(current.options || [])
                       }
                     ]
                   })
@@ -107,7 +112,7 @@ export async function publishInteractions(
                     description: current.description,
                     default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                     dm_permission: current.directMessages,
-                    options: snakecaseKeys(current.options)
+                    options: snakecaseKeys(current.options || [])
                   });
                 }
               }
@@ -138,6 +143,8 @@ export async function publishInteractions(
 
       return all;
     }, []);
+  
+  console.log(util.inspect(body, false, 999, true));
   
   
   switch (publishType) {

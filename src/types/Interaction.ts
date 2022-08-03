@@ -46,14 +46,14 @@ export class DBIBaseInteraction {
     this.description = cfg.description;
     this.onExecute = cfg.onExecute;
     this.type = cfg.type;
-    this.options = this.options;
+    this.options = cfg.options;
     this.other = cfg.other;
   }
 
   name: string;
   description: string;
   readonly type: TDBIInteractionTypes;
-  options?: any;
+  options?: any | any[];
   other?: Record<string, any>;
   cooldowns?: DBICooldown[];
   onExecute(ctx: IDBIBaseExecuteCtx): Promise<any> | any {

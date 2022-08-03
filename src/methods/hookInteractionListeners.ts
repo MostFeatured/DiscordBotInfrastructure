@@ -3,12 +3,13 @@ import Discord from "discord.js";
 
 export function hookInteractionListeners(DBI: DBI): () => any {
   async function handle(inter: Discord.Interaction<Discord.CacheType>) {
+
     const dbiInter =
       DBI.data.interactions.find(i => (
         (
           i.type == "ChatInput"
           && (inter.isChatInputCommand() || inter.isAutocomplete())
-          && inter.commandName == i.name
+          && i.name == [inter.commandName, inter.options.getSubcommandGroup(false), inter.options.getSubcommand(false)].filter(i=>!!i).join(" ")
         )
         ||
         (
@@ -42,6 +43,8 @@ export function hookInteractionListeners(DBI: DBI): () => any {
         )
       ));
     
+    if (!dbiInter) return;
+    
     if (inter.isAutocomplete()) {
       let focussed = inter.options.getFocused(true);
       let option = dbiInter.options.find(i => i.name == focussed.name);
@@ -56,6 +59,15 @@ export function hookInteractionListeners(DBI: DBI): () => any {
       return;
     }
 
+
+    if (inter.isChatInputCommand()) {
+      dbiInter.onExecute({
+        DBI,
+        interaction: inter,
+        locale: null,
+        other: null
+      });
+    }
     // TODO: Handle others
   }
 

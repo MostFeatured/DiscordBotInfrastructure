@@ -2,9 +2,9 @@ import Discord from "discord.js";
 import { IDBIBaseExecuteCtx } from "../Interaction";
 
 type TValueName<T> = { value: T, name: string };
-type TNameDescription = { name: string, description: string };
+type TNameDescription = { name: string, description: string, required?: boolean };
 
-type TMinMaxLength = { maxLength?: string, minLength?: string };
+type TMinMaxLength = { maxLength?: number, minLength?: number };
 type TMinMaxValue = { maxValue?: number, minValue?: number };
 
 export interface IDBICompleteCtx extends IDBIBaseExecuteCtx {
@@ -21,7 +21,8 @@ export class DBIChatInputOptions {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxLength: cfg.maxLength,
-      minLength: cfg.minLength
+      minLength: cfg.minLength,
+      required: cfg.required
     };
   }
   static stringChoices(cfg: TNameDescription & TMinMaxLength & { choices: TValueName<string>[] }) {
@@ -31,7 +32,8 @@ export class DBIChatInputOptions {
       choices: cfg.choices,
       description: cfg.description,
       maxLength: cfg.maxLength,
-      minLength: cfg.minLength
+      minLength: cfg.minLength,
+      required: cfg.required
     };
   }
 
@@ -41,7 +43,8 @@ export class DBIChatInputOptions {
       name: cfg.name,
       description: cfg.description,
       maxLength: cfg.maxLength,
-      minLength: cfg.minLength
+      minLength: cfg.minLength,
+      required: cfg.required
     };
   }
 
@@ -53,7 +56,8 @@ export class DBIChatInputOptions {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -64,7 +68,8 @@ export class DBIChatInputOptions {
       choices: cfg.choices,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -74,7 +79,8 @@ export class DBIChatInputOptions {
       name: cfg.name,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -86,7 +92,8 @@ export class DBIChatInputOptions {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -97,7 +104,8 @@ export class DBIChatInputOptions {
       choices: cfg.choices,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -107,7 +115,8 @@ export class DBIChatInputOptions {
       name: cfg.name,
       description: cfg.description,
       maxValue: cfg.maxValue,
-      minValue: cfg.minValue
+      minValue: cfg.minValue,
+      required: cfg.required
     };
   }
 
@@ -115,7 +124,8 @@ export class DBIChatInputOptions {
     return {
       type: Discord.ApplicationCommandOptionType.Boolean,
       name: cfg.name,
-      description: cfg.description
+      description: cfg.description,
+      required: cfg.required
     };
   }
 
@@ -123,7 +133,8 @@ export class DBIChatInputOptions {
     return {
       type: Discord.ApplicationCommandOptionType.Attachment,
       name: cfg.name,
-      description: cfg.description
+      description: cfg.description,
+      required: cfg.required
     };
   }
 
@@ -132,7 +143,8 @@ export class DBIChatInputOptions {
       type: Discord.ApplicationCommandOptionType.Channel,
       name: cfg.name,
       description: cfg.description,
-      channelTypes: cfg.channelTypes
+      channelTypes: cfg.channelTypes,
+      required: cfg.required
     };
   }
 
@@ -140,7 +152,8 @@ export class DBIChatInputOptions {
     return {
       type: Discord.ApplicationCommandOptionType.Mentionable,
       name: cfg.name,
-      description: cfg.description
+      description: cfg.description,
+      required: cfg.required
     };
   }
 
@@ -148,7 +161,8 @@ export class DBIChatInputOptions {
     return {
       type: Discord.ApplicationCommandOptionType.User,
       name: cfg.name,
-      description: cfg.description
+      description: cfg.description,
+      required: cfg.required
     };
   }
 }

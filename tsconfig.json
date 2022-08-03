@@ -11,8 +11,8 @@
     "useUnknownInCatchVariables": true,
     "noUncheckedIndexedAccess": true,
     // Modules
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "commonjs",
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
     // Emit
     "declaration": true,
@@ -33,7 +33,7 @@
     "lib": [
       "ESNext"
     ],
-    "target": "ES2022",
+    "target": "ESNext",    
     "useDefineForClassFields": true
   }
 }
