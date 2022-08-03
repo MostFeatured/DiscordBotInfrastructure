@@ -2,7 +2,10 @@ import Discord from "discord.js";
 import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput";
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { publishInteractions } from "./methods/publishInteractions";
-import { DBIEvent } from "./types/Event";
+import { DBIEvent, TDBIEventOmitted } from "./types/Event";
+import * as stuffs from "stuffs";
+import { MemoryStore } from "./utils/MemoryStore";
+import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 
 export interface DBIConfig {
   discord: {
@@ -25,6 +28,7 @@ export interface DBIConfig {
 export interface DBIRegisterAPI {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
+  Event(cfg: TDBIEventOmitted): DBIEvent;
 }
 
 export class DBI {
@@ -36,12 +40,28 @@ export class DBI {
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
     other: Record<string, any>;
+    unloaders: Set<() => void>
   };
   constructor(namespace: string, config: DBIConfig) {
     this.namespace = namespace;
-    this.config = config;
+    this.config = stuffs.defaultify(config, {
+      store: new MemoryStore()
+    }, true);
+
+    this.data = {
+      interactions: new Discord.Collection(),
+      events: new Discord.Collection(),
+      plugins: new Discord.Collection(),
+      other: {},
+      unloaders: new Set()
+    }
 
     this.client = new Discord.Client(config.discord?.options);
+    this._hookListeners();
+  }
+
+  private async _hookListeners() {
+    this.data.unloaders.add(hookInteractionListeners(this));
   }
 
   async login(): Promise<any> {
@@ -53,19 +73,25 @@ export class DBI {
 
     let ChatInput = function (cfg: DBIChatInput) {
       let dbiInteraction = new DBIChatInput(cfg);
-        self.data.interactions.set(dbiInteraction.name, dbiInteraction);
-        return dbiInteraction;
+      if (self.data.interactions.has(dbiInteraction.name)) throw new Error(`DBIInteraction "${dbiInteraction.name}" already loaded!`);
+      self.data.interactions.set(dbiInteraction.name, dbiInteraction);
+      return dbiInteraction;
     };
     ChatInput = Object.assign(ChatInput, class { constructor(...args) { return ChatInput.call(this, ...args); } });
 
+    let Event = function(cfg: TDBIEventOmitted) {
+      let dbiEvent = new DBIEvent(cfg);
+      if (self.data.events.has(dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.name}" already loaded!`);
+      self.data.events.set(dbiEvent.name, dbiEvent);
+      return dbiEvent;
+    };
+    Event = Object.assign(Event, class { constructor(...args) { return Event.call(this, ...args); } });
+
     return await cb({
       ChatInput,
+      Event,
       ChatInputOptions: DBIChatInputOptions
     });
-  }
-
-  async reload(): Promise<any> {
-
   }
 
   async publish(type: "Global", clear?: boolean): Promise<any>;

@@ -94,13 +94,15 @@ export type DBIEventCombinations = {
   }
 }[keyof ClientEvents];
 
+export type TDBIEventOmitted = Omit<DBIEvent, "type" | "name" | "onExecute"> & DBIEventCombinations;
+
 export class DBIEvent {
   readonly type: "Event";
   other?: Record<string, any>;
   id?: string;
   name: string;
   onExecute: (...args: any[]) => any;
-  constructor(cfg: Omit<DBIEvent, "type" | "name" | "onExecute"> & DBIEventCombinations ) {
+  constructor(cfg: TDBIEventOmitted) {
     this.type = "Event";
     this.id = cfg.id;
     this.other = cfg.other;

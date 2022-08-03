@@ -33,7 +33,7 @@ export async function publishInteractions(
                 name: nameSplitted[0],
                 default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                 dm_permission: current.directMessages,
-                options: (current.options || []).map(snakecaseKeys)
+                options: snakecaseKeys(current.options)
               });
               break;
             }
@@ -45,7 +45,7 @@ export async function publishInteractions(
                 description: current.description,
                 default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                 dm_permission: current.directMessages,
-                options: (current.options || []).map(snakecaseKeys)
+                options: snakecaseKeys(current.options)
               };
               if (!baseItem) {
                 all.push({
@@ -77,7 +77,7 @@ export async function publishInteractions(
                           description: current.description,
                           default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                           dm_permission: current.directMessages,
-                          options: (current.options || []).map(snakecaseKeys)
+                          options: snakecaseKeys(current.options)
                         }
                       ]
                     }
@@ -96,7 +96,7 @@ export async function publishInteractions(
                         description: current.description,
                         default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                         dm_permission: current.directMessages,
-                        options: (current.options || []).map(snakecaseKeys)
+                        options: snakecaseKeys(current.options)
                       }
                     ]
                   })
@@ -107,7 +107,7 @@ export async function publishInteractions(
                     description: current.description,
                     default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
                     dm_permission: current.directMessages,
-                    options: (current.options || []).map(snakecaseKeys)
+                    options: snakecaseKeys(current.options)
                   });
                 }
               }

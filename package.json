@@ -4,7 +4,9 @@
     "discord-api-types": "^0.37.0",
     "discord.js": "^14.1.2",
     "eventemitter3": "^4.0.7",
-    "snakecase-keys": "^5.4.2"
+    "lodash": "^4.17.21",
+    "snakecase-keys": "^5.4.2",
+    "stuffs": "^0.1.17"
   },
   "name": "@mostfeatured/dbi",
   "version": "0.0.1",
@@ -22,5 +24,8 @@
     "url": "https://github.com/MostFeatured/DiscordBotInfrastructure/issues"
   },
   "homepage": "https://github.com/MostFeatured/DiscordBotInfrastructure#readme",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/lodash": "^4.14.182"
+  }
 }

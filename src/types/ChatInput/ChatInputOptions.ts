@@ -9,6 +9,7 @@ type TMinMaxValue = { maxValue?: number, minValue?: number };
 
 export interface IDBICompleteCtx extends IDBIBaseExecuteCtx {
   interaction: Discord.AutocompleteInteraction;
+  value: string | number;
 }
 
 export class DBIChatInputOptions {
