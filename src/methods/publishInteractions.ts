@@ -144,8 +144,6 @@ export async function publishInteractions(
       return all;
     }, []);
   
-  console.log(util.inspect(body, false, 999, true));
-  
   
   switch (publishType) {
     case "Global": {
