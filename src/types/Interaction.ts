@@ -13,6 +13,7 @@ export interface IDBIBaseExecuteCtx {
   locale: any;
   other: any;
   DBI: DBI;
+  setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
 }
 
 export type TDBIInteractionTypes =
@@ -24,7 +25,7 @@ export type TDBIInteractionTypes =
   | "SelectMenu"
   | "Button";
 
-export type TDBICooldownTypes =
+export type TDBIRateLimitTypes =
   | "User"
   | "Channel"
   | "Guild"
@@ -32,8 +33,8 @@ export type TDBICooldownTypes =
   | "Message";
 
 
-export type DBICooldown = {
-  type: TDBICooldownTypes;
+export type DBIRateLimit = {
+  type: TDBIRateLimitTypes;
   /**
    * Duration in milliseconds.
    */
@@ -55,7 +56,7 @@ export class DBIBaseInteraction {
   readonly type: TDBIInteractionTypes;
   options?: any | any[];
   other?: Record<string, any>;
-  cooldowns?: DBICooldown[];
+  rateLimits?: DBIRateLimit[];
   onExecute(ctx: IDBIBaseExecuteCtx): Promise<any> | any {
 
   }

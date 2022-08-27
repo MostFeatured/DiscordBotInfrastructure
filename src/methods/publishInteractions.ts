@@ -4,7 +4,6 @@ import { REST } from "@discordjs/rest";
 import { Routes, RESTGetAPIUserResult, RESTPutAPIApplicationCommandsJSONBody, ApplicationCommandType, ApplicationCommandOptionType } from "discord-api-types/v9";
 import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
-import util from "util";
 
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 

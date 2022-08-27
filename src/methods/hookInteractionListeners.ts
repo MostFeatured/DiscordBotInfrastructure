@@ -59,16 +59,38 @@ export function hookInteractionListeners(DBI: DBI): () => any {
       return;
     }
 
-
-    if (inter.isChatInputCommand()) {
-      dbiInter.onExecute({
-        DBI,
-        interaction: inter,
-        locale: null,
-        other: null
-      });
+    let rateLimitKeyMap = {
+      "User": `${inter.user.id}`,
+      "Channel": `${inter.channelId || "Channel"}`,
+      "Guild": `${inter.guildId || "Guild"}`,
+      "Member": `${inter.user.id}_${inter.guildId || "Guild"}`,
+      "Message": `${(inter as any)?.message?.id}`
     }
-    // TODO: Handle others
+
+    for (const type in rateLimitKeyMap) {
+      let key = `RateLimit:${rateLimitKeyMap[type]}`;
+      let val = await DBI.config.store.get(key);
+      if (val && Date.now() > val.at + val.duration) {
+        await DBI.config.store.del(key);
+        val = null;
+      }
+      if (val) {
+        // TODO: Handle ratelimit
+        return;
+      }
+    }
+
+    async function setRateLimit(type: string, duration: number) {
+      await DBI.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
+    }
+    
+    dbiInter.onExecute({
+      DBI,
+      interaction: inter as any,
+      locale: null,
+      other: null,
+      setRateLimit
+    });
   }
 
   DBI.client.on("interactionCreate", handle);

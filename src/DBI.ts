@@ -19,8 +19,8 @@ export interface DBIConfig {
   }
 
   store?: {
-    get(key: string, defaultValue: any): Promise<any>;
-    set(key: string): Promise<void>;
+    get(key: string, defaultValue?: any): Promise<any>;
+    set(key: string, value: any): Promise<void>;
     del(key: string): Promise<void>;
     has(key: string): Promise<boolean>;
   }
@@ -110,6 +110,14 @@ export class DBI {
 
   async register(cb: (api: DBIRegisterAPI) => void): Promise<any> {
     this.data.registers.add(cb);
+  }
+
+  load() {
+    this._registerAll();
+  }
+
+  unload() {
+    this._unregisterAll();
   }
 
   async publish(type: "Global", clear?: boolean): Promise<any>;
