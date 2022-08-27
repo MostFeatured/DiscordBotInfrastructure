@@ -7,6 +7,7 @@ import * as stuffs from "stuffs";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
+import { DBILocale } from "./types/Locale";
 
 export interface DBIConfig {
   discord: {
@@ -30,6 +31,7 @@ export interface DBIRegisterAPI {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
   Event(cfg: TDBIEventOmitted): DBIEvent;
+  onUnload(cb: ()=>Promise<any>);
 }
 
 export class DBI {
@@ -40,11 +42,14 @@ export class DBI {
     interactions: Discord.Collection<string, DBIChatInput>;
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
+    locales: Discord.Collection<string, DBILocale>;
     other: Record<string, any>;
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
+    registerUnloaders: Set<(...args: any[]) => any>;
   };
   events: Events;
+  private _loaded: boolean;
   constructor(namespace: string, config: DBIConfig) {
     this.namespace = namespace;
     this.config = stuffs.defaultify(config, {
@@ -55,14 +60,17 @@ export class DBI {
       interactions: new Discord.Collection(),
       events: new Discord.Collection(),
       plugins: new Discord.Collection(),
+      locales: new Discord.Collection(),
       other: {},
       unloaders: new Set(),
       registers: new Set(),
+      registerUnloaders: new Set(),
     }
 
     this.events = new Events(this);
     this.client = new Discord.Client(config.discord?.options);
     this._hookListeners();
+    this._loaded = false;
   }
 
   private async _hookListeners() {
@@ -70,7 +78,10 @@ export class DBI {
     this.data.unloaders.add(unload);
   }
 
-  private _unregisterAll() {
+  private async _unregisterAll() {
+    for await (const cb of this.data.registerUnloaders) {
+      await cb();
+    }
     this.data.events.clear();
     this.data.interactions.clear();
     this.data.plugins.clear();
@@ -99,7 +110,10 @@ export class DBI {
       return await cb({
         ChatInput,
         Event,
-        ChatInputOptions: DBIChatInputOptions
+        ChatInputOptions: DBIChatInputOptions,
+        onUnload(cb) {
+          self.data.registerUnloaders.add(cb);
+        }
       });
     }
   }
@@ -112,12 +126,22 @@ export class DBI {
     this.data.registers.add(cb);
   }
 
-  load() {
-    this._registerAll();
+  async load(): Promise<boolean> {
+    if (this._loaded) return false;
+    await this._registerAll();
+    this._loaded = true;
+    return true;
   }
 
-  unload() {
-    this._unregisterAll();
+  async unload(): Promise<boolean> {
+    if (!this._loaded) return false;
+    await this._unregisterAll();
+    this._loaded = false;
+    return true;
+  }
+
+  get loaded(): boolean {
+    return this._loaded;
   }
 
   async publish(type: "Global", clear?: boolean): Promise<any>;
