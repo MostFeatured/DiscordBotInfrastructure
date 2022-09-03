@@ -25,4 +25,3 @@ dbi.events.on("beforeInteraction", (data) => {
   await dbi.login();
   console.log("ok");  
 })();
-
