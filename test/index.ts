@@ -9,7 +9,12 @@ export let dbi = createDBI("namespace", {
         "Guilds"
       ]
     }
-  }
+  },
+});
+
+dbi.events.on("beforeInteraction", (data) => {
+  console.log("beforeInteraction");
+  return true;
 });
 
 (async () => {

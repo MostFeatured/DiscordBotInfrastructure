@@ -11,9 +11,13 @@ export interface IDBIBaseExecuteCtx {
     | Discord.AutocompleteInteraction
     | Discord.SelectMenuInteraction
     | Discord.ButtonInteraction;
-  locale: DBILocale;
+  locale: {
+    user: DBILocale,
+    guild?: DBILocale
+  }
   dbi: DBI;
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
+  other: Record<string, any>;
 }
 
 export type TDBIInteractionTypes =

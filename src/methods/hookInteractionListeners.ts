@@ -46,8 +46,16 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       return;
     }
 
-    let localeName = inter.locale.split("-")[0];
-    let locale = dbi.data.locales.has(localeName) ? dbi.data.locales.get(localeName) : dbi.data.locales.get(dbi.config.defaultLocale);
+    let userLocaleName = inter.locale.split("-")[0];
+    let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaultLocale);
+
+    let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
+    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaultLocale)) : null;
+
+    let locale = {
+      user: userLocale,
+      guild: guildLocale
+    };
 
     let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
 
@@ -67,7 +75,16 @@ export function hookInteractionListeners(dbi: DBI): () => any {
         val = null;
       }
       if (val) {
-        dbi.events.trigger("interactionRateLimit", { dbi, interaction: inter, locale, data })
+        dbi.events.trigger("interactionRateLimit", {
+          dbi,
+          interaction: inter,
+          locale,
+          data,
+          rateLimit: {
+            type: key,
+            ...val
+          }
+        })
         return;
       }
     }
@@ -76,7 +93,9 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       await dbi.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
     }
 
-    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data }))) return;
+    let other = {};
+
+    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other }))) return;
 
     await dbiInter.onExecute({
       dbi,
@@ -84,10 +103,11 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       interaction: inter as any,
       locale,
       setRateLimit,
-      data
+      data,
+      other
     });
     
-    dbi.events.trigger("afterInteraction", { dbi, interaction: inter, locale, setRateLimit, data });
+    dbi.events.trigger("afterInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other });
   }
 
   dbi.client.on("interactionCreate", handle);
