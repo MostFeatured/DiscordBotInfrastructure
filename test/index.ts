@@ -14,6 +14,8 @@ export let dbi = createDBI("namespace", {
 
 (async () => {
   await recursiveImport(path.resolve(__dirname, "./commands"));
+
+  await dbi.load();
   // await dbi.publish("Guild", "817408899904438282");
   await dbi.login();
   console.log("ok");  

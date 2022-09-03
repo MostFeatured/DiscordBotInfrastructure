@@ -10,11 +10,12 @@ export class Events {
       beforeInteraction: [],
       afterInteraction: [],
       beforeEvent: [],
-      afterEvent: []
+      afterEvent: [],
+      interactionRateLimit: []
     }
   }
   
-  async trigger(name: "beforeInteraction" | "afterInteraction" | "beforeEvent" | "afterEvent", data: any): Promise<boolean>{
+  async trigger(name: "beforeInteraction" | "afterInteraction" | "beforeEvent" | "afterEvent" | "interactionRateLimit", data: any): Promise<boolean>{
     let handlers = this.handlers[name];
     for (let i = 0; i < handlers.length; i++) {
       const handler = handlers[i];

@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import { DBI } from "../DBI";
 
 export interface ClientEvents {
   applicationCommandPermissionsUpdate: { data: Discord.ApplicationCommandPermissionsUpdateData };
@@ -94,7 +95,7 @@ export type DBIEventCombinations = {
   }
 }[keyof ClientEvents];
 
-export type TDBIEventOmitted = Omit<DBIEvent, "type" | "name" | "onExecute"> & DBIEventCombinations;
+export type TDBIEventOmitted = Omit<DBIEvent, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations;
 
 export class DBIEvent {
   readonly type: "Event";
@@ -102,7 +103,9 @@ export class DBIEvent {
   id?: string;
   name: string;
   onExecute: (...args: any[]) => any;
-  constructor(cfg: TDBIEventOmitted) {
+  dbi: DBI;
+  constructor(dbi: DBI, cfg: TDBIEventOmitted) {
+    this.dbi = dbi;
     this.type = "Event";
     this.id = cfg.id;
     this.other = cfg.other;

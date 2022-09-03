@@ -7,13 +7,16 @@ import * as stuffs from "stuffs";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
-import { DBILocale } from "./types/Locale";
+import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
+import { DBIButton, TDBIButtonOmitted } from "./types/Button";
+import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
 
 export interface DBIConfig {
   discord: {
     token: string;
     options?: Discord.ClientOptions
   }
+  defaultLocale?: TDBILocaleString;
   sharding?: {
     clusterCount: "auto" | number,
     shardCountPerCluster: number
@@ -31,6 +34,9 @@ export interface DBIRegisterAPI {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
   Event(cfg: TDBIEventOmitted): DBIEvent;
+  Locale(cfg: TDBILocaleConstructor): DBILocale;
+  Button(cfg: TDBIButtonOmitted): DBIButton;
+  SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
   onUnload(cb: ()=>Promise<any>);
 }
 
@@ -39,7 +45,7 @@ export class DBI {
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
-    interactions: Discord.Collection<string, DBIChatInput>;
+    interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu>;
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale>;
@@ -47,14 +53,17 @@ export class DBI {
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
+    refs: Map<string, { at: number, value: any }>;
   };
   events: Events;
   private _loaded: boolean;
   constructor(namespace: string, config: DBIConfig) {
     this.namespace = namespace;
-    this.config = stuffs.defaultify(config, {
-      store: new MemoryStore()
-    }, true);
+
+    config.store = config.store as any || new MemoryStore();
+    config.defaultLocale = config.defaultLocale || "en";
+
+    this.config = config;
 
     this.data = {
       interactions: new Discord.Collection(),
@@ -65,6 +74,7 @@ export class DBI {
       unloaders: new Set(),
       registers: new Set(),
       registerUnloaders: new Set(),
+      refs: new Map()
     }
 
     this.events = new Events(this);
@@ -92,28 +102,55 @@ export class DBI {
 
     for await (const cb of this.data.registers) {
       let ChatInput = function(cfg: DBIChatInput) {
-        let dbiInteraction = new DBIChatInput(cfg);
-        if (self.data.interactions.has(dbiInteraction.name)) throw new Error(`DBIInteraction "${dbiInteraction.name}" already loaded!`);
-        self.data.interactions.set(dbiInteraction.name, dbiInteraction);
-        return dbiInteraction;
+        let dbiChatInput = new DBIChatInput(self, cfg);
+        if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name).type}"!`);
+        self.data.interactions.set(dbiChatInput.name, dbiChatInput);
+        return dbiChatInput;
       };
       ChatInput = Object.assign(ChatInput, class { constructor(...args) { return ChatInput.call(this, ...args); } });
 
       let Event = function(cfg: TDBIEventOmitted) {
-        let dbiEvent = new DBIEvent(cfg);
+        let dbiEvent = new DBIEvent(self, cfg);
         if (self.data.events.has(dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.name}" already loaded!`);
         self.data.events.set(dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
       Event = Object.assign(Event, class { constructor(...args) { return Event.call(this, ...args); } });
 
+      let Button = function(cfg: TDBIButtonOmitted) {
+        let dbiButton = new DBIButton(self, cfg);
+        if (self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name).type}"!`);
+        self.data.interactions.set(dbiButton.name, dbiButton);
+        return dbiButton;
+      };
+      Button = Object.assign(Button, class { constructor(...args) { return Button.call(this, ...args); } });
+
+      let SelectMenu = function(cfg: TDBISelectMenuOmitted) {
+        let dbiSelectMenu = new DBISelectMenu(self, cfg);
+        if (self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name).type}"!`);
+        self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
+        return dbiSelectMenu;
+      };
+      SelectMenu = Object.assign(SelectMenu, class { constructor(...args) { return SelectMenu.call(this, ...args); } });
+
+      let Locale = function(cfg: TDBILocaleConstructor) {
+        let dbiLocale = new DBILocale(self, cfg);
+        if (self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
+        self.data.locales.set(dbiLocale.name, dbiLocale);
+        return dbiLocale;
+      };
+      Locale = Object.assign(Locale, class { constructor(...args) { return Locale.call(this, ...args); } });
+
       return await cb({
         ChatInput,
         Event,
         ChatInputOptions: DBIChatInputOptions,
+        Locale,
+        Button,
+        SelectMenu,
         onUnload(cb) {
           self.data.registerUnloaders.add(cb);
-        }
+        },
       });
     }
   }
@@ -148,18 +185,19 @@ export class DBI {
   async publish(type: "Guild", guildId: string, clear?: boolean): Promise<any>;
 
   async publish(...args) {
+    let interactions = this.data.interactions.filter(i => i.type == "ChatInput" || i.type == "MessageContextMenu" || i.type == "UserContextMenu") as any;
     switch (args[0]) {
       case "Global": {
         return await publishInteractions(
           this.config.discord.token,
-          args[1] ? new Discord.Collection() : this.data.interactions,
+          args[1] ? new Discord.Collection() : interactions,
           args[0]
         );
       }
       case "Guild": {
         return await publishInteractions(
           this.config.discord.token,
-          args[2] ? new Discord.Collection() : this.data.interactions,
+          args[2] ? new Discord.Collection() : interactions,
           args[0],
           args[1]
         );

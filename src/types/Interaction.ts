@@ -1,5 +1,6 @@
 import Discord from "discord.js";
 import { DBI } from "../DBI";
+import { DBILocale } from "./Locale";
 
 export interface IDBIBaseExecuteCtx {
   interaction:
@@ -10,9 +11,8 @@ export interface IDBIBaseExecuteCtx {
     | Discord.AutocompleteInteraction
     | Discord.SelectMenuInteraction
     | Discord.ButtonInteraction;
-  locale: any;
-  other: any;
-  DBI: DBI;
+  locale: DBILocale;
+  dbi: DBI;
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
 }
 
@@ -42,7 +42,8 @@ export type DBIRateLimit = {
 }
 
 export class DBIBaseInteraction {
-  constructor(cfg: DBIBaseInteraction) {
+  constructor(dbi: DBI, cfg: Omit<DBIBaseInteraction, "dbi">) {
+    this.dbi = dbi;
     this.name = cfg.name;
     this.description = cfg.description;
     this.onExecute = cfg.onExecute;
@@ -51,6 +52,7 @@ export class DBIBaseInteraction {
     this.other = cfg.other;
   }
 
+  dbi: DBI;
   name: string;
   description: string;
   readonly type: TDBIInteractionTypes;

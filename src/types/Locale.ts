@@ -1,4 +1,5 @@
-import stuffs from "stuffs";
+import * as stuffs from "stuffs";
+import { DBI } from "../DBI";
 
 export interface LangObject {
   [property: string]: LangObject & ((...args: any[]) => string);
@@ -8,16 +9,20 @@ export interface LangConstructorObject {
   [property: string]: LangConstructorObject | string;
 }
 
-export type TDBILocaleConstructor = DBILocale & { data: LangConstructorObject };
+export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
+
+export type TDBILocaleConstructor = Omit<DBILocale & { data: LangConstructorObject }, "dbi">;
 
 export class DBILocale {
-  locale: string;
+  name: TDBILocaleString;
   data: LangObject
   private _data: LangConstructorObject;
-  constructor(cfg: TDBILocaleConstructor) {
-    this.locale = cfg.locale;
+  dbi: DBI;
+  constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
+    this.dbi = dbi;
+    this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convert(cfg.data); // TODO: Convert to LangObj
+    this.data = convert(cfg.data);
   }
 }
 

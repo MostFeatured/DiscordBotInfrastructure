@@ -1,63 +1,55 @@
 import { DBI } from "../DBI";
 import Discord from "discord.js";
+import { parseCustomId } from "../utils/customId";
 
-export function hookInteractionListeners(DBI: DBI): () => any {
+export function hookInteractionListeners(dbi: DBI): () => any {
   async function handle(inter: Discord.Interaction<Discord.CacheType>) {
 
     const dbiInter =
-      DBI.data.interactions.find(i => (
-        (
-          i.type == "ChatInput"
-          && (inter.isChatInputCommand() || inter.isAutocomplete())
-          && i.name == [inter.commandName, inter.options.getSubcommandGroup(false), inter.options.getSubcommand(false)].filter(i=>!!i).join(" ")
+      dbi.data.interactions.find(i => {
+        let isUsesCustomId = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit());
+        let parsedId = isUsesCustomId ? parseCustomId(dbi, (inter as any).customId) : null;
+        return (
+          (
+            i.type == "ChatInput"
+            && (inter.isChatInputCommand() || inter.isAutocomplete())
+            && i.name == [inter.commandName, inter.options.getSubcommandGroup(false), inter.options.getSubcommand(false)].filter(i => !!i).join(" ")
+          )
+          ||
+          (
+            (i.type == "MessageContextMenu" || i.type == "UserContextMenu")
+            && (inter.isMessageContextMenuCommand() || inter.isUserContextMenuCommand())
+            && inter.commandName == i.name
+          )
+          ||
+          (
+            (i.type == "Button" || i.type == "SelectMenu" || i.type == "Modal")
+            && isUsesCustomId
+            && parsedId.name == i.name
+          )
         )
-        ||
-        (
-          i.type == "MessageContextMenu"
-          && inter.isMessageContextMenuCommand()
-          && inter.commandName == i.name
-        )
-        ||
-        (
-          i.type == "UserContextMenu"
-          && inter.isUserContextMenuCommand()
-          && inter.commandName == i.name
-        )
-        ||
-        (
-          i.type == "Button"
-          && inter.isButton()
-          && inter.customId == i.name
-        )
-        ||
-        (
-          i.type == "SelectMenu"
-          && inter.isSelectMenu()
-          && inter.customId == i.name
-        )
-        ||
-        (
-          i.type == "Modal"
-          && inter.isModalSubmit()
-          && inter.customId == i.name
-        )
-      ));
+      });
     
     if (!dbiInter) return;
     
     if (inter.isAutocomplete()) {
       let focussed = inter.options.getFocused(true);
-      let option = dbiInter.options.find(i => i.name == focussed.name);
+      let option = (dbiInter.options as any[]).find(i => i.name == focussed.name);
       if (option?.onComplete) {
         let response = await option.onComplete({
           value: focussed.value,
           interaction: inter,
-          DBI
+          dbi
         });
         await inter.respond(response);
       }
       return;
     }
+
+    let localeName = inter.locale.split("-")[0];
+    let locale = dbi.data.locales.has(localeName) ? dbi.data.locales.get(localeName) : dbi.data.locales.get(dbi.config.defaultLocale);
+
+    let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
 
     let rateLimitKeyMap = {
       "User": `${inter.user.id}`,
@@ -69,33 +61,38 @@ export function hookInteractionListeners(DBI: DBI): () => any {
 
     for (const type in rateLimitKeyMap) {
       let key = `RateLimit:${rateLimitKeyMap[type]}`;
-      let val = await DBI.config.store.get(key);
+      let val = await dbi.config.store.get(key);
       if (val && Date.now() > val.at + val.duration) {
-        await DBI.config.store.del(key);
+        await dbi.config.store.del(key);
         val = null;
       }
       if (val) {
-        // TODO: Handle ratelimit
+        dbi.events.trigger("interactionRateLimit", { dbi, interaction: inter, locale, data })
         return;
       }
     }
 
     async function setRateLimit(type: string, duration: number) {
-      await DBI.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
+      await dbi.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
     }
-    
-    dbiInter.onExecute({
-      DBI,
+
+    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data }))) return;
+
+    await dbiInter.onExecute({
+      dbi,
+      // @ts-ignore
       interaction: inter as any,
-      locale: null,
-      other: null,
-      setRateLimit
+      locale,
+      setRateLimit,
+      data
     });
+    
+    dbi.events.trigger("afterInteraction", { dbi, interaction: inter, locale, setRateLimit, data });
   }
 
-  DBI.client.on("interactionCreate", handle);
+  dbi.client.on("interactionCreate", handle);
 
   return () => { 
-    DBI.client.off("interactionCreate", handle);
+    dbi.client.off("interactionCreate", handle);
   };
 }
