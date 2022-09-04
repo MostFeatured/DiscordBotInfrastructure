@@ -1,7 +1,31 @@
-import { ButtonStyle, ComponentType } from "discord.js";
+import { ButtonStyle, ComponentType, TextInputStyle } from "discord.js";
 import { dbi } from "..";
 
-dbi.register(({ ChatInput, ChatInputOptions, Button, Event }) => {
+dbi.register(({ ChatInput, ChatInputOptions, Button, Event, Modal }) => {
+
+  Modal({
+    name: "modalIsCool",
+    onExecute(ctx) {
+      ctx.interaction.reply("xd 1");
+    },
+    options: {
+      title: "XDaaaa",
+      components: [
+        {
+          type: ComponentType.ActionRow,
+          components: [
+            {
+              customId: "COOLID",
+              label: "WOWXD",
+              style: TextInputStyle.Short,
+              type: ComponentType.TextInput,
+              placeholder: "valla yani"
+            }
+          ]
+        }
+      ]
+    }
+  })
 
   Event({
     name: "ready",
@@ -32,17 +56,20 @@ dbi.register(({ ChatInput, ChatInputOptions, Button, Event }) => {
     name: "hello world",
     description: "bruh",
     async onExecute(ctx) {
-      ctx.interaction.reply({
-        content: `Hi! \`${ctx.interaction.options.getString("yazı")}\``,
-        components: [
-          {
-            type: ComponentType.ActionRow,
-            components: [
-              (ctx.dbi.data.interactions.get("button1") as any).toJSON({ text: ctx.interaction.options.getString("yazı") })
-            ]
-          }
-        ]
-      });
+      console.log("aa1")
+      console.log((ctx.dbi.data.interactions.get("modalIsCool") as any).toJSON());
+      ctx.interaction.showModal((ctx.dbi.data.interactions.get("modalIsCool") as any).toJSON())
+      // ctx.interaction.reply({
+      //   content: `Hi! \`${ctx.interaction.options.getString("yazı")}\``,
+      //   components: [
+      //     {
+      //       type: ComponentType.ActionRow,
+      //       components: [
+      //         (ctx.dbi.data.interactions.get("button1") as any).toJSON({ text: ctx.interaction.options.getString("yazı") })
+      //       ]
+      //     }
+      //   ]
+      // });
     },
     options: [
       ChatInputOptions.stringAutocomplete({

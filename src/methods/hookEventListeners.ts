@@ -3,7 +3,7 @@ import { DBI } from "../DBI";
 export function hookEventListeners(dbi: DBI): () => any {
   async function handle(eventName: string, ...args: any[]) {
     if (!dbi.data.eventMap[eventName]) return;
-    
+
     let ctxArgs =
       dbi.data.eventMap[eventName]
         .reduce((all, current, index) => {
@@ -29,7 +29,7 @@ export function hookEventListeners(dbi: DBI): () => any {
 
   dbi.client.emit = function(eventName, ...args) {
     handle(eventName, ...args);
-    return originalEmit.call(this, ...args);
+    return originalEmit.call(this, eventName, ...args);
   }
 
   return () => {

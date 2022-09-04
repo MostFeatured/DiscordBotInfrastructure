@@ -13,6 +13,7 @@ import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/Me
 import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
 import { hookEventListeners } from "./methods/hookEventListeners";
 import eventMap from "./data/eventMap.json";
+import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 
 export interface DBIConfig {
   discord: {
@@ -46,6 +47,7 @@ export interface DBIRegisterAPI {
   SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
   UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
+  Modal(cfg: TDBIModalOmitted): DBIModal;
   onUnload(cb: ()=>Promise<any>);
 }
 
@@ -54,7 +56,7 @@ export class DBI {
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
-    interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu>;
+    interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal>;
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale>;
@@ -165,6 +167,14 @@ export class DBI {
       };
       UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args) { return UserContextMenu.call(this, ...args); } });
 
+      let Modal = function(cfg: TDBIModalOmitted) {
+        let dbiModal = new DBIModal(self, cfg);
+        if (self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name).type}"!`);
+        self.data.interactions.set(dbiModal.name, dbiModal);
+        return dbiModal;
+      };
+      Modal = Object.assign(Modal, class { constructor(...args) { return Modal.call(this, ...args); } });
+
 
       let Locale = function(cfg: TDBILocaleConstructor) {
         let dbiLocale = new DBILocale(self, cfg);
@@ -183,6 +193,7 @@ export class DBI {
         SelectMenu,
         MessageContextMenu,
         UserContextMenu,
+        Modal,
         onUnload(cb) {
           self.data.registerUnloaders.add(cb);
         },

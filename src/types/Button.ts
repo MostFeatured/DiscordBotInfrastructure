@@ -27,6 +27,6 @@ export class DBIButton extends DBIBaseInteraction {
       ...this.options,
       customId: customIdBuilder(this.dbi, this.name, customData),
       type: Discord.ComponentType.Button
-    } as any
+    } as any;
   };
 }
