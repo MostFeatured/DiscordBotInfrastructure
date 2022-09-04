@@ -1,8 +1,22 @@
 import { ButtonStyle, ComponentType } from "discord.js";
 import { dbi } from "..";
-import { DBIButton } from "../../src/types/Button";
 
-dbi.register(({ ChatInput, ChatInputOptions, Button }) => {
+dbi.register(({ ChatInput, ChatInputOptions, Button, Event }) => {
+
+  Event({
+    name: "ready",
+    onExecute() {
+      console.log("READY");
+    }
+  });
+
+  Event({
+    name: "messageCreate",
+    onExecute(ctx) {
+      console.log(ctx.message.content);
+    }
+  })
+
   Button({
     name: "button1",
     onExecute(ctx) {
@@ -24,7 +38,7 @@ dbi.register(({ ChatInput, ChatInputOptions, Button }) => {
           {
             type: ComponentType.ActionRow,
             components: [
-              (ctx.dbi.data.interactions.get("button1") as DBIButton).toJSON({ text: ctx.interaction.options.getString("yazı") })
+              (ctx.dbi.data.interactions.get("button1") as any).toJSON({ text: ctx.interaction.options.getString("yazı") })
             ]
           }
         ]
@@ -43,4 +57,5 @@ dbi.register(({ ChatInput, ChatInputOptions, Button }) => {
       })
     ],
   });
-})
+
+});

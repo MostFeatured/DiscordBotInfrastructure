@@ -20,7 +20,5 @@ export class DBIChatInput extends DBIBaseInteraction {
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];
   declare options?: any[];
-  override onExecute(ctx: IDBIChatInputExecuteCtx) {
-    
-  }
+  override onExecute(ctx: IDBIChatInputExecuteCtx) {}
 }

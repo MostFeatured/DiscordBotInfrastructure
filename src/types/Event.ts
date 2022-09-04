@@ -91,7 +91,7 @@ export interface ClientEvents {
 export type DBIEventCombinations = {
   [K in keyof ClientEvents]: {
     name: K,
-    onExecute: (ctx: ClientEvents[K]) => Promise<any> | any
+    onExecute: (ctx: ClientEvents[K] & { other: Record<string, any> }) => Promise<any> | any
   }
 }[keyof ClientEvents];
 

@@ -20,7 +20,7 @@ export class DBISelectMenu extends DBIBaseInteraction {
 
   declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
 
-  override onExecute(ctx: IDBISelectMenuExecuteCtx) { };
+  override onExecute(ctx: IDBISelectMenuExecuteCtx): Promise<any> | any { };
 
   toJSON(...customData: (string | number | object)[]): Discord.SelectMenuComponentData {
     return {

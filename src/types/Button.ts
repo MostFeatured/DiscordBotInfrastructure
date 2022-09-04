@@ -20,7 +20,7 @@ export class DBIButton extends DBIBaseInteraction {
 
   declare options: Omit<Discord.ButtonComponentData, "customId" | "type">;
 
-  override onExecute(ctx: IDBIButtonExecuteCtx) { };
+  override onExecute(ctx: IDBIButtonExecuteCtx): Promise<any> | any { };
 
   toJSON(...customData: (string | number | object)[]): Discord.ButtonComponentData {
     return {

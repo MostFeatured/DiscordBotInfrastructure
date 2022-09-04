@@ -47,10 +47,10 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     }
 
     let userLocaleName = inter.locale.split("-")[0];
-    let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaultLocale);
+    let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
 
     let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
-    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaultLocale)) : null;
+    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale)) : null;
 
     let locale = {
       user: userLocale,

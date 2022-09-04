@@ -3,20 +3,27 @@ import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput"
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { publishInteractions } from "./methods/publishInteractions";
 import { DBIEvent, TDBIEventOmitted } from "./types/Event";
-import * as stuffs from "stuffs";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
 import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Button";
 import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
+import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
+import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
+import { hookEventListeners } from "./methods/hookEventListeners";
+import eventMap from "./data/eventMap.json";
 
 export interface DBIConfig {
   discord: {
     token: string;
     options?: Discord.ClientOptions
   }
-  defaultLocale?: TDBILocaleString;
+  defaults?: {
+    locale?: TDBILocaleString,
+    directMessages?: boolean,
+    defaultMemberPermissions?: Discord.PermissionsString[]
+  };
   sharding?: {
     clusterCount: "auto" | number,
     shardCountPerCluster: number
@@ -37,6 +44,8 @@ export interface DBIRegisterAPI {
   Locale(cfg: TDBILocaleConstructor): DBILocale;
   Button(cfg: TDBIButtonOmitted): DBIButton;
   SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
+  MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
+  UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
   onUnload(cb: ()=>Promise<any>);
 }
 
@@ -45,11 +54,12 @@ export class DBI {
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
-    interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu>;
+    interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu>;
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale>;
     other: Record<string, any>;
+    eventMap: Record<string, string[]>;
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
@@ -61,7 +71,12 @@ export class DBI {
     this.namespace = namespace;
 
     config.store = config.store as any || new MemoryStore();
-    config.defaultLocale = config.defaultLocale || "en";
+    config.defaults = {
+      locale: "en",
+      defaultMemberPermissions: [],
+      directMessages: false,
+      ...(config.defaults || {})
+    };
 
     this.config = config;
 
@@ -71,6 +86,7 @@ export class DBI {
       plugins: new Discord.Collection(),
       locales: new Discord.Collection(),
       other: {},
+      eventMap,
       unloaders: new Set(),
       registers: new Set(),
       registerUnloaders: new Set(),
@@ -84,8 +100,8 @@ export class DBI {
   }
 
   private async _hookListeners() {
-    let unload = hookInteractionListeners(this);
-    this.data.unloaders.add(unload);
+    this.data.unloaders.add(hookInteractionListeners(this));
+    this.data.unloaders.add(hookEventListeners(this));
   }
 
   private async _unregisterAll() {
@@ -133,6 +149,23 @@ export class DBI {
       };
       SelectMenu = Object.assign(SelectMenu, class { constructor(...args) { return SelectMenu.call(this, ...args); } });
 
+      let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted) {
+        let dbiMessageContextMenu = new DBIMessageContextMenu(self, cfg);
+        if (self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name).type}"!`);
+        self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
+        return dbiMessageContextMenu;
+      };
+      MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args) { return MessageContextMenu.call(this, ...args); } });
+
+      let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted) {
+        let dbiUserContextMenu = new DBIUserContextMenu(self, cfg);
+        if (self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name).type}"!`);
+        self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
+        return dbiUserContextMenu;
+      };
+      UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args) { return UserContextMenu.call(this, ...args); } });
+
+
       let Locale = function(cfg: TDBILocaleConstructor) {
         let dbiLocale = new DBILocale(self, cfg);
         if (self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
@@ -148,6 +181,8 @@ export class DBI {
         Locale,
         Button,
         SelectMenu,
+        MessageContextMenu,
+        UserContextMenu,
         onUnload(cb) {
           self.data.registerUnloaders.add(cb);
         },
