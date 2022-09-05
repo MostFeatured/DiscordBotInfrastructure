@@ -2,6 +2,7 @@
   "dependencies": {
     "@discordjs/rest": "^1.0.1",
     "discord-api-types": "^0.37.0",
+    "discord-hybrid-sharding": "^1.7.4",
     "discord.js": "^14.1.2",
     "eventemitter3": "^4.0.7",
     "lodash": "^4.17.21",

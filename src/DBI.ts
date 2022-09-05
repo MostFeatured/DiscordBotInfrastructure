@@ -14,6 +14,7 @@ import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserCont
 import { hookEventListeners } from "./methods/hookEventListeners";
 import eventMap from "./data/eventMap.json";
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
+import * as Sharding from "discord-hybrid-sharding";
 
 export interface DBIConfig {
   discord: {
@@ -25,10 +26,8 @@ export interface DBIConfig {
     directMessages?: boolean,
     defaultMemberPermissions?: Discord.PermissionsString[]
   };
-  sharding?: {
-    clusterCount: "auto" | number,
-    shardCountPerCluster: number
-  }
+
+  sharding?: boolean;
 
   store?: {
     get(key: string, defaultValue?: any): Promise<any>;
@@ -68,6 +67,7 @@ export class DBI {
     refs: Map<string, { at: number, value: any }>;
   };
   events: Events;
+  cluster?: Sharding.Client;
   private _loaded: boolean;
   constructor(namespace: string, config: DBIConfig) {
     this.namespace = namespace;
@@ -96,7 +96,14 @@ export class DBI {
     }
 
     this.events = new Events(this);
-    this.client = new Discord.Client(config.discord?.options);
+    this.client = new Discord.Client({
+      ...(config.discord?.options || {}) as any,
+      ...(config.sharding ? {
+        shards: (Sharding as any).data.SHARD_LIST,
+        shardCount: (Sharding as any).data.TOTAL_SHARDS
+      } : {})
+    });
+    this.cluster = config.sharding ? new Sharding.Client(this.client) : null;
     this._hookListeners();
     this._loaded = false;
   }
