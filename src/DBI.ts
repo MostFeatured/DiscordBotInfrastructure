@@ -191,7 +191,7 @@ export class DBI {
       };
       Locale = Object.assign(Locale, class { constructor(...args) { return Locale.call(this, ...args); } });
 
-      return await cb({
+      await cb({
         ChatInput,
         Event,
         ChatInputOptions: DBIChatInputOptions,

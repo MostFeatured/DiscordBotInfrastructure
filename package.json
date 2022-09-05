@@ -10,7 +10,7 @@
     "stuffs": "^0.1.17"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "main": "dist/src/index.js",
   "type": "commonjs",
   "private": false,
