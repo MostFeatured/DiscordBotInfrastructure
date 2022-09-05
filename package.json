@@ -10,13 +10,14 @@
     "stuffs": "^0.1.17"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.0.4",
-  "main": "dist/src/index.js",
+  "version": "0.0.8",
+  "main": "dist/index.js",
   "type": "commonjs",
   "private": false,
   "scripts": {
     "test": "npx tsc && node dist/test",
-    "build": "npx tsc"
+    "build": "npx tsc",
+    "prepublish": "npx tsc"
   },
   "repository": {
     "type": "git",

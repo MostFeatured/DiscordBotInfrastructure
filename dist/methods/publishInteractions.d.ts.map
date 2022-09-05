@@ -1,0 +1,1 @@
+{"version":3,"file":"publishInteractions.d.ts","sourceRoot":"","sources":["../../src/methods/publishInteractions.ts"],"names":[],"mappings":"AAAA,OAAO,OAAO,MAAM,YAAY,CAAC;AACjC,OAAO,EAAE,YAAY,EAAE,MAAM,8BAA8B,CAAC;AAQ5D,wBAAsB,mBAAmB,CACvC,WAAW,EAAE,MAAM,EACnB,YAAY,EAAE,OAAO,CAAC,UAAU,CAAC,MAAM,EAAE,YAAY,CAAC,EACtD,WAAW,EAAE,OAAO,GAAG,QAAQ,EAC/B,OAAO,CAAC,EAAE,MAAM,iBAgJjB"}

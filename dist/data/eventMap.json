@@ -1,0 +1,234 @@
+{
+    "applicationCommandPermissionsUpdate": [
+        "data"
+    ],
+    "cacheSweep": [
+        "message"
+    ],
+    "channelCreate": [
+        "channel"
+    ],
+    "channelDelete": [
+        "channel"
+    ],
+    "channelPinsUpdate": [
+        "channel",
+        "date"
+    ],
+    "channelUpdate": [
+        "oldChannel",
+        "newChannel"
+    ],
+    "debug": [
+        "message"
+    ],
+    "warn": [
+        "message"
+    ],
+    "emojiCreate": [
+        "emoji"
+    ],
+    "emojiDelete": [
+        "emoji"
+    ],
+    "emojiUpdate": [
+        "oldEmoji",
+        "newEmoji"
+    ],
+    "error": [
+        "error"
+    ],
+    "guildBanAdd": [
+        "ban"
+    ],
+    "guildBanRemove": [
+        "ban"
+    ],
+    "guildCreate": [
+        "guild"
+    ],
+    "guildDelete": [
+        "guild"
+    ],
+    "guildUnavailable": [
+        "guild"
+    ],
+    "guildIntegrationsUpdate": [
+        "guild"
+    ],
+    "guildMemberAdd": [
+        "member"
+    ],
+    "guildMemberAvailable": [
+        "member"
+    ],
+    "guildMemberRemove": [
+        "member"
+    ],
+    "guildMembersChunk": [
+        "members",
+        "guild",
+        "data"
+    ],
+    "guildMemberUpdate": [
+        "oldMember",
+        "newMember"
+    ],
+    "guildUpdate": [
+        "oldGuild",
+        "newGuild"
+    ],
+    "inviteCreate": [
+        "invite"
+    ],
+    "inviteDelete": [
+        "invite"
+    ],
+    "messageCreate": [
+        "message"
+    ],
+    "messageDelete": [
+        "message"
+    ],
+    "messageReactionRemoveAll": [
+        "message",
+        "reactions"
+    ],
+    "messageReactionRemoveEmoji": [
+        "reaction"
+    ],
+    "messageDeleteBulk": [
+        "messages",
+        "channel"
+    ],
+    "messageReactionAdd": [
+        "reaction",
+        "user"
+    ],
+    "messageReactionRemove": [
+        "reaction",
+        "user"
+    ],
+    "messageUpdate": [
+        "oldMessage",
+        "newMessage"
+    ],
+    "presenceUpdate": [
+        "oldPresence",
+        "newPresence"
+    ],
+    "ready": [
+        "client"
+    ],
+    "invalidated": [
+        "undefined"
+    ],
+    "roleCreate": [
+        "role"
+    ],
+    "roleDelete": [
+        "role"
+    ],
+    "roleUpdate": [
+        "oldRole",
+        "newRole"
+    ],
+    "threadCreate": [
+        "thread",
+        "newlyCreated"
+    ],
+    "threadDelete": [
+        "thread"
+    ],
+    "threadListSync": [
+        "threads",
+        "guild"
+    ],
+    "threadMemberUpdate": [
+        "oldMember",
+        "newMember"
+    ],
+    "threadMembersUpdate": [
+        "addedMembers",
+        "removedMembers",
+        "thread"
+    ],
+    "threadUpdate": [
+        "oldThread",
+        "newThread"
+    ],
+    "typingStart": [
+        "typing"
+    ],
+    "userUpdate": [
+        "oldUser",
+        "newUser"
+    ],
+    "voiceStateUpdate": [
+        "oldState",
+        "newState"
+    ],
+    "webhookUpdate": [
+        "channel"
+    ],
+    "interactionCreate": [
+        "interaction"
+    ],
+    "shardDisconnect": [
+        "closeEvent",
+        "shardId"
+    ],
+    "shardError": [
+        "error",
+        "shardId"
+    ],
+    "shardReady": [
+        "shardId",
+        "unavailableGuilds"
+    ],
+    "shardReconnecting": [
+        "shardId"
+    ],
+    "shardResume": [
+        "shardId",
+        "replayedEvents"
+    ],
+    "stageInstanceCreate": [
+        "stageInstance"
+    ],
+    "stageInstanceUpdate": [
+        "oldStageInstance",
+        "newStageInstance"
+    ],
+    "stageInstanceDelete": [
+        "stageInstance"
+    ],
+    "stickerCreate": [
+        "sticker"
+    ],
+    "stickerDelete": [
+        "sticker"
+    ],
+    "stickerUpdate": [
+        "oldSticker",
+        "newSticker"
+    ],
+    "guildScheduledEventCreate": [
+        "guildScheduledEvent"
+    ],
+    "guildScheduledEventUpdate": [
+        "oldGuildScheduledEvent",
+        "newGuildScheduledEvent"
+    ],
+    "guildScheduledEventDelete": [
+        "guildScheduledEvent"
+    ],
+    "guildScheduledEventUserAdd": [
+        "guildScheduledEvent",
+        "user"
+    ],
+    "guildScheduledEventUserRemove": [
+        "guildScheduledEvent",
+        "user"
+    ]
+}
