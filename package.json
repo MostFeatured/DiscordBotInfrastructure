@@ -10,9 +10,10 @@
     "stuffs": "^0.1.17"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.0.1",
-  "main": "dist/index.js",
+  "version": "0.0.2",
+  "main": "dist/src/index.js",
   "type": "commonjs",
+  "private": false,
   "scripts": {
     "test": "npx tsc && node dist/test",
     "build": "npx tsc"
@@ -31,5 +32,9 @@
   "devDependencies": {
     "@types/lodash": "^4.14.182",
     "typescript": "^4.7.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
