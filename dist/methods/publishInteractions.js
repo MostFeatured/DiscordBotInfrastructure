@@ -1,21 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.publishInteractions = void 0;
+exports.formatLocale = exports.localeifyOptions = exports.publishInteractions = void 0;
 const tslib_1 = require("tslib");
 const rest_1 = require("@discordjs/rest");
 const v9_1 = require("discord-api-types/v9");
 const permissions_1 = require("../utils/permissions");
 const snakecase_keys_1 = tslib_1.__importDefault(require("snakecase-keys"));
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
-async function publishInteractions(clientToken, interactions, publishType, guildId) {
+const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
+async function publishInteractions(clientToken, interactions, interactionsLocales, publishType, guildId) {
     interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
     const rest = new rest_1.REST({ version: "9" });
     rest.setToken(clientToken);
     const me = await rest.get(v9_1.Routes.user());
-    const body = interactions.reduce((all, current) => {
+    let body = interactions.reduce((all, current) => {
         switch (current.type) {
             case "ChatInput": {
                 let nameSplitted = current.name.split(" ");
+                let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                 switch (nameSplitted.length) {
                     case 1: {
                         all.push({
@@ -24,24 +26,30 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                             name: nameSplitted[0],
                             default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                             dm_permission: current.directMessages,
-                            options: (0, snakecase_keys_1.default)(current.options || [])
+                            options: localeifyOptions(current.options || [], localeData.optionsLocales),
+                            name_localizations: localeData.nameLocales(0),
+                            description_localizations: localeData.descriptionLocales,
                         });
                         break;
                     }
                     case 2: {
                         let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+                        let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         let option = {
                             type: v9_1.ApplicationCommandOptionType.Subcommand,
                             name: nameSplitted[1],
                             description: current.description,
                             default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                             dm_permission: current.directMessages,
-                            options: (0, snakecase_keys_1.default)(current.options || [])
+                            options: localeifyOptions(current.options || [], localeData.optionsLocales),
+                            name_localizations: localeData.nameLocales(1),
+                            description_localizations: localeData.descriptionLocales,
                         };
                         if (!baseItem) {
                             all.push({
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
+                                name_localizations: localeData.nameLocales(0),
                                 description: "...",
                                 options: [
                                     option
@@ -55,15 +63,18 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                     }
                     case 3: {
                         let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+                        let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         if (!level1Item) {
                             all.push({
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
+                                name_localizations: localeData.nameLocales(0),
                                 description: "...",
                                 options: [
                                     {
                                         type: v9_1.ApplicationCommandOptionType.SubcommandGroup,
                                         name: nameSplitted[1],
+                                        name_localizations: localeData.nameLocales(1),
                                         description: "...",
                                         options: [
                                             {
@@ -72,7 +83,9 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                                                 description: current.description,
                                                 default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                                 dm_permission: current.directMessages,
-                                                options: (0, snakecase_keys_1.default)(current.options || [])
+                                                options: localeifyOptions(current.options || [], localeData.optionsLocales),
+                                                name_localizations: localeData.nameLocales(2),
+                                                description_localizations: localeData.descriptionLocales,
                                             }
                                         ]
                                     }
@@ -85,6 +98,7 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                                 level1Item.options.push({
                                     type: v9_1.ApplicationCommandOptionType.SubcommandGroup,
                                     name: nameSplitted[1],
+                                    name_localizations: localeData.nameLocales(1),
                                     description: "...",
                                     options: [
                                         {
@@ -93,7 +107,9 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                                             description: current.description,
                                             default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                             dm_permission: current.directMessages,
-                                            options: (0, snakecase_keys_1.default)(current.options || [])
+                                            options: localeifyOptions(current.options || [], localeData.optionsLocales),
+                                            name_localizations: localeData.nameLocales(2),
+                                            description_localizations: localeData.descriptionLocales
                                         }
                                     ]
                                 });
@@ -105,7 +121,9 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                                     description: current.description,
                                     default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                     dm_permission: current.directMessages,
-                                    options: (0, snakecase_keys_1.default)(current.options || [])
+                                    options: localeifyOptions(current.options || [], localeData.optionsLocales),
+                                    name_localizations: localeData.nameLocales(2),
+                                    description_localizations: localeData.descriptionLocales,
                                 });
                             }
                         }
@@ -115,26 +133,33 @@ async function publishInteractions(clientToken, interactions, publishType, guild
                 break;
             }
             case "MessageContextMenu": {
+                let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                 all.push({
                     type: v9_1.ApplicationCommandType.Message,
                     name: current.name,
                     default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
-                    dm_permission: current.directMessages
+                    dm_permission: current.directMessages,
+                    name_localizations: localeData.allNameLocales,
+                    description_localizations: localeData.descriptionLocales,
                 });
                 break;
             }
             case "UserContextMenu": {
+                let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                 all.push({
                     type: v9_1.ApplicationCommandType.User,
                     name: current.name,
                     default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
-                    dm_permission: current.directMessages
+                    dm_permission: current.directMessages,
+                    name_localizations: localeData.allNameLocales,
+                    description_localizations: localeData.descriptionLocales
                 });
                 break;
             }
         }
         return all;
     }, []);
+    body = (0, snakecase_keys_1.default)(body);
     switch (publishType) {
         case "Global": {
             await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body });
@@ -147,4 +172,52 @@ async function publishInteractions(clientToken, interactions, publishType, guild
     }
 }
 exports.publishInteractions = publishInteractions;
+function localeifyOptions(options, localeData) {
+    return options.map(i => {
+        return localeData[i.name] ? Object.assign(i, {
+            name_localizations: localeData[i.name].nameLocales,
+            description_localizations: localeData[i.name].descriptionLocales,
+        }) : i;
+    });
+}
+exports.localeifyOptions = localeifyOptions;
+function formatLocale(locale) {
+    let allNameLocales = {};
+    let descriptionLocales = {};
+    let optionsLocales = {};
+    function nameLocales(index) {
+        return Object.fromEntries(Object.entries(allNameLocales).map(i => [i[0], i[1].split(" ").at(index)]));
+    }
+    if (!locale?.data)
+        return {
+            nameLocales,
+            allNameLocales,
+            descriptionLocales,
+            optionsLocales
+        };
+    Object.entries(locale.data).forEach(([shortLocale, localeData]) => {
+        let longAliases = ORIGINAL_LOCALES.filter(i => i.split("-").at(0) == shortLocale);
+        longAliases.forEach((longLocale) => {
+            allNameLocales[longLocale] = localeData.name;
+            descriptionLocales[longLocale] = localeData.description;
+            Object.entries(localeData.options || []).forEach(([optionName, optionData]) => {
+                if (!optionsLocales[optionName])
+                    optionsLocales[optionName] = {};
+                if (!optionsLocales[optionName].nameLocales)
+                    optionsLocales[optionName].nameLocales = {};
+                if (!optionsLocales[optionName].descriptionLocales)
+                    optionsLocales[optionName].descriptionLocales = {};
+                optionsLocales[optionName].nameLocales[longLocale] = optionData.name;
+                optionsLocales[optionName].descriptionLocales[longLocale] = optionData.description;
+            });
+        });
+    });
+    return {
+        nameLocales,
+        allNameLocales,
+        descriptionLocales,
+        optionsLocales
+    };
+}
+exports.formatLocale = formatLocale;
 //# sourceMappingURL=publishInteractions.js.map

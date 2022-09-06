@@ -72,7 +72,7 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       let key = `RateLimit["${rateLimitKeyMap[type]}"]`;
       let val = await dbi.config.store.get(key);
       if (val && Date.now() > val.at + val.duration) {
-        await dbi.config.store.del(key);
+        await dbi.config.store.delete(key);
         val = null;
       }
       if (val) {

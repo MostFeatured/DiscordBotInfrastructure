@@ -15,11 +15,13 @@ import { hookEventListeners } from "./methods/hookEventListeners";
 import eventMap from "./data/eventMap.json";
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
+import _ from "lodash";
+import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
   set(key: string, value: any): Promise<void>;
-  del(key: string): Promise<void>;
+  delete(key: string): Promise<void>;
   has(key: string): Promise<boolean>;
 }
 
@@ -35,7 +37,9 @@ export interface DBIConfig {
   };
 
   sharding: boolean;
-
+  /**
+   * Persist store. (Default to MemoryStore thats not persis tho.)
+   */
   store: DBIStore;
 }
 
@@ -50,11 +54,12 @@ export interface DBIRegisterAPI {
   SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
   UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
+  InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
   Modal(cfg: TDBIModalOmitted): DBIModal;
   onUnload(cb: () => Promise<any> | any): any;
 }
 
-export class DBI {
+export class DBI<TOtherData = Record<string, any>> {
   namespace: string;
   config: DBIConfig;
   client: Discord.Client<true>;
@@ -63,7 +68,8 @@ export class DBI {
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale>;
-    other: Record<string, any>;
+    interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
+    other: TOtherData;
     eventMap: Record<string, string[]>;
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
@@ -93,7 +99,8 @@ export class DBI {
       events: new Discord.Collection(),
       plugins: new Discord.Collection(),
       locales: new Discord.Collection(),
-      other: {},
+      interactionLocales: new Discord.Collection(),
+      other: {} as TOtherData,
       eventMap,
       unloaders: new Set(),
       registers: new Set(),
@@ -188,7 +195,6 @@ export class DBI {
       };
       Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
 
-
       let Locale = function(cfg: TDBILocaleConstructor) {
         let dbiLocale = new DBILocale(self, cfg);
         if (self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
@@ -196,6 +202,14 @@ export class DBI {
         return dbiLocale;
       };
       Locale = Object.assign(Locale, class { constructor(...args: any[]) { return Locale.apply(this, args as any); } });
+
+      let InteractionLocale = function(cfg: TDBIInteractionLocaleOmitted) {
+        let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
+        if (self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
+        self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
+        return dbiInteractionLocale;
+      };
+      InteractionLocale = Object.assign(InteractionLocale, class { constructor(...args: any[]) { return InteractionLocale.apply(this, args as any); } });
 
       await cb({
         ChatInput,
@@ -207,11 +221,44 @@ export class DBI {
         MessageContextMenu,
         UserContextMenu,
         Modal,
+        InteractionLocale,
         onUnload(cb: ()=> Promise<any> | any) {
           self.data.registerUnloaders.add(cb);
         },
       });
     }
+  }
+
+  /**
+   * Shorthands for modifying `dbi.data.other`
+   */
+  get<K extends keyof TOtherData>(k: K, defaultValue?: TOtherData[K]): TOtherData[K] {
+    if (this.has(k as any)) {
+      this.set(k, defaultValue);
+      return defaultValue;
+    }
+    return _.get(this.data.other, k);
+  }
+
+  /**
+   * Shorthands for modifying `dbi.data.other`
+   */
+  set<K extends keyof TOtherData>(k: K, v: TOtherData[K]): any {
+    this.data.other = _.set(this.data.other as any, k, v);
+  }
+
+  /**
+   * Shorthands for modifying `dbi.data.other`
+   */
+  has(k: string): boolean {
+    return _.has(this.data.other, k as any);
+  }
+
+  /**
+   * Shorthands for modifying `dbi.data.other`
+   */
+  delete(k: string): boolean {
+    return _.unset(this.data.other, k);
   }
 
   async login(): Promise<any> {
@@ -250,6 +297,7 @@ export class DBI {
         return await publishInteractions(
           this.config.discord.token,
           args[1] ? new Discord.Collection() : interactions,
+          this.data.interactionLocales,
           args[0]
         );
       }
@@ -257,6 +305,7 @@ export class DBI {
         return await publishInteractions(
           this.config.discord.token,
           args[2] ? new Discord.Collection() : interactions,
+          this.data.interactionLocales,
           args[0],
           args[1]
         );

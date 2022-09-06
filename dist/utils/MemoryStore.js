@@ -19,7 +19,7 @@ class MemoryStore {
     async set(key, value) {
         return this.store = lodash_1.default.set(this.store, key, value);
     }
-    async del(key) {
+    async delete(key) {
         return lodash_1.default.unset(this.store, key);
     }
     async has(key) {

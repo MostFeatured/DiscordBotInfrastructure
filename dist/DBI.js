@@ -19,6 +19,8 @@ const hookEventListeners_1 = require("./methods/hookEventListeners");
 const eventMap_json_1 = tslib_1.__importDefault(require("./data/eventMap.json"));
 const Modal_1 = require("./types/Modal");
 const Sharding = tslib_1.__importStar(require("discord-hybrid-sharding"));
+const lodash_1 = tslib_1.__importDefault(require("lodash"));
+const InteractionLocale_1 = require("./types/InteractionLocale");
 class DBI {
     namespace;
     config;
@@ -44,6 +46,7 @@ class DBI {
             events: new discord_js_1.default.Collection(),
             plugins: new discord_js_1.default.Collection(),
             locales: new discord_js_1.default.Collection(),
+            interactionLocales: new discord_js_1.default.Collection(),
             other: {},
             eventMap: eventMap_json_1.default,
             unloaders: new Set(),
@@ -158,6 +161,16 @@ class DBI {
             Locale = Object.assign(Locale, class {
                 constructor(...args) { return Locale.apply(this, args); }
             });
+            let InteractionLocale = function (cfg) {
+                let dbiInteractionLocale = new InteractionLocale_1.DBIInteractionLocale(self, cfg);
+                if (self.data.interactionLocales.has(dbiInteractionLocale.name))
+                    throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
+                self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
+                return dbiInteractionLocale;
+            };
+            InteractionLocale = Object.assign(InteractionLocale, class {
+                constructor(...args) { return InteractionLocale.apply(this, args); }
+            });
             await cb({
                 ChatInput,
                 Event,
@@ -168,11 +181,40 @@ class DBI {
                 MessageContextMenu,
                 UserContextMenu,
                 Modal,
+                InteractionLocale,
                 onUnload(cb) {
                     self.data.registerUnloaders.add(cb);
                 },
             });
         }
+    }
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    get(k, defaultValue) {
+        if (this.has(k)) {
+            this.set(k, defaultValue);
+            return defaultValue;
+        }
+        return lodash_1.default.get(this.data.other, k);
+    }
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    set(k, v) {
+        this.data.other = lodash_1.default.set(this.data.other, k, v);
+    }
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    has(k) {
+        return lodash_1.default.has(this.data.other, k);
+    }
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    delete(k) {
+        return lodash_1.default.unset(this.data.other, k);
     }
     async login() {
         await this.client.login(this.config.discord.token);
@@ -201,10 +243,10 @@ class DBI {
         let interactions = this.data.interactions.filter(i => i.type == "ChatInput" || i.type == "MessageContextMenu" || i.type == "UserContextMenu");
         switch (args[0]) {
             case "Global": {
-                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[1] ? new discord_js_1.default.Collection() : interactions, args[0]);
+                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[1] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0]);
             }
             case "Guild": {
-                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[2] ? new discord_js_1.default.Collection() : interactions, args[0], args[1]);
+                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[2] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0], args[1]);
             }
         }
     }

@@ -3,7 +3,7 @@ export declare class MemoryStore {
     constructor();
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<any>;
-    del(key: string): Promise<boolean>;
+    delete(key: string): Promise<boolean>;
     has(key: string): Promise<boolean>;
 }
 //# sourceMappingURL=MemoryStore.d.ts.map

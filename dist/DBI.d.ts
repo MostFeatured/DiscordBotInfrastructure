@@ -10,10 +10,11 @@ import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/Me
 import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
+import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 export interface DBIStore {
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<void>;
-    del(key: string): Promise<void>;
+    delete(key: string): Promise<void>;
     has(key: string): Promise<boolean>;
 }
 export interface DBIConfig {
@@ -27,6 +28,9 @@ export interface DBIConfig {
         defaultMemberPermissions: Discord.PermissionsString[];
     };
     sharding: boolean;
+    /**
+     * Persist store. (Default to MemoryStore thats not persis tho.)
+     */
     store: DBIStore;
 }
 export declare type TDBIConfigConstructor = Partial<DBIConfig>;
@@ -39,10 +43,11 @@ export interface DBIRegisterAPI {
     SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
     MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
     UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
+    InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
     Modal(cfg: TDBIModalOmitted): DBIModal;
     onUnload(cb: () => Promise<any> | any): any;
 }
-export declare class DBI {
+export declare class DBI<TOtherData = Record<string, any>> {
     namespace: string;
     config: DBIConfig;
     client: Discord.Client<true>;
@@ -51,7 +56,8 @@ export declare class DBI {
         events: Discord.Collection<string, DBIEvent>;
         plugins: Discord.Collection<string, any>;
         locales: Discord.Collection<string, DBILocale>;
-        other: Record<string, any>;
+        interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
+        other: TOtherData;
         eventMap: Record<string, string[]>;
         unloaders: Set<() => void>;
         registers: Set<(...args: any[]) => any>;
@@ -68,6 +74,22 @@ export declare class DBI {
     private _hookListeners;
     private _unregisterAll;
     private _registerAll;
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    get<K extends keyof TOtherData>(k: K, defaultValue?: TOtherData[K]): TOtherData[K];
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    set<K extends keyof TOtherData>(k: K, v: TOtherData[K]): any;
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    has(k: string): boolean;
+    /**
+     * Shorthands for modifying `dbi.data.other`
+     */
+    delete(k: string): boolean;
     login(): Promise<any>;
     register(cb: (api: DBIRegisterAPI) => void): Promise<any>;
     load(): Promise<boolean>;

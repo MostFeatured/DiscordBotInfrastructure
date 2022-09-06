@@ -18,7 +18,7 @@ export class MemoryStore {
     return this.store = _.set(this.store, key, value);
   }
 
-  async del(key: string): Promise<boolean> {
+  async delete(key: string): Promise<boolean> {
     return _.unset(this.store, key);
   }
 
