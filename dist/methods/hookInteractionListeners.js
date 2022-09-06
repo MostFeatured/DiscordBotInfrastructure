@@ -17,7 +17,7 @@ function hookInteractionListeners(dbi) {
                 ||
                     ((i.type == "Button" || i.type == "SelectMenu" || i.type == "Modal")
                         && isUsesCustomId
-                        && parsedId.name == i.name));
+                        && parsedId?.name == i.name));
         });
         if (!dbiInter)
             return;
@@ -35,7 +35,7 @@ function hookInteractionListeners(dbi) {
             return;
         }
         let userLocaleName = inter.locale.split("-")[0];
-        let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
+        let userLocale = userLocaleName ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
         let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
         let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale)) : null;
         let locale = {
@@ -51,7 +51,8 @@ function hookInteractionListeners(dbi) {
             "Message": `${inter?.message?.id}`
         };
         for (const type in rateLimitKeyMap) {
-            let key = `RateLimit:${rateLimitKeyMap[type]}`;
+            // @ts-ignore
+            let key = `RateLimit["${rateLimitKeyMap[type]}"]`;
             let val = await dbi.config.store.get(key);
             if (val && Date.now() > val.at + val.duration) {
                 await dbi.config.store.del(key);
@@ -72,7 +73,8 @@ function hookInteractionListeners(dbi) {
             }
         }
         async function setRateLimit(type, duration) {
-            await dbi.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
+            // @ts-ignore
+            await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
         }
         let other = {};
         if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other })))
@@ -81,8 +83,10 @@ function hookInteractionListeners(dbi) {
             dbi,
             // @ts-ignore
             interaction: inter,
+            // @ts-ignore
             locale,
             setRateLimit,
+            // @ts-ignore
             data,
             other
         });

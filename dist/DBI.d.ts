@@ -10,24 +10,26 @@ import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/Me
 import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
+export interface DBIStore {
+    get(key: string, defaultValue?: any): Promise<any>;
+    set(key: string, value: any): Promise<void>;
+    del(key: string): Promise<void>;
+    has(key: string): Promise<boolean>;
+}
 export interface DBIConfig {
     discord: {
         token: string;
-        options?: Discord.ClientOptions;
+        options: Discord.ClientOptions;
     };
-    defaults?: {
-        locale?: TDBILocaleString;
-        directMessages?: boolean;
-        defaultMemberPermissions?: Discord.PermissionsString[];
+    defaults: {
+        locale: TDBILocaleString;
+        directMessages: boolean;
+        defaultMemberPermissions: Discord.PermissionsString[];
     };
-    sharding?: boolean;
-    store?: {
-        get(key: string, defaultValue?: any): Promise<any>;
-        set(key: string, value: any): Promise<void>;
-        del(key: string): Promise<void>;
-        has(key: string): Promise<boolean>;
-    };
+    sharding: boolean;
+    store: DBIStore;
 }
+export declare type TDBIConfigConstructor = Partial<DBIConfig>;
 export interface DBIRegisterAPI {
     ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
     ChatInputOptions: typeof DBIChatInputOptions;
@@ -38,7 +40,7 @@ export interface DBIRegisterAPI {
     MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
     UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
     Modal(cfg: TDBIModalOmitted): DBIModal;
-    onUnload(cb: () => Promise<any>): any;
+    onUnload(cb: () => Promise<any> | any): any;
 }
 export declare class DBI {
     namespace: string;
@@ -62,7 +64,7 @@ export declare class DBI {
     events: Events;
     cluster?: Sharding.Client;
     private _loaded;
-    constructor(namespace: string, config: DBIConfig);
+    constructor(namespace: string, config: TDBIConfigConstructor);
     private _hookListeners;
     private _unregisterAll;
     private _registerAll;

@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DBILocale = void 0;
+exports.convertLang = exports.DBILocale = void 0;
 const tslib_1 = require("tslib");
+// @ts-ignore
 const stuffs = tslib_1.__importStar(require("stuffs"));
 class DBILocale {
     name;
@@ -12,11 +13,11 @@ class DBILocale {
         this.dbi = dbi;
         this.name = cfg.name;
         this._data = cfg.data;
-        this.data = convert(cfg.data);
+        this.data = convertLang(cfg.data);
     }
 }
 exports.DBILocale = DBILocale;
-function convert(data) {
+function convertLang(data) {
     return Object.fromEntries(Object.entries(data).map(([key, value]) => {
         if (typeof value === "string") {
             return [key, (...args) => {
@@ -24,8 +25,9 @@ function convert(data) {
                 }];
         }
         else {
-            return [key, convert(value)];
+            return [key, convertLang(value)];
         }
     }));
 }
+exports.convertLang = convertLang;
 //# sourceMappingURL=Locale.js.map

@@ -11,6 +11,11 @@ export interface IDBIBaseExecuteCtx {
     setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
     other: Record<string, any>;
 }
+export declare type TDBIReferencedData = ({
+    [key: string]: any;
+    $ref: string;
+    $unRef(): boolean;
+} | string | number);
 export declare type TDBIInteractionTypes = "ChatInput" | "UserContextMenu" | "MessageContextMenu" | "Modal" | "Autocomplete" | "SelectMenu" | "Button";
 export declare type TDBIRateLimitTypes = "User" | "Channel" | "Guild" | "Member" | "Message";
 export declare type DBIRateLimit = {
