@@ -1,11 +1,11 @@
 import Discord from "discord.js";
 import { DBI } from "../DBI";
-import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "./Interaction";
+import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import { customIdBuilder } from "../utils/customId";
 
 export interface IDBISelectMenuExecuteCtx extends IDBIBaseExecuteCtx {
   interaction: Discord.ButtonInteraction<Discord.CacheType>;
-  data: (string | number | { [key: string]: any, $ref: string, $unRef(): boolean })[];
+  data: TDBIReferencedData[];
 }
 
 export type TDBISelectMenuOmitted = Omit<DBIBaseInteraction, "type" | "description" | "dbi" | "toJSON">;

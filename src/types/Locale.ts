@@ -1,3 +1,4 @@
+// @ts-ignore
 import * as stuffs from "stuffs";
 import { DBI } from "../DBI";
 
@@ -11,7 +12,7 @@ export interface LangConstructorObject {
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor = Omit<DBILocale & { data: LangConstructorObject }, "dbi">;
+export type TDBILocaleConstructor = Omit<DBILocale, "data" | "dbi"> & { data: LangConstructorObject };
 
 export class DBILocale {
   name: TDBILocaleString;
@@ -22,18 +23,18 @@ export class DBILocale {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convert(cfg.data);
+    this.data = convertLang(cfg.data);
   }
 }
 
-function convert(data) {
+export function convertLang(data: LangConstructorObject): LangObject {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
-      return [key, (...args) => {
+      return [key, (...args: any[]) => {
         return stuffs.mapReplace(value, Object.fromEntries(args.map((t, i) => [`{${i}}`, t])))
       }]
     } else {
-      return [key, convert(value)];
+      return [key, convertLang(value)];
     }
   }))
 }

@@ -1,12 +1,12 @@
 import { DBI } from "../DBI";
-import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "./Interaction";
+import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import Discord from "discord.js";
 import { customIdBuilder } from "../utils/customId";
 
 export interface IDBIModalExecuteCtx extends IDBIBaseExecuteCtx {
   interaction: Discord.ModalSubmitInteraction<Discord.CacheType>;
 
-  data: ({ [key: string]: any, $ref: string, $unRef(): boolean } | string | number)[];
+  data: TDBIReferencedData[];
 }
 
 export type TDBIModalOmitted = Omit<DBIModal, "type" | "description" | "dbi" | "toJSON">;

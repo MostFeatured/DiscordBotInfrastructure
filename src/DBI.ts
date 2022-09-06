@@ -16,26 +16,30 @@ import eventMap from "./data/eventMap.json";
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
 
+export interface DBIStore {
+  get(key: string, defaultValue?: any): Promise<any>;
+  set(key: string, value: any): Promise<void>;
+  del(key: string): Promise<void>;
+  has(key: string): Promise<boolean>;
+}
+
 export interface DBIConfig {
   discord: {
     token: string;
-    options?: Discord.ClientOptions
+    options: Discord.ClientOptions
   }
-  defaults?: {
-    locale?: TDBILocaleString,
-    directMessages?: boolean,
-    defaultMemberPermissions?: Discord.PermissionsString[]
+  defaults: {
+    locale: TDBILocaleString,
+    directMessages: boolean,
+    defaultMemberPermissions: Discord.PermissionsString[]
   };
 
-  sharding?: boolean;
+  sharding: boolean;
 
-  store?: {
-    get(key: string, defaultValue?: any): Promise<any>;
-    set(key: string, value: any): Promise<void>;
-    del(key: string): Promise<void>;
-    has(key: string): Promise<boolean>;
-  }
+  store: DBIStore;
 }
+
+export type TDBIConfigConstructor = Partial<DBIConfig>;
 
 export interface DBIRegisterAPI {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
@@ -47,7 +51,7 @@ export interface DBIRegisterAPI {
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
   UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
   Modal(cfg: TDBIModalOmitted): DBIModal;
-  onUnload(cb: ()=>Promise<any>);
+  onUnload(cb: () => Promise<any> | any): any;
 }
 
 export class DBI {
@@ -69,7 +73,7 @@ export class DBI {
   events: Events;
   cluster?: Sharding.Client;
   private _loaded: boolean;
-  constructor(namespace: string, config: DBIConfig) {
+  constructor(namespace: string, config: TDBIConfigConstructor) {
     this.namespace = namespace;
 
     config.store = config.store as any || new MemoryStore();
@@ -79,7 +83,9 @@ export class DBI {
       directMessages: false,
       ...(config.defaults || {})
     };
+    config.sharding = config.sharding ?? false;
 
+    // @ts-ignore
     this.config = config;
 
     this.data = {
@@ -103,7 +109,7 @@ export class DBI {
         shardCount: (Sharding as any).data.TOTAL_SHARDS
       } : {})
     });
-    this.cluster = config.sharding ? new Sharding.Client(this.client) : null;
+    this.cluster = config.sharding ? new Sharding.Client(this.client) : undefined;
     this._hookListeners();
     this._loaded = false;
   }
@@ -128,11 +134,11 @@ export class DBI {
     for await (const cb of this.data.registers) {
       let ChatInput = function(cfg: DBIChatInput) {
         let dbiChatInput = new DBIChatInput(self, cfg);
-        if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name).type}"!`);
+        if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type}"!`);
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
       };
-      ChatInput = Object.assign(ChatInput, class { constructor(...args) { return ChatInput.call(this, ...args); } });
+      ChatInput = Object.assign(ChatInput, class { constructor(...args: any[]) { return ChatInput.apply(this, args as any); } });
 
       let Event = function(cfg: TDBIEventOmitted) {
         let dbiEvent = new DBIEvent(self, cfg);
@@ -140,47 +146,47 @@ export class DBI {
         self.data.events.set(dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
-      Event = Object.assign(Event, class { constructor(...args) { return Event.call(this, ...args); } });
+      Event = Object.assign(Event, class { constructor(...args: any[]) { return Event.apply(this, args as any); } });
 
       let Button = function(cfg: TDBIButtonOmitted) {
         let dbiButton = new DBIButton(self, cfg);
-        if (self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name).type}"!`);
+        if (self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
         self.data.interactions.set(dbiButton.name, dbiButton);
         return dbiButton;
       };
-      Button = Object.assign(Button, class { constructor(...args) { return Button.call(this, ...args); } });
+      Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
 
       let SelectMenu = function(cfg: TDBISelectMenuOmitted) {
         let dbiSelectMenu = new DBISelectMenu(self, cfg);
-        if (self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name).type}"!`);
+        if (self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
         self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
         return dbiSelectMenu;
       };
-      SelectMenu = Object.assign(SelectMenu, class { constructor(...args) { return SelectMenu.call(this, ...args); } });
+      SelectMenu = Object.assign(SelectMenu, class { constructor(...args: any[]) { return SelectMenu.apply(this, args as any); } });
 
       let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self, cfg);
-        if (self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name).type}"!`);
+        if (self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
         return dbiMessageContextMenu;
       };
-      MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args) { return MessageContextMenu.call(this, ...args); } });
+      MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args: any[]) { return MessageContextMenu.apply(this, args as any); } });
 
       let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted) {
         let dbiUserContextMenu = new DBIUserContextMenu(self, cfg);
-        if (self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name).type}"!`);
+        if (self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
         return dbiUserContextMenu;
       };
-      UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args) { return UserContextMenu.call(this, ...args); } });
+      UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args: any[]) { return UserContextMenu.apply(this, args as any); } });
 
       let Modal = function(cfg: TDBIModalOmitted) {
         let dbiModal = new DBIModal(self, cfg);
-        if (self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name).type}"!`);
+        if (self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
         self.data.interactions.set(dbiModal.name, dbiModal);
         return dbiModal;
       };
-      Modal = Object.assign(Modal, class { constructor(...args) { return Modal.call(this, ...args); } });
+      Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
 
 
       let Locale = function(cfg: TDBILocaleConstructor) {
@@ -189,7 +195,7 @@ export class DBI {
         self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };
-      Locale = Object.assign(Locale, class { constructor(...args) { return Locale.call(this, ...args); } });
+      Locale = Object.assign(Locale, class { constructor(...args: any[]) { return Locale.apply(this, args as any); } });
 
       await cb({
         ChatInput,
@@ -201,7 +207,7 @@ export class DBI {
         MessageContextMenu,
         UserContextMenu,
         Modal,
-        onUnload(cb) {
+        onUnload(cb: ()=> Promise<any> | any) {
           self.data.registerUnloaders.add(cb);
         },
       });
@@ -237,7 +243,7 @@ export class DBI {
   async publish(type: "Global", clear?: boolean): Promise<any>;
   async publish(type: "Guild", guildId: string, clear?: boolean): Promise<any>;
 
-  async publish(...args) {
+  async publish(...args: any[]) {
     let interactions = this.data.interactions.filter(i => i.type == "ChatInput" || i.type == "MessageContextMenu" || i.type == "UserContextMenu") as any;
     switch (args[0]) {
       case "Global": {

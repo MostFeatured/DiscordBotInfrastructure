@@ -25,7 +25,7 @@ export function hookInteractionListeners(dbi: DBI): () => any {
           (
             (i.type == "Button" || i.type == "SelectMenu" || i.type == "Modal")
             && isUsesCustomId
-            && parsedId.name == i.name
+            && parsedId?.name == i.name
           )
         )
       });
@@ -47,7 +47,7 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     }
 
     let userLocaleName = inter.locale.split("-")[0];
-    let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
+    let userLocale = userLocaleName ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
 
     let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
     let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale)) : null;
@@ -68,7 +68,8 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     }
 
     for (const type in rateLimitKeyMap) {
-      let key = `RateLimit:${rateLimitKeyMap[type]}`;
+      // @ts-ignore
+      let key = `RateLimit["${rateLimitKeyMap[type]}"]`;
       let val = await dbi.config.store.get(key);
       if (val && Date.now() > val.at + val.duration) {
         await dbi.config.store.del(key);
@@ -90,7 +91,8 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     }
 
     async function setRateLimit(type: string, duration: number) {
-      await dbi.config.store.set(`RateLimit:${rateLimitKeyMap[type]}`, { at: Date.now(), duration });
+      // @ts-ignore
+      await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
     }
 
     let other = {};
@@ -101,8 +103,10 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       dbi,
       // @ts-ignore
       interaction: inter as any,
+      // @ts-ignore
       locale,
       setRateLimit,
+      // @ts-ignore
       data,
       other
     });

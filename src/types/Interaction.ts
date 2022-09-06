@@ -20,6 +20,8 @@ export interface IDBIBaseExecuteCtx {
   other: Record<string, any>;
 }
 
+export type TDBIReferencedData = ({ [key: string]: any, $ref: string, $unRef(): boolean } | string | number);
+
 export type TDBIInteractionTypes =
   | "ChatInput"
   | "UserContextMenu"
