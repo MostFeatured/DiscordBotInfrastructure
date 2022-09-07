@@ -249,7 +249,7 @@ export class DBI<TOtherData = Record<string, any>> {
    * Shorthands for modifying `dbi.data.other`
    */
   get<K extends keyof TOtherData>(k: K, defaultValue?: TOtherData[K]): TOtherData[K] {
-    if (this.has(k as any)) {
+    if (defaultValue && !this.has(k as any)) {
       this.set(k, defaultValue);
       return defaultValue;
     }

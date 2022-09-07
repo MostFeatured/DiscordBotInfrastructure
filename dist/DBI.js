@@ -192,7 +192,7 @@ class DBI {
      * Shorthands for modifying `dbi.data.other`
      */
     get(k, defaultValue) {
-        if (this.has(k)) {
+        if (defaultValue && !this.has(k)) {
             this.set(k, defaultValue);
             return defaultValue;
         }
