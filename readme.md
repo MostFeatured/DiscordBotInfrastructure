@@ -17,7 +17,7 @@ Neyse, açacağamız dosyalar ve klasörler şunlar; `dbi.js`, `login.js`, `publ
 
 
 İkinci olarak `login.js` dosyamı açıyorum ve içerisine botu açmak için kullanacağım kod gurubunu yazıyorum.
-![2](https://i.imgur.com/1XNBIcx.png)
+![2](https://i.imgur.com/Kn9ELps.png)
 
 İçeriye `recursiveImport()` fonksiyonunu alıyorum. Bu fonksiyon ile sonsuz bir şekilde `x` klasöründeki bütün dosyaları `import`/`require` edebiliyoruz, bu sayede altyapı bu dosyalardan haberdar oluyor.
 Ana `dbi.js` dosyamdan altyapıma ulaşıyorum. Ve `async` bir ortam oluşturup ilk önce tüm proje dosylarını altyapıya tanımlıyorum. Tanımlamanın ardından tanımladığım tüm özellikleri altyapıya `load()` fonksiyonunu ile yüklüyorum. Hemen ardından `login()` fonksiyonu ile Discord'a giriş sağlıyorum.
