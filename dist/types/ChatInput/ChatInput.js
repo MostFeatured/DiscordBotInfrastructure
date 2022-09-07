@@ -10,6 +10,8 @@ class DBIChatInput extends Interaction_1.DBIBaseInteraction {
             name: cfg.name.toLowerCase(),
             options: Array.isArray(cfg.options) ? cfg.options : []
         });
+        this.directMessages = cfg.directMessages ?? dbi.config.defaults.directMessages;
+        this.defaultMemberPermissions = cfg.defaultMemberPermissions ?? dbi.config.defaults.defaultMemberPermissions;
     }
     directMessages;
     defaultMemberPermissions;

@@ -16,6 +16,9 @@ export class DBIChatInput extends DBIBaseInteraction {
       name: cfg.name.toLowerCase(),
       options: Array.isArray(cfg.options) ? cfg.options : []
     });
+
+    this.directMessages = cfg.directMessages ?? dbi.config.defaults.directMessages;
+    this.defaultMemberPermissions = cfg.defaultMemberPermissions ?? dbi.config.defaults.defaultMemberPermissions;
   }
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];

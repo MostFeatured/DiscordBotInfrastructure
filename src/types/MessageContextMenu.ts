@@ -15,6 +15,9 @@ export class DBIMessageContextMenu extends DBIBaseInteraction {
       ...(cfg as any),
       type: "MessageContextMenu"
     });
+
+    this.directMessages = cfg.directMessages ?? dbi.config.defaults.directMessages;
+    this.defaultMemberPermissions = cfg.defaultMemberPermissions ?? dbi.config.defaults.defaultMemberPermissions;
   }
 
   directMessages?: boolean;

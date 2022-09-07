@@ -14,6 +14,9 @@ export class DBIUserContextMenu extends DBIBaseInteraction {
       ...(cfg as any),
       type: "UserContextMenu"
     });
+
+    this.directMessages = cfg.directMessages ?? dbi.config.defaults.directMessages;
+    this.defaultMemberPermissions = cfg.defaultMemberPermissions ?? dbi.config.defaults.defaultMemberPermissions;
   }
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];

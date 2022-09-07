@@ -8,6 +8,8 @@ class DBIUserContextMenu extends Interaction_1.DBIBaseInteraction {
             ...cfg,
             type: "UserContextMenu"
         });
+        this.directMessages = cfg.directMessages ?? dbi.config.defaults.directMessages;
+        this.defaultMemberPermissions = cfg.defaultMemberPermissions ?? dbi.config.defaults.defaultMemberPermissions;
     }
     directMessages;
     defaultMemberPermissions;

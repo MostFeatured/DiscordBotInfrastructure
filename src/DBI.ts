@@ -43,7 +43,23 @@ export interface DBIConfig {
   store: DBIStore;
 }
 
-export type TDBIConfigConstructor = Partial<DBIConfig>;
+export interface DBIConfigConstructor {
+  discord: {
+    token: string;
+    options: Discord.ClientOptions
+  }
+  defaults?: {
+    locale?: TDBILocaleString,
+    directMessages?: boolean,
+    defaultMemberPermissions?: Discord.PermissionsString[]
+  };
+
+  sharding?: boolean;
+  /**
+   * Persist store. (Default to MemoryStore thats not persis tho.)
+   */
+  store?: DBIStore;
+}
 
 export interface DBIRegisterAPI {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
@@ -79,7 +95,7 @@ export class DBI<TOtherData = Record<string, any>> {
   events: Events;
   cluster?: Sharding.Client;
   private _loaded: boolean;
-  constructor(namespace: string, config: TDBIConfigConstructor) {
+  constructor(namespace: string, config: DBIConfigConstructor) {
     this.namespace = namespace;
 
     config.store = config.store as any || new MemoryStore();
