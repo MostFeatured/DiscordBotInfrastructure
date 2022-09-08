@@ -54,12 +54,12 @@ export declare class DBIChatInputOptions {
         required: boolean;
     };
     static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & {
-        onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]>;
+        onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]>;
     }): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
         autocomplete: boolean;
-        onComplete: (ctx: IDBICompleteCtx<number>) => Promise<TValueName<number>[]>;
+        onComplete: (ctx: IDBICompleteCtx<string>) => Promise<TValueName<number>[]>;
         description: string;
         maxValue: number;
         minValue: number;
@@ -85,12 +85,12 @@ export declare class DBIChatInputOptions {
         required: boolean;
     };
     static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & {
-        onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]>;
+        onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]>;
     }): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
         autocomplete: boolean;
-        onComplete: (ctx: IDBICompleteCtx<number>) => Promise<TValueName<number>[]>;
+        onComplete: (ctx: IDBICompleteCtx<string>) => Promise<TValueName<number>[]>;
         description: string;
         maxValue: number;
         minValue: number;

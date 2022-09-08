@@ -48,7 +48,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]> }) {
+  static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -84,7 +84,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]> }) {
+  static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,
