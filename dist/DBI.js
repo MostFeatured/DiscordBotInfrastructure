@@ -93,9 +93,9 @@ class DBI {
             });
             let Event = function (cfg) {
                 let dbiEvent = new Event_1.DBIEvent(self, cfg);
-                if (self.data.events.has(dbiEvent.name))
-                    throw new Error(`DBIEvent "${dbiEvent.name}" already loaded!`);
-                self.data.events.set(dbiEvent.name, dbiEvent);
+                if (self.data.events.has(dbiEvent.id || dbiEvent.name))
+                    throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
+                self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
                 return dbiEvent;
             };
             Event = Object.assign(Event, class {

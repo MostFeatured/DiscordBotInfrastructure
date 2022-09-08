@@ -165,8 +165,8 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let Event = function(cfg: TDBIEventOmitted) {
         let dbiEvent = new DBIEvent(self, cfg);
-        if (self.data.events.has(dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.name}" already loaded!`);
-        self.data.events.set(dbiEvent.name, dbiEvent);
+        if (self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
+        self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
       Event = Object.assign(Event, class { constructor(...args: any[]) { return Event.apply(this, args as any); } });
