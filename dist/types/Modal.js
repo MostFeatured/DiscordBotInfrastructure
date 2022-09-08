@@ -14,7 +14,7 @@ class DBIModal extends Interaction_1.DBIBaseInteraction {
     ;
     toJSON(...customData) {
         return {
-            ...this.options,
+            ...(typeof this.options == "function" ? this.options(customData) : this.options),
             customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, customData)
         };
     }

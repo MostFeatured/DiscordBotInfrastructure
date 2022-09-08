@@ -19,13 +19,13 @@ export class DBIModal extends DBIBaseInteraction {
     })
   }
 
-  declare options: Omit<Discord.ModalComponentData, "customId">;
+  declare options: Omit<Discord.ModalComponentData, "customId"> | ((data: (number | string | any)[]) => Omit<Discord.ModalComponentData, "customId">);
 
   override onExecute(ctx: IDBIModalExecuteCtx): Promise<any> | any { };
 
   toJSON(...customData: (string | number | object)[]): Discord.ModalComponentData {
     return {
-      ...this.options,
+      ...(typeof this.options == "function" ? this.options(customData) : this.options),
       customId: customIdBuilder(this.dbi, this.name, customData)
     } as any;
   };

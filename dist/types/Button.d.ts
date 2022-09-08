@@ -8,7 +8,7 @@ export interface IDBIButtonExecuteCtx extends IDBIBaseExecuteCtx {
 export declare type TDBIButtonOmitted = Omit<DBIButton, "type" | "description" | "dbi" | "toJSON">;
 export declare class DBIButton extends DBIBaseInteraction {
     constructor(dbi: DBI, args: TDBIButtonOmitted);
-    options: Omit<Discord.ButtonComponentData, "customId" | "type">;
+    options?: Omit<Discord.ButtonComponentData, "customId" | "type"> | ((data: (number | string | any)[]) => Omit<Discord.ButtonComponentData, "customId" | "type">);
     onExecute(ctx: IDBIButtonExecuteCtx): Promise<any> | any;
     toJSON(...customData: (string | number | object)[]): Discord.ButtonComponentData;
 }

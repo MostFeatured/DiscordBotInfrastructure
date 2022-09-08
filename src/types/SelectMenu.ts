@@ -18,13 +18,13 @@ export class DBISelectMenu extends DBIBaseInteraction {
     });
   }
 
-  declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
+  declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type"> | ((data: (number | string | any)[]) => Omit<Discord.SelectMenuComponentData, "customId" | "type">);
 
   override onExecute(ctx: IDBISelectMenuExecuteCtx): Promise<any> | any { };
 
   toJSON(...customData: (string | number | object)[]): Discord.SelectMenuComponentData {
     return {
-      ...this.options,
+      ...(typeof this.options == "function" ? this.options(customData) : this.options),
       customId: customIdBuilder(this.dbi, this.name, customData),
       type: Discord.ComponentType.SelectMenu
     } as any

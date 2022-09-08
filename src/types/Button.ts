@@ -18,13 +18,13 @@ export class DBIButton extends DBIBaseInteraction {
     });
   }
 
-  declare options: Omit<Discord.ButtonComponentData, "customId" | "type">;
+  declare options?: Omit<Discord.ButtonComponentData, "customId" | "type"> | ((data: (number | string | any)[]) => Omit<Discord.ButtonComponentData, "customId" | "type">);
 
   override onExecute(ctx: IDBIButtonExecuteCtx): Promise<any> | any { };
 
   toJSON(...customData: (string | number | object)[]): Discord.ButtonComponentData {
     return {
-      ...this.options,
+      ...(typeof this.options == "function" ? this.options(customData) : this.options),
       customId: customIdBuilder(this.dbi, this.name, customData),
       type: Discord.ComponentType.Button
     } as any;
