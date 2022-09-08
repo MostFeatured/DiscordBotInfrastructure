@@ -13,6 +13,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
     const rest = new rest_1.REST({ version: "9" });
     rest.setToken(clientToken);
     const me = await rest.get(v9_1.Routes.user());
+    interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);
     let body = interactions.reduce((all, current) => {
         switch (current.type) {
             case "ChatInput": {
@@ -33,7 +34,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                         break;
                     }
                     case 2: {
-                        let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+                        let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
                         let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         let option = {
                             type: v9_1.ApplicationCommandOptionType.Subcommand,
@@ -62,7 +63,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                         break;
                     }
                     case 3: {
-                        let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+                        let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
                         let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         if (!level1Item) {
                             all.push({
@@ -93,7 +94,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                             });
                         }
                         else {
-                            let level2Item = level1Item.options.find(i => i.name == current.name.split(" ")[1] && i.type == "ChatInput");
+                            let level2Item = level1Item.options.find(i => i.name == current.name.split(" ")[1]);
                             if (!level2Item) {
                                 level1Item.options.push({
                                     type: v9_1.ApplicationCommandOptionType.SubcommandGroup,

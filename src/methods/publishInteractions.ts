@@ -23,7 +23,8 @@ export async function publishInteractions(
   rest.setToken(clientToken);
 
   const me: RESTGetAPIUserResult = await rest.get(Routes.user()) as any;
-  
+  interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);
+
   let body: RESTPutAPIApplicationCommandsJSONBody =
     interactions.reduce((all, current) => {
       switch (current.type) {
@@ -45,7 +46,7 @@ export async function publishInteractions(
               break;
             }
             case 2: {
-              let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+              let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               let option = {
                 type: ApplicationCommandOptionType.Subcommand,
@@ -73,7 +74,7 @@ export async function publishInteractions(
               break;
             }
             case 3: {
-              let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == "ChatInput");
+              let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               if (!level1Item) {
                 all.push({
@@ -103,7 +104,7 @@ export async function publishInteractions(
                   ]
                 });
               } else {
-                let level2Item = level1Item.options.find(i => i.name == current.name.split(" ")[1] && i.type == "ChatInput");
+                let level2Item = level1Item.options.find(i => i.name == current.name.split(" ")[1]);
                 if (!level2Item) {
                   level1Item.options.push({
                     type: ApplicationCommandOptionType.SubcommandGroup,

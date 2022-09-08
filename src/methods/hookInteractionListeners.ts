@@ -31,20 +31,6 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       });
     
     if (!dbiInter) return;
-    
-    if (inter.isAutocomplete()) {
-      let focussed = inter.options.getFocused(true);
-      let option = (dbiInter.options as any[]).find(i => i.name == focussed.name);
-      if (option?.onComplete) {
-        let response = await option.onComplete({
-          value: focussed.value,
-          interaction: inter,
-          dbi
-        });
-        await inter.respond(response);
-      }
-      return;
-    }
 
     let userLocaleName = inter.locale.split("-")[0];
     let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
@@ -58,6 +44,27 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     };
 
     let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
+
+    let other = {};
+
+    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other }))) return;
+    
+    if (inter.isAutocomplete()) {
+      let focussed = inter.options.getFocused(true);
+      let option = (dbiInter.options as any[]).find(i => i.name == focussed.name);
+      if (option?.onComplete) {
+        let response = await option.onComplete({
+          value: focussed.value,
+          interaction: inter,
+          dbi,
+          data,
+          other,
+          locale
+        });
+        await inter.respond(response);
+      }
+      return;
+    }
 
     let rateLimitKeyMap = {
       "User": `${dbiInter.name}_${inter.user.id}`,
@@ -94,10 +101,6 @@ export function hookInteractionListeners(dbi: DBI): () => any {
       // @ts-ignore
       await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
     }
-
-    let other = {};
-
-    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other }))) return;
 
     await dbiInter.onExecute({
       dbi,

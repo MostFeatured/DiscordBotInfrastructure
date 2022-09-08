@@ -21,19 +21,6 @@ function hookInteractionListeners(dbi) {
         });
         if (!dbiInter)
             return;
-        if (inter.isAutocomplete()) {
-            let focussed = inter.options.getFocused(true);
-            let option = dbiInter.options.find(i => i.name == focussed.name);
-            if (option?.onComplete) {
-                let response = await option.onComplete({
-                    value: focussed.value,
-                    interaction: inter,
-                    dbi
-                });
-                await inter.respond(response);
-            }
-            return;
-        }
         let userLocaleName = inter.locale.split("-")[0];
         let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
         let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
@@ -43,6 +30,25 @@ function hookInteractionListeners(dbi) {
             guild: guildLocale
         };
         let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
+        let other = {};
+        if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other })))
+            return;
+        if (inter.isAutocomplete()) {
+            let focussed = inter.options.getFocused(true);
+            let option = dbiInter.options.find(i => i.name == focussed.name);
+            if (option?.onComplete) {
+                let response = await option.onComplete({
+                    value: focussed.value,
+                    interaction: inter,
+                    dbi,
+                    data,
+                    other,
+                    locale
+                });
+                await inter.respond(response);
+            }
+            return;
+        }
         let rateLimitKeyMap = {
             "User": `${dbiInter.name}_${inter.user.id}`,
             "Channel": `${dbiInter.name}_${inter.channelId || "Channel"}`,
@@ -76,9 +82,6 @@ function hookInteractionListeners(dbi) {
             // @ts-ignore
             await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
         }
-        let other = {};
-        if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other })))
-            return;
         await dbiInter.onExecute({
             dbi,
             // @ts-ignore
