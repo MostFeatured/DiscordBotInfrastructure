@@ -7,13 +7,13 @@ type TNameDescription = { name: string, description: string, required?: boolean 
 type TMinMaxLength = { maxLength?: number, minLength?: number };
 type TMinMaxValue = { maxValue?: number, minValue?: number };
 
-export interface IDBICompleteCtx extends IDBIBaseExecuteCtx {
+export interface IDBICompleteCtx<TValueType = string | number> extends IDBIBaseExecuteCtx {
   interaction: Discord.AutocompleteInteraction;
-  value: string | number;
+  value: TValueType;
 }
 
 export class DBIChatInputOptions {
-  static stringAutocomplete(cfg: TNameDescription & TMinMaxLength & { onComplete(ctx: IDBICompleteCtx): Promise<TValueName<string>[]> }) {
+  static stringAutocomplete(cfg: TNameDescription & TMinMaxLength & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<string>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -48,7 +48,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx): Promise<TValueName<number>[]> }) {
+  static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -84,7 +84,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx): Promise<TValueName<number>[]> }) {
+  static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,

@@ -17,18 +17,18 @@ declare type TMinMaxValue = {
     maxValue?: number;
     minValue?: number;
 };
-export interface IDBICompleteCtx extends IDBIBaseExecuteCtx {
+export interface IDBICompleteCtx<TValueType = string | number> extends IDBIBaseExecuteCtx {
     interaction: Discord.AutocompleteInteraction;
-    value: string | number;
+    value: TValueType;
 }
 export declare class DBIChatInputOptions {
     static stringAutocomplete(cfg: TNameDescription & TMinMaxLength & {
-        onComplete(ctx: IDBICompleteCtx): Promise<TValueName<string>[]>;
+        onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<string>[]>;
     }): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
         autocomplete: boolean;
-        onComplete: (ctx: IDBICompleteCtx) => Promise<TValueName<string>[]>;
+        onComplete: (ctx: IDBICompleteCtx<string>) => Promise<TValueName<string>[]>;
         description: string;
         maxLength: number;
         minLength: number;
@@ -54,12 +54,12 @@ export declare class DBIChatInputOptions {
         required: boolean;
     };
     static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & {
-        onComplete(ctx: IDBICompleteCtx): Promise<TValueName<number>[]>;
+        onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]>;
     }): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
         autocomplete: boolean;
-        onComplete: (ctx: IDBICompleteCtx) => Promise<TValueName<number>[]>;
+        onComplete: (ctx: IDBICompleteCtx<number>) => Promise<TValueName<number>[]>;
         description: string;
         maxValue: number;
         minValue: number;
@@ -85,12 +85,12 @@ export declare class DBIChatInputOptions {
         required: boolean;
     };
     static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & {
-        onComplete(ctx: IDBICompleteCtx): Promise<TValueName<number>[]>;
+        onComplete(ctx: IDBICompleteCtx<number>): Promise<TValueName<number>[]>;
     }): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
         autocomplete: boolean;
-        onComplete: (ctx: IDBICompleteCtx) => Promise<TValueName<number>[]>;
+        onComplete: (ctx: IDBICompleteCtx<number>) => Promise<TValueName<number>[]>;
         description: string;
         maxValue: number;
         minValue: number;
