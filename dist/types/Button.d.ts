@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 export interface IDBIButtonExecuteCtx extends IDBIBaseExecuteCtx {
-    interaction: Discord.ButtonInteraction<Discord.CacheType>;
+    interaction: Discord.ButtonInteraction<"cached">;
     data: TDBIReferencedData[];
 }
 export declare type TDBIButtonOmitted = Omit<DBIButton, "type" | "description" | "dbi" | "toJSON">;

@@ -44,11 +44,11 @@ function hookInteractionListeners(dbi) {
         };
         let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
         let rateLimitKeyMap = {
-            "User": `${inter.user.id}`,
-            "Channel": `${inter.channelId || "Channel"}`,
-            "Guild": `${inter.guildId || "Guild"}`,
-            "Member": `${inter.user.id}_${inter.guildId || "Guild"}`,
-            "Message": `${inter?.message?.id}`
+            "User": `${dbiInter.name}_${inter.user.id}`,
+            "Channel": `${dbiInter.name}_${inter.channelId || "Channel"}`,
+            "Guild": `${dbiInter.name}_${inter.guildId || "Guild"}`,
+            "Member": `${dbiInter.name}_${inter.user.id}_${inter.guildId || "Guild"}`,
+            "Message": `${dbiInter.name}_${inter?.message?.id}`
         };
         for (const type in rateLimitKeyMap) {
             // @ts-ignore

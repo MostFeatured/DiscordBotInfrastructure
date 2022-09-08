@@ -4,7 +4,7 @@ import Discord from "discord.js";
 import { customIdBuilder } from "../utils/customId";
 
 export interface IDBIModalExecuteCtx extends IDBIBaseExecuteCtx {
-  interaction: Discord.ModalSubmitInteraction<Discord.CacheType>;
+  interaction: Discord.ModalSubmitInteraction<"cached">;
 
   data: TDBIReferencedData[];
 }

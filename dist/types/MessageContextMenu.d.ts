@@ -3,7 +3,7 @@ import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "./Interaction";
 import Discord from "discord.js";
 export declare type TDBIMessageContextMenuOmitted = Omit<DBIMessageContextMenu, "type" | "description" | "dbi" | "options">;
 export interface IDBIMessageContextMenuExecuteCtx extends IDBIBaseExecuteCtx {
-    interaction: Discord.MessageContextMenuCommandInteraction<Discord.CacheType>;
+    interaction: Discord.MessageContextMenuCommandInteraction<"cached">;
 }
 export declare class DBIMessageContextMenu extends DBIBaseInteraction {
     constructor(dbi: DBI, cfg: TDBIMessageContextMenuOmitted);

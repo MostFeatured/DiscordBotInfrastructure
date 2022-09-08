@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 export interface IDBISelectMenuExecuteCtx extends IDBIBaseExecuteCtx {
-    interaction: Discord.ButtonInteraction<Discord.CacheType>;
+    interaction: Discord.ButtonInteraction<"cached">;
     data: TDBIReferencedData[];
 }
 export declare type TDBISelectMenuOmitted = Omit<DBIBaseInteraction, "type" | "description" | "dbi" | "toJSON">;

@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import { DBI } from "../../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "../Interaction";
 export interface IDBIChatInputExecuteCtx extends IDBIBaseExecuteCtx {
-    interaction: Discord.ChatInputCommandInteraction<Discord.CacheType>;
+    interaction: Discord.ChatInputCommandInteraction<"cached">;
 }
 export declare type TDBIChatInputOmitted = Omit<DBIChatInput, "type" | "dbi">;
 export declare class DBIChatInput extends DBIBaseInteraction {

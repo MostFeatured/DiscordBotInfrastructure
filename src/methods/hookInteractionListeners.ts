@@ -3,7 +3,7 @@ import Discord from "discord.js";
 import { parseCustomId } from "../utils/customId";
 
 export function hookInteractionListeners(dbi: DBI): () => any {
-  async function handle(inter: Discord.Interaction<Discord.CacheType>) {
+  async function handle(inter: Discord.Interaction<"cached">) {
 
     const dbiInter =
       dbi.data.interactions.find(i => {
@@ -60,11 +60,11 @@ export function hookInteractionListeners(dbi: DBI): () => any {
     let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
 
     let rateLimitKeyMap = {
-      "User": `${inter.user.id}`,
-      "Channel": `${inter.channelId || "Channel"}`,
-      "Guild": `${inter.guildId || "Guild"}`,
-      "Member": `${inter.user.id}_${inter.guildId || "Guild"}`,
-      "Message": `${(inter as any)?.message?.id}`
+      "User": `${dbiInter.name}_${inter.user.id}`,
+      "Channel": `${dbiInter.name}_${inter.channelId || "Channel"}`,
+      "Guild": `${dbiInter.name}_${inter.guildId || "Guild"}`,
+      "Member": `${dbiInter.name}_${inter.user.id}_${inter.guildId || "Guild"}`,
+      "Message": `${dbiInter.name}_${(inter as any)?.message?.id}`
     }
 
     for (const type in rateLimitKeyMap) {

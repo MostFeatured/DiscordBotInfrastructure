@@ -4,7 +4,7 @@ import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./In
 import { customIdBuilder } from "../utils/customId";
 
 export interface IDBISelectMenuExecuteCtx extends IDBIBaseExecuteCtx {
-  interaction: Discord.ButtonInteraction<Discord.CacheType>;
+  interaction: Discord.ButtonInteraction<"cached">;
   data: TDBIReferencedData[];
 }
 

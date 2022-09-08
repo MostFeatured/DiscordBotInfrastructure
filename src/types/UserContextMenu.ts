@@ -5,7 +5,7 @@ import Discord from "discord.js";
 export type TDBIUserContextMenuOmitted = Omit<DBIUserContextMenu, "type" | "description" | "dbi" | "options">;
 
 export interface IDBIUserContextMenuExecuteCtx extends IDBIBaseExecuteCtx {
-  interaction: Discord.UserContextMenuCommandInteraction<Discord.CacheType>;
+  interaction: Discord.UserContextMenuCommandInteraction<"cached">;
 }
 
 export class DBIUserContextMenu extends DBIBaseInteraction {

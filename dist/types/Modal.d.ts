@@ -2,7 +2,7 @@ import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import Discord from "discord.js";
 export interface IDBIModalExecuteCtx extends IDBIBaseExecuteCtx {
-    interaction: Discord.ModalSubmitInteraction<Discord.CacheType>;
+    interaction: Discord.ModalSubmitInteraction<"cached">;
     data: TDBIReferencedData[];
 }
 export declare type TDBIModalOmitted = Omit<DBIModal, "type" | "description" | "dbi" | "toJSON">;
