@@ -128,6 +128,14 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
+    static role(cfg) {
+        return {
+            type: discord_js_1.default.ApplicationCommandOptionType.Role,
+            name: cfg.name,
+            description: cfg.description,
+            required: cfg.required
+        };
+    }
     static mentionable(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Mentionable,

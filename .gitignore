@@ -125,3 +125,10 @@ out
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+src/test.ts
+dist/test.d.ts
+dist/test.d.ts.map
+dist/test.js
+dist/test.js.map

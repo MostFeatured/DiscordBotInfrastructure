@@ -9,6 +9,9 @@ export type TDBIInteractionLocaleData = {
       [k: string]: {
         name: string;
         description: string;
+        choices?: {
+          [k: string]: string
+        }
       }
     }
   };

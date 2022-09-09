@@ -6,7 +6,7 @@ import { DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
-import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
+import { DBILocale, LangConstructorObject, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Button";
 import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
 import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
@@ -65,11 +65,11 @@ export interface DBIConfigConstructor {
   clearRefsAfter?: number;
 }
 
-export interface DBIRegisterAPI {
+export interface DBIRegisterAPI<TLocaleFormat> {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
   Event(cfg: TDBIEventOmitted): DBIEvent;
-  Locale(cfg: TDBILocaleConstructor): DBILocale;
+  Locale(cfg: TDBILocaleConstructor<TLocaleFormat>): DBILocale;
   Button(cfg: TDBIButtonOmitted): DBIButton;
   SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
@@ -79,7 +79,7 @@ export interface DBIRegisterAPI {
   onUnload(cb: () => Promise<any> | any): any;
 }
 
-export class DBI<TOtherData = Record<string, any>> {
+export class DBI<TOtherData = Record<string, any>, TLocaleFormat = LangConstructorObject> {
   namespace: string;
   config: DBIConfig;
   client: Discord.Client<true>;
@@ -87,7 +87,7 @@ export class DBI<TOtherData = Record<string, any>> {
     interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal>;
     events: Discord.Collection<string, DBIEvent>;
     plugins: Discord.Collection<string, any>;
-    locales: Discord.Collection<string, DBILocale>;
+    locales: Discord.Collection<string, DBILocale<TLocaleFormat>>;
     interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
     other: TOtherData;
     eventMap: Record<string, string[]>;
@@ -129,7 +129,7 @@ export class DBI<TOtherData = Record<string, any>> {
       refs: new Map()
     }
 
-    this.events = new Events(this);
+    this.events = new Events(this as any);
     this.client = new Discord.Client({
       ...(config.discord?.options || {}) as any,
       ...(config.sharding ? {
@@ -145,8 +145,8 @@ export class DBI<TOtherData = Record<string, any>> {
   private async _hookListeners() {
     if (this._hooked) return;
     this._hooked = true;
-    this.data.unloaders.add(hookInteractionListeners(this));
-    this.data.unloaders.add(hookEventListeners(this));
+    this.data.unloaders.add(hookInteractionListeners(this as any));
+    this.data.unloaders.add(hookEventListeners(this as any));
     if (typeof this.config.clearRefsAfter == "number") {
       this.data.unloaders.add((() => {
         let interval = setInterval(() => {
@@ -181,7 +181,7 @@ export class DBI<TOtherData = Record<string, any>> {
   }
 
   private async _registerAll() {
-    const self = this;
+    const self = this as any;
 
     for await (const cb of this.data.registers) {
       let ChatInput = function(cfg: DBIChatInput) {
@@ -240,7 +240,7 @@ export class DBI<TOtherData = Record<string, any>> {
       };
       Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
 
-      let Locale = function(cfg: TDBILocaleConstructor) {
+      let Locale = function(cfg: TDBILocaleConstructor<TLocaleFormat>) {
         let dbiLocale = new DBILocale(self, cfg);
         if (self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
         self.data.locales.set(dbiLocale.name, dbiLocale);
@@ -310,7 +310,7 @@ export class DBI<TOtherData = Record<string, any>> {
     await this.client.login(this.config.discord.token);
   }
 
-  async register(cb: (api: DBIRegisterAPI) => void): Promise<any> {
+  async register(cb: (api: DBIRegisterAPI<TLocaleFormat>) => void): Promise<any> {
     this.data.registers.add(cb);
   }
 

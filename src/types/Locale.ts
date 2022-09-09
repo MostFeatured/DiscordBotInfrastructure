@@ -12,18 +12,18 @@ export interface LangConstructorObject {
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor = Omit<DBILocale, "data" | "dbi"> & { data: LangConstructorObject };
+export type TDBILocaleConstructor<TDataFormat> = Omit<DBILocale, "data" | "dbi"> & { data: TDataFormat };
 
-export class DBILocale {
+export class DBILocale<TDataFormat = LangConstructorObject> {
   name: TDBILocaleString;
-  data: LangObject
-  private _data: LangConstructorObject;
+  data: LangObject;
+  private _data: TDataFormat;
   dbi: DBI;
-  constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
+  constructor(dbi: DBI, cfg: TDBILocaleConstructor<TDataFormat>) {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convertLang(cfg.data);
+    this.data = convertLang(cfg.data as any);
   }
 }
 

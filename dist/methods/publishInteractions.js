@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.formatLocale = exports.localeifyOptions = exports.publishInteractions = void 0;
-const tslib_1 = require("tslib");
 const rest_1 = require("@discordjs/rest");
 const v9_1 = require("discord-api-types/v9");
 const permissions_1 = require("../utils/permissions");
-const snakecase_keys_1 = tslib_1.__importDefault(require("snakecase-keys"));
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
 async function publishInteractions(clientToken, interactions, interactionsLocales, publishType, guildId) {
@@ -160,7 +158,6 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
         }
         return all;
     }, []);
-    body = (0, snakecase_keys_1.default)(body);
     switch (publishType) {
         case "Global": {
             await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body });
@@ -175,9 +172,16 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
 exports.publishInteractions = publishInteractions;
 function localeifyOptions(options, localeData) {
     return options.map(i => {
-        return localeData[i.name] ? Object.assign(i, {
-            name_localizations: localeData[i.name].nameLocales,
-            description_localizations: localeData[i.name].descriptionLocales,
+        let optionData = localeData[i.name];
+        return optionData ? Object.assign(i, {
+            name_localizations: optionData.nameLocales,
+            description_localizations: optionData.descriptionLocales,
+            choices: i.choices ? i.choices.map((j) => {
+                let choiceLocale = optionData.choiceLocales[j.name];
+                return choiceLocale ? Object.assign(j, {
+                    name_localizations: choiceLocale
+                }) : j;
+            }) : undefined
         }) : i;
     });
 }
@@ -204,12 +208,23 @@ function formatLocale(locale) {
             Object.entries(localeData.options || []).forEach(([optionName, optionData]) => {
                 if (!optionsLocales[optionName])
                     optionsLocales[optionName] = {};
-                if (!optionsLocales[optionName].nameLocales)
-                    optionsLocales[optionName].nameLocales = {};
-                if (!optionsLocales[optionName].descriptionLocales)
-                    optionsLocales[optionName].descriptionLocales = {};
-                optionsLocales[optionName].nameLocales[longLocale] = optionData.name;
-                optionsLocales[optionName].descriptionLocales[longLocale] = optionData.description;
+                let optionLocale = optionsLocales[optionName];
+                if (!optionLocale.nameLocales)
+                    optionLocale.nameLocales = {};
+                if (!optionLocale.descriptionLocales)
+                    optionLocale.descriptionLocales = {};
+                if (!optionLocale.choiceLocales)
+                    optionLocale.choiceLocales = {};
+                Object.entries(optionData.choices).forEach(([choiceOriginalName, choiceName]) => {
+                    if (!optionLocale.choiceLocales)
+                        optionLocale.choiceLocales = {};
+                    if (!optionLocale.choiceLocales[choiceOriginalName])
+                        optionLocale.choiceLocales[choiceOriginalName] = {};
+                    let choiceLocale = optionLocale.choiceLocales[choiceOriginalName];
+                    choiceLocale[longLocale] = choiceName;
+                });
+                optionLocale.nameLocales[longLocale] = optionData.name;
+                optionLocale.descriptionLocales[longLocale] = optionData.description;
             });
         });
     });

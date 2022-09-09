@@ -171,8 +171,6 @@ export async function publishInteractions(
       return all;
     }, []);
   
-  body = snakecaseKeys(body);
-  
   switch (publishType) {
     case "Global": {
       await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body });
@@ -188,9 +186,16 @@ export async function publishInteractions(
 
 export function localeifyOptions(options: any[], localeData: any): any[] {
   return options.map(i => {
-    return localeData[i.name] ? Object.assign(i, {
-      name_localizations: localeData[i.name].nameLocales,
-      description_localizations: localeData[i.name].descriptionLocales,
+    let optionData = localeData[i.name];
+    return optionData ? Object.assign(i, {
+      name_localizations: optionData.nameLocales,
+      description_localizations: optionData.descriptionLocales,
+      choices: i.choices ? i.choices.map((j) => {
+        let choiceLocale = optionData.choiceLocales[j.name];
+        return choiceLocale ? Object.assign(j, {
+          name_localizations: choiceLocale
+        }) : j;
+      }) : undefined
     }) : i;
   })
 }
@@ -218,11 +223,21 @@ export function formatLocale(locale: DBIInteractionLocale): any {
       descriptionLocales[longLocale] = localeData.description;
       Object.entries(localeData.options || []).forEach(([optionName, optionData]) => {
         if (!optionsLocales[optionName]) optionsLocales[optionName] = {};
-        if (!optionsLocales[optionName].nameLocales) optionsLocales[optionName].nameLocales = {};
-        if (!optionsLocales[optionName].descriptionLocales) optionsLocales[optionName].descriptionLocales = {};
+        let optionLocale = optionsLocales[optionName];
+        if (!optionLocale.nameLocales) optionLocale.nameLocales = {};
+        if (!optionLocale.descriptionLocales) optionLocale.descriptionLocales = {};
+        if (!optionLocale.choiceLocales) optionLocale.choiceLocales = {};
 
-        optionsLocales[optionName].nameLocales[longLocale] = optionData.name;
-        optionsLocales[optionName].descriptionLocales[longLocale] = optionData.description;
+        Object.entries(optionData.choices).forEach(([choiceOriginalName, choiceName]) => {
+          if (!optionLocale.choiceLocales) optionLocale.choiceLocales = {};
+          if (!optionLocale.choiceLocales[choiceOriginalName]) optionLocale.choiceLocales[choiceOriginalName] = {};
+          let choiceLocale = optionLocale.choiceLocales[choiceOriginalName];
+          
+          choiceLocale[longLocale] = choiceName;
+        });
+
+        optionLocale.nameLocales[longLocale] = optionData.name;
+        optionLocale.descriptionLocales[longLocale] = optionData.description;
       })
     });
   });

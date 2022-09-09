@@ -148,6 +148,15 @@ export class DBIChatInputOptions {
     };
   }
 
+  static role(cfg: TNameDescription) {
+    return {
+      type: Discord.ApplicationCommandOptionType.Role,
+      name: cfg.name,
+      description: cfg.description,
+      required: cfg.required
+    }
+  }
+
   static mentionable(cfg: TNameDescription) {
     return {
       type: Discord.ApplicationCommandOptionType.Mentionable,

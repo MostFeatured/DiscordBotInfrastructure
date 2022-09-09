@@ -136,6 +136,12 @@ export declare class DBIChatInputOptions {
         channelTypes: Discord.ChannelType[];
         required: boolean;
     };
+    static role(cfg: TNameDescription): {
+        type: Discord.ApplicationCommandOptionType;
+        name: string;
+        description: string;
+        required: boolean;
+    };
     static mentionable(cfg: TNameDescription): {
         type: Discord.ApplicationCommandOptionType;
         name: string;
