@@ -32,6 +32,7 @@ export interface DBIConfig {
      * Persist store. (Default to MemoryStore thats not persis tho.)
      */
     store: DBIStore;
+    clearRefsAfter?: number;
 }
 export interface DBIConfigConstructor {
     discord: {
@@ -48,6 +49,7 @@ export interface DBIConfigConstructor {
      * Persist store. (Default to MemoryStore thats not persis tho.)
      */
     store?: DBIStore;
+    clearRefsAfter?: number;
 }
 export interface DBIRegisterAPI {
     ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
@@ -85,8 +87,10 @@ export declare class DBI<TOtherData = Record<string, any>> {
     events: Events;
     cluster?: Sharding.Client;
     private _loaded;
+    private _hooked;
     constructor(namespace: string, config: DBIConfigConstructor);
     private _hookListeners;
+    private _unhookListeners;
     private _unregisterAll;
     private _registerAll;
     /**

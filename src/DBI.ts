@@ -41,6 +41,8 @@ export interface DBIConfig {
    * Persist store. (Default to MemoryStore thats not persis tho.)
    */
   store: DBIStore;
+
+  clearRefsAfter?: number;
 }
 
 export interface DBIConfigConstructor {
@@ -59,6 +61,8 @@ export interface DBIConfigConstructor {
    * Persist store. (Default to MemoryStore thats not persis tho.)
    */
   store?: DBIStore;
+
+  clearRefsAfter?: number;
 }
 
 export interface DBIRegisterAPI {
@@ -95,6 +99,7 @@ export class DBI<TOtherData = Record<string, any>> {
   events: Events;
   cluster?: Sharding.Client;
   private _loaded: boolean;
+  private _hooked: boolean;
   constructor(namespace: string, config: DBIConfigConstructor) {
     this.namespace = namespace;
 
@@ -133,13 +138,37 @@ export class DBI<TOtherData = Record<string, any>> {
       } : {})
     });
     this.cluster = config.sharding ? new Sharding.Client(this.client) : undefined;
-    this._hookListeners();
     this._loaded = false;
+    this._hooked = false;
   }
 
   private async _hookListeners() {
+    if (this._hooked) return;
+    this._hooked = true;
     this.data.unloaders.add(hookInteractionListeners(this));
     this.data.unloaders.add(hookEventListeners(this));
+    if (typeof this.config.clearRefsAfter == "number") {
+      this.data.unloaders.add((() => {
+        let interval = setInterval(() => {
+          this.data.refs.forEach(({ at }, key) => {
+            if (Date.now() > (at + this.config.clearRefsAfter)) {
+              this.data.refs.delete(key);
+            }
+          });
+        }, 60000);
+        return () => {
+          clearInterval(interval);
+        }
+      })());
+    }
+  }
+
+  private async _unhookListeners() {
+    if (!this._hooked) return;
+    this._hooked = false;
+    this.data.unloaders.forEach(f => {
+      f();
+    });
   }
 
   private async _unregisterAll() {
@@ -288,6 +317,7 @@ export class DBI<TOtherData = Record<string, any>> {
   async load(): Promise<boolean> {
     if (this._loaded) return false;
     await this._registerAll();
+    await this._hookListeners();
     this._loaded = true;
     return true;
   }
@@ -295,6 +325,7 @@ export class DBI<TOtherData = Record<string, any>> {
   async unload(): Promise<boolean> {
     if (!this._loaded) return false;
     await this._unregisterAll();
+    await this._unhookListeners();
     this._loaded = false;
     return true;
   }

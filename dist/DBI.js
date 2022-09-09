@@ -29,6 +29,7 @@ class DBI {
     events;
     cluster;
     _loaded;
+    _hooked;
     constructor(namespace, config) {
         this.namespace = namespace;
         config.store = config.store || new MemoryStore_1.MemoryStore();
@@ -63,12 +64,37 @@ class DBI {
             } : {})
         });
         this.cluster = config.sharding ? new Sharding.Client(this.client) : undefined;
-        this._hookListeners();
         this._loaded = false;
+        this._hooked = false;
     }
     async _hookListeners() {
+        if (this._hooked)
+            return;
+        this._hooked = true;
         this.data.unloaders.add((0, hookInteractionListeners_1.hookInteractionListeners)(this));
         this.data.unloaders.add((0, hookEventListeners_1.hookEventListeners)(this));
+        if (typeof this.config.clearRefsAfter == "number") {
+            this.data.unloaders.add((() => {
+                let interval = setInterval(() => {
+                    this.data.refs.forEach(({ at }, key) => {
+                        if (Date.now() > (at + this.config.clearRefsAfter)) {
+                            this.data.refs.delete(key);
+                        }
+                    });
+                }, 60000);
+                return () => {
+                    clearInterval(interval);
+                };
+            })());
+        }
+    }
+    async _unhookListeners() {
+        if (!this._hooked)
+            return;
+        this._hooked = false;
+        this.data.unloaders.forEach(f => {
+            f();
+        });
     }
     async _unregisterAll() {
         for await (const cb of this.data.registerUnloaders) {
@@ -226,6 +252,7 @@ class DBI {
         if (this._loaded)
             return false;
         await this._registerAll();
+        await this._hookListeners();
         this._loaded = true;
         return true;
     }
@@ -233,6 +260,7 @@ class DBI {
         if (!this._loaded)
             return false;
         await this._unregisterAll();
+        await this._unhookListeners();
         this._loaded = false;
         return true;
     }
