@@ -72,7 +72,7 @@ export declare class DBI<TOtherData = Record<string, any>, TLocaleFormat = LangC
         interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal>;
         events: Discord.Collection<string, DBIEvent>;
         plugins: Discord.Collection<string, any>;
-        locales: Discord.Collection<string, DBILocale<TLocaleFormat>>;
+        locales: Discord.Collection<TDBILocaleString, DBILocale<TLocaleFormat>>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
         eventMap: Record<string, string[]>;
