@@ -1,6 +1,5 @@
 import { DBI, DBIConfigConstructor } from "./DBI";
-import { LangConstructorObject } from "./types/Locale";
 export { recursiveImport } from "./utils/recursiveImport";
 export { MemoryStore } from "./utils/MemoryStore";
-export declare function createDBI<TOtherType = Record<string, any>, TDataFormat = LangConstructorObject>(namespace: string, cfg: DBIConfigConstructor): DBI<TOtherType, TDataFormat>;
+export declare function createDBI<TOtherType = Record<string, any>>(namespace: string, cfg: DBIConfigConstructor): DBI<TOtherType>;
 //# sourceMappingURL=index.d.ts.map

@@ -215,6 +215,30 @@ class DBI {
         }
     }
     /**
+     * this.data.interactions.get(name)
+     */
+    interaction(name) {
+        return this.data.interactions.get(name);
+    }
+    /**
+     * this.data.events.get(name)
+     */
+    event(name) {
+        return this.data.events.get(name);
+    }
+    /**
+     * this.data.locales.get(name)
+     */
+    locale(name) {
+        return this.data.locales.get(name);
+    }
+    /**
+     * this.data.plugins.get(name)
+     */
+    plugin(name) {
+        return this.data.plugins.get(name);
+    }
+    /**
      * Shorthands for modifying `dbi.data.other`
      */
     get(k, defaultValue) {

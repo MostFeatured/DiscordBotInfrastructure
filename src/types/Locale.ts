@@ -2,24 +2,24 @@
 import * as stuffs from "stuffs";
 import { DBI } from "../DBI";
 
-export interface LangObject {
-  [property: string]: LangObject & ((...args: any[]) => string);
+export interface DBILangObject {
+  [property: string]: DBILangObject & ((...args: any[]) => string);
 }
 
-export interface LangConstructorObject {
-  [property: string]: LangConstructorObject | string;
+export interface DBILangConstructorObject {
+  [property: string]: DBILangConstructorObject | string;
 }
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor<TDataFormat> = Omit<DBILocale, "data" | "dbi"> & { data: TDataFormat };
+export type TDBILocaleConstructor = Omit<DBILocale, "data" | "dbi"> & { data: DBILangConstructorObject };
 
-export class DBILocale<TDataFormat = LangConstructorObject> {
+export class DBILocale {
   name: TDBILocaleString;
-  data: LangObject;
-  private _data: TDataFormat;
+  data: DBILangObject;
+  private _data;
   dbi: DBI;
-  constructor(dbi: DBI, cfg: TDBILocaleConstructor<TDataFormat>) {
+  constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
@@ -27,7 +27,7 @@ export class DBILocale<TDataFormat = LangConstructorObject> {
   }
 }
 
-export function convertLang(data: LangConstructorObject): LangObject {
+export function convertLang(data: DBILangConstructorObject): DBILangObject {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
       return [key, (...args: any[]) => {

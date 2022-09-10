@@ -3,7 +3,7 @@ import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput"
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { Events } from "./Events";
-import { DBILocale, LangConstructorObject, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
+import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Button";
 import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
 import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
@@ -51,11 +51,11 @@ export interface DBIConfigConstructor {
     store?: DBIStore;
     clearRefsAfter?: number;
 }
-export interface DBIRegisterAPI<TLocaleFormat> {
+export interface DBIRegisterAPI {
     ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
     ChatInputOptions: typeof DBIChatInputOptions;
     Event(cfg: TDBIEventOmitted): DBIEvent;
-    Locale(cfg: TDBILocaleConstructor<TLocaleFormat>): DBILocale;
+    Locale(cfg: TDBILocaleConstructor): DBILocale;
     Button(cfg: TDBIButtonOmitted): DBIButton;
     SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
     MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
@@ -64,15 +64,16 @@ export interface DBIRegisterAPI<TLocaleFormat> {
     Modal(cfg: TDBIModalOmitted): DBIModal;
     onUnload(cb: () => Promise<any> | any): any;
 }
-export declare class DBI<TOtherData = Record<string, any>, TLocaleFormat = LangConstructorObject> {
+export declare type TDBIInteractions = DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal;
+export declare class DBI<TOtherData = Record<string, any>> {
     namespace: string;
     config: DBIConfig;
     client: Discord.Client<true>;
     data: {
-        interactions: Discord.Collection<string, DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal>;
+        interactions: Discord.Collection<string, TDBIInteractions>;
         events: Discord.Collection<string, DBIEvent>;
         plugins: Discord.Collection<string, any>;
-        locales: Discord.Collection<TDBILocaleString, DBILocale<TLocaleFormat>>;
+        locales: Discord.Collection<string, DBILocale>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
         eventMap: Record<string, string[]>;
@@ -94,6 +95,22 @@ export declare class DBI<TOtherData = Record<string, any>, TLocaleFormat = LangC
     private _unregisterAll;
     private _registerAll;
     /**
+     * this.data.interactions.get(name)
+     */
+    interaction(name: string): TDBIInteractions;
+    /**
+     * this.data.events.get(name)
+     */
+    event(name: string): DBIEvent;
+    /**
+     * this.data.locales.get(name)
+     */
+    locale(name: string): DBILocale;
+    /**
+     * this.data.plugins.get(name)
+     */
+    plugin(name: string): any;
+    /**
      * Shorthands for modifying `dbi.data.other`
      */
     get<K extends keyof TOtherData>(k: K, defaultValue?: TOtherData[K]): TOtherData[K];
@@ -110,7 +127,7 @@ export declare class DBI<TOtherData = Record<string, any>, TLocaleFormat = LangC
      */
     delete(k: string): boolean;
     login(): Promise<any>;
-    register(cb: (api: DBIRegisterAPI<TLocaleFormat>) => void): Promise<any>;
+    register(cb: (api: DBIRegisterAPI) => void): Promise<any>;
     load(): Promise<boolean>;
     unload(): Promise<boolean>;
     get loaded(): boolean;
