@@ -6,7 +6,7 @@ import { DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
-import { DBILocale, DBILangConstructorObject, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
+import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Button";
 import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
 import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
@@ -36,13 +36,20 @@ export interface DBIConfig {
     defaultMemberPermissions: Discord.PermissionsString[]
   };
 
-  sharding: boolean;
+  sharding: "hybrid" | "default" | "off";
   /**
    * Persist store. (Default to MemoryStore thats not persis tho.)
    */
   store: DBIStore;
 
-  clearRefsAfter?: number;
+  references: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    }
+  };
+
+  strict: boolean;
 }
 
 export interface DBIConfigConstructor {
@@ -56,13 +63,20 @@ export interface DBIConfigConstructor {
     defaultMemberPermissions?: Discord.PermissionsString[]
   };
 
-  sharding?: boolean;
+  sharding?: "hybrid" | "default" | "off";
   /**
    * Persist store. (Default to MemoryStore thats not persis tho.)
    */
   store?: DBIStore;
 
-  clearRefsAfter?: number;
+  references?: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    }
+  };
+
+  strict?: boolean;
 }
 
 export interface DBIRegisterAPI {
@@ -96,7 +110,7 @@ export class DBI<TOtherData = Record<string, any>> {
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
-    refs: Map<string, { at: number, value: any }>;
+    refs: Map<string, { at: number, value: any, ttl?: number }>;
   };
   events: Events;
   cluster?: Sharding.Client;
@@ -112,7 +126,12 @@ export class DBI<TOtherData = Record<string, any>> {
       directMessages: false,
       ...(config.defaults || {})
     };
-    config.sharding = config.sharding ?? false;
+    config.sharding = config.sharding ?? "off";
+    config.strict = config.strict ?? true;
+    config.references = {
+      autoClear: undefined,
+      ...(config.references || {})
+    }
 
     // @ts-ignore
     this.config = config;
@@ -134,12 +153,12 @@ export class DBI<TOtherData = Record<string, any>> {
     this.events = new Events(this as any);
     this.client = new Discord.Client({
       ...(config.discord?.options || {}) as any,
-      ...(config.sharding ? {
+      ...(config.sharding == "hybrid" ? {
         shards: (Sharding as any).data.SHARD_LIST,
         shardCount: (Sharding as any).data.TOTAL_SHARDS
       } : {})
     });
-    this.cluster = config.sharding ? new Sharding.Client(this.client) : undefined;
+    this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.client) : undefined;
     this._loaded = false;
     this._hooked = false;
   }
@@ -149,15 +168,15 @@ export class DBI<TOtherData = Record<string, any>> {
     this._hooked = true;
     this.data.unloaders.add(hookInteractionListeners(this as any));
     this.data.unloaders.add(hookEventListeners(this as any));
-    if (typeof this.config.clearRefsAfter == "number") {
+    if (typeof this.config.references.autoClear != "undefined") {
       this.data.unloaders.add((() => {
         let interval = setInterval(() => {
-          this.data.refs.forEach(({ at }, key) => {
-            if (Date.now() > (at + this.config.clearRefsAfter)) {
+          this.data.refs.forEach(({ at, ttl }, key) => {
+            if (Date.now() > (at + (ttl || this.config.references.autoClear.ttl))) {
               this.data.refs.delete(key);
             }
           });
-        }, 60000);
+        }, this.config.references.autoClear.check);
         return () => {
           clearInterval(interval);
         }
@@ -183,7 +202,7 @@ export class DBI<TOtherData = Record<string, any>> {
   }
 
   private async _registerAll() {
-    const self = this as any;
+    const self = this;
 
     for await (const cb of this.data.registers) {
       let ChatInput = function(cfg: DBIChatInput) {
@@ -196,7 +215,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let Event = function(cfg: TDBIEventOmitted) {
         let dbiEvent = new DBIEvent(self, cfg);
-        if (self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
+        if (self.config.strict && self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
         self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
@@ -204,7 +223,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let Button = function(cfg: TDBIButtonOmitted) {
         let dbiButton = new DBIButton(self, cfg);
-        if (self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
         self.data.interactions.set(dbiButton.name, dbiButton);
         return dbiButton;
       };
@@ -212,7 +231,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let SelectMenu = function(cfg: TDBISelectMenuOmitted) {
         let dbiSelectMenu = new DBISelectMenu(self, cfg);
-        if (self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
         self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
         return dbiSelectMenu;
       };
@@ -220,7 +239,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self, cfg);
-        if (self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
         return dbiMessageContextMenu;
       };
@@ -228,7 +247,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted) {
         let dbiUserContextMenu = new DBIUserContextMenu(self, cfg);
-        if (self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
         return dbiUserContextMenu;
       };
@@ -236,7 +255,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let Modal = function(cfg: TDBIModalOmitted) {
         let dbiModal = new DBIModal(self, cfg);
-        if (self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
         self.data.interactions.set(dbiModal.name, dbiModal);
         return dbiModal;
       };
@@ -244,7 +263,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let Locale = function(cfg: TDBILocaleConstructor) {
         let dbiLocale = new DBILocale(self, cfg);
-        if (self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
+        if (self.config.strict && self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
         self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };
@@ -252,7 +271,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
       let InteractionLocale = function(cfg: TDBIInteractionLocaleOmitted) {
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
-        if (self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
+        if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
         self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
         return dbiInteractionLocale;
       };
@@ -337,7 +356,7 @@ export class DBI<TOtherData = Record<string, any>> {
   }
 
   async login(): Promise<any> {
-    await this.client.login(this.config.discord.token);
+    await this.client.login(this.config.sharding == "default" ? undefined : this.config.discord.token);
   }
 
   async register(cb: (api: DBIRegisterAPI) => void): Promise<any> {

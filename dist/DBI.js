@@ -39,7 +39,12 @@ class DBI {
             directMessages: false,
             ...(config.defaults || {})
         };
-        config.sharding = config.sharding ?? false;
+        config.sharding = config.sharding ?? "off";
+        config.strict = config.strict ?? true;
+        config.references = {
+            autoClear: undefined,
+            ...(config.references || {})
+        };
         // @ts-ignore
         this.config = config;
         this.data = {
@@ -58,12 +63,12 @@ class DBI {
         this.events = new Events_1.Events(this);
         this.client = new discord_js_1.default.Client({
             ...(config.discord?.options || {}),
-            ...(config.sharding ? {
+            ...(config.sharding == "hybrid" ? {
                 shards: Sharding.data.SHARD_LIST,
                 shardCount: Sharding.data.TOTAL_SHARDS
             } : {})
         });
-        this.cluster = config.sharding ? new Sharding.Client(this.client) : undefined;
+        this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.client) : undefined;
         this._loaded = false;
         this._hooked = false;
     }
@@ -73,15 +78,15 @@ class DBI {
         this._hooked = true;
         this.data.unloaders.add((0, hookInteractionListeners_1.hookInteractionListeners)(this));
         this.data.unloaders.add((0, hookEventListeners_1.hookEventListeners)(this));
-        if (typeof this.config.clearRefsAfter == "number") {
+        if (typeof this.config.references.autoClear != "undefined") {
             this.data.unloaders.add((() => {
                 let interval = setInterval(() => {
-                    this.data.refs.forEach(({ at }, key) => {
-                        if (Date.now() > (at + this.config.clearRefsAfter)) {
+                    this.data.refs.forEach(({ at, ttl }, key) => {
+                        if (Date.now() > (at + (ttl || this.config.references.autoClear.ttl))) {
                             this.data.refs.delete(key);
                         }
                     });
-                }, 60000);
+                }, this.config.references.autoClear.check);
                 return () => {
                     clearInterval(interval);
                 };
@@ -119,7 +124,7 @@ class DBI {
             });
             let Event = function (cfg) {
                 let dbiEvent = new Event_1.DBIEvent(self, cfg);
-                if (self.data.events.has(dbiEvent.id || dbiEvent.name))
+                if (self.config.strict && self.data.events.has(dbiEvent.id || dbiEvent.name))
                     throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
                 self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
                 return dbiEvent;
@@ -129,7 +134,7 @@ class DBI {
             });
             let Button = function (cfg) {
                 let dbiButton = new Button_1.DBIButton(self, cfg);
-                if (self.data.interactions.has(dbiButton.name))
+                if (self.config.strict && self.data.interactions.has(dbiButton.name))
                     throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
                 self.data.interactions.set(dbiButton.name, dbiButton);
                 return dbiButton;
@@ -139,7 +144,7 @@ class DBI {
             });
             let SelectMenu = function (cfg) {
                 let dbiSelectMenu = new SelectMenu_1.DBISelectMenu(self, cfg);
-                if (self.data.interactions.has(dbiSelectMenu.name))
+                if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name))
                     throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
                 self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
                 return dbiSelectMenu;
@@ -149,7 +154,7 @@ class DBI {
             });
             let MessageContextMenu = function (cfg) {
                 let dbiMessageContextMenu = new MessageContextMenu_1.DBIMessageContextMenu(self, cfg);
-                if (self.data.interactions.has(dbiMessageContextMenu.name))
+                if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name))
                     throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
                 self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
                 return dbiMessageContextMenu;
@@ -159,7 +164,7 @@ class DBI {
             });
             let UserContextMenu = function (cfg) {
                 let dbiUserContextMenu = new UserContextMenu_1.DBIUserContextMenu(self, cfg);
-                if (self.data.interactions.has(dbiUserContextMenu.name))
+                if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name))
                     throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
                 self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
                 return dbiUserContextMenu;
@@ -169,7 +174,7 @@ class DBI {
             });
             let Modal = function (cfg) {
                 let dbiModal = new Modal_1.DBIModal(self, cfg);
-                if (self.data.interactions.has(dbiModal.name))
+                if (self.config.strict && self.data.interactions.has(dbiModal.name))
                     throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
                 self.data.interactions.set(dbiModal.name, dbiModal);
                 return dbiModal;
@@ -179,7 +184,7 @@ class DBI {
             });
             let Locale = function (cfg) {
                 let dbiLocale = new Locale_1.DBILocale(self, cfg);
-                if (self.data.locales.has(dbiLocale.name))
+                if (self.config.strict && self.data.locales.has(dbiLocale.name))
                     throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
                 self.data.locales.set(dbiLocale.name, dbiLocale);
                 return dbiLocale;
@@ -189,7 +194,7 @@ class DBI {
             });
             let InteractionLocale = function (cfg) {
                 let dbiInteractionLocale = new InteractionLocale_1.DBIInteractionLocale(self, cfg);
-                if (self.data.interactionLocales.has(dbiInteractionLocale.name))
+                if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name))
                     throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
                 self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
                 return dbiInteractionLocale;
@@ -267,7 +272,7 @@ class DBI {
         return lodash_1.default.unset(this.data.other, k);
     }
     async login() {
-        await this.client.login(this.config.discord.token);
+        await this.client.login(this.config.sharding == "default" ? undefined : this.config.discord.token);
     }
     async register(cb) {
         this.data.registers.add(cb);

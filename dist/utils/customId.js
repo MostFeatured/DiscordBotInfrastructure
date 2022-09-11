@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseCustomId = exports.customIdBuilder = void 0;
 const tslib_1 = require("tslib");
 const stuffs = tslib_1.__importStar(require("stuffs"));
-function customIdBuilder(dbi, name, customData) {
+function customIdBuilder(dbi, name, customData, ttl) {
     let customId = [
         name,
         ...customData.map(value => {
@@ -16,7 +16,7 @@ function customIdBuilder(dbi, name, customData) {
                 $ref: id,
                 $unRef() { return dbi.data.refs.delete(id); },
             });
-            dbi.data.refs.set(id, { at: Date.now(), value });
+            dbi.data.refs.set(id, { at: Date.now(), value, ttl });
             return `¤${id}`;
         })
     ].join("—");

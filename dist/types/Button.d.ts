@@ -10,6 +10,7 @@ export declare class DBIButton extends DBIBaseInteraction {
     constructor(dbi: DBI, args: TDBIButtonOmitted);
     options?: Omit<Discord.ButtonComponentData, "customId" | "type"> | ((data: (number | string | any)[]) => Omit<Discord.ButtonComponentData, "customId" | "type">);
     onExecute(ctx: IDBIButtonExecuteCtx): Promise<any> | any;
+    referenceTTL?: number;
     toJSON(...customData: (string | number | object)[]): Discord.ButtonComponentData;
 }
 //# sourceMappingURL=Button.d.ts.map

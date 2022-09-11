@@ -27,12 +27,18 @@ export interface DBIConfig {
         directMessages: boolean;
         defaultMemberPermissions: Discord.PermissionsString[];
     };
-    sharding: boolean;
+    sharding: "hybrid" | "default" | "off";
     /**
      * Persist store. (Default to MemoryStore thats not persis tho.)
      */
     store: DBIStore;
-    clearRefsAfter?: number;
+    references: {
+        autoClear?: {
+            check: number;
+            ttl: number;
+        };
+    };
+    strict: boolean;
 }
 export interface DBIConfigConstructor {
     discord: {
@@ -44,12 +50,18 @@ export interface DBIConfigConstructor {
         directMessages?: boolean;
         defaultMemberPermissions?: Discord.PermissionsString[];
     };
-    sharding?: boolean;
+    sharding?: "hybrid" | "default" | "off";
     /**
      * Persist store. (Default to MemoryStore thats not persis tho.)
      */
     store?: DBIStore;
-    clearRefsAfter?: number;
+    references?: {
+        autoClear?: {
+            check: number;
+            ttl: number;
+        };
+    };
+    strict?: boolean;
 }
 export interface DBIRegisterAPI {
     ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
@@ -83,6 +95,7 @@ export declare class DBI<TOtherData = Record<string, any>> {
         refs: Map<string, {
             at: number;
             value: any;
+            ttl?: number;
         }>;
     };
     events: Events;

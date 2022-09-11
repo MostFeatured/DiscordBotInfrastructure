@@ -1,7 +1,7 @@
 import { DBI } from "../DBI";
 import * as stuffs from "stuffs";
 
-export function customIdBuilder(dbi: DBI, name: string, customData: any[]): string {
+export function customIdBuilder(dbi: DBI, name: string, customData: any[], ttl?:number): string {
   let customId = [
     name,
     ...customData.map(value => {
@@ -12,7 +12,7 @@ export function customIdBuilder(dbi: DBI, name: string, customData: any[]): stri
         $ref: id,
         $unRef() { return dbi.data.refs.delete(id); },
       })
-      dbi.data.refs.set(id, { at: Date.now(), value });
+      dbi.data.refs.set(id, { at: Date.now(), value, ttl });
       return `¤${id}`;
     })
   ].join("—");

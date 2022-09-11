@@ -11,13 +11,14 @@ class DBIButton extends Interaction_1.DBIBaseInteraction {
             ...args,
             type: "Button",
         });
+        this.referenceTTL = args.referenceTTL;
     }
     onExecute(ctx) { }
     ;
     toJSON(...customData) {
         return {
             ...(typeof this.options == "function" ? this.options(customData) : this.options),
-            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, customData),
+            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, customData, this.referenceTTL),
             type: discord_js_1.default.ComponentType.Button
         };
     }
