@@ -9,6 +9,11 @@ export interface IDBIModalExecuteCtx extends IDBIBaseExecuteCtx {
   data: TDBIReferencedData[];
 }
 
+export interface ModalComponentData {
+  title: string;
+  components: (Discord.ActionRowData<Discord.ModalActionRowComponentData>)[];
+}
+
 export type TDBIModalOmitted = Omit<DBIModal, "type" | "description" | "dbi" | "toJSON">;
 
 export class DBIModal extends DBIBaseInteraction {
@@ -20,7 +25,7 @@ export class DBIModal extends DBIBaseInteraction {
     this.referenceTTL = args.referenceTTL;
   }
 
-  declare options: Omit<Discord.ModalComponentData, "customId"> | ((data: (number | string | any)[]) => Omit<Discord.ModalComponentData, "customId">);
+  declare options: ModalComponentData | ((data: TDBIReferencedData[]) => ModalComponentData);
 
   override onExecute(ctx: IDBIModalExecuteCtx): Promise<any> | any { };
 
@@ -28,7 +33,7 @@ export class DBIModal extends DBIBaseInteraction {
 
   toJSON(...customData: (string | number | object)[]): Discord.ModalComponentData {
     return {
-      ...(typeof this.options == "function" ? this.options(customData) : this.options),
+      ...(typeof this.options == "function" ? this.options(customData as any) : this.options),
       customId: customIdBuilder(this.dbi, this.name, customData, this.referenceTTL)
     } as any;
   };
