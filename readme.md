@@ -109,7 +109,7 @@ dbi.register(({ ChatInput, Event })=>{
 ```
 Unutmayın ki aynı anda istediğiniz kadar özelliği çağırabilirsiniz!
 
-#ChatInput & ChatInputOptions
+# ChatInput & ChatInputOptions
 
 `ChatInput` sizin anlayacağınız şekilde "Slash Komut" olarak tanımlanmaktadır.
 
