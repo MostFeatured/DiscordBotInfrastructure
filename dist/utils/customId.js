@@ -20,6 +20,8 @@ function customIdBuilder(dbi, name, customData, ttl) {
             return `¤${id}`;
         })
     ].join("—");
+    if (!dbi.config.strict)
+        customId = customId.slice(0, 100);
     if (customId.length > 100)
         throw new Error("Custom id cannot be longer than 100 characters.");
     return customId;
