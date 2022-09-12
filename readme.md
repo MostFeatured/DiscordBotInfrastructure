@@ -249,6 +249,8 @@ Bir eşsiz özelliği daha sizlere sunuyoruz. Artık her kullanıcıya özel kom
 <sub>`src/interactionlocales.js` dosyası:</sub>
 
 ```js
+const dbi = require("../dbi");
+
 dbi.register(({ InteractionLocale })=>{
   InteractionLocale({
     name: "cinsiyet seç",
