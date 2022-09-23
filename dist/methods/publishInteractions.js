@@ -159,11 +159,11 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
         return all;
     }, []);
     switch (publishType) {
-        case "Global": {
+        case "Guild": {
             await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body });
             break;
         }
-        case "Guild": {
+        case "Global": {
             await rest.put(v9_1.Routes.applicationCommands(me.id), { body });
             break;
         }
