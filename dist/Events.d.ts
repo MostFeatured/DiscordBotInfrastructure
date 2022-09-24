@@ -1,5 +1,6 @@
 import { DBI } from "./DBI";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
+import { DBILocale } from "./types/Locale";
 export declare type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent";
 export declare class Events {
     DBI: DBI;
@@ -12,6 +13,10 @@ export declare class Events {
     on(eventName: "beforeEvent" | "afterEvent", handler: (data: {
         [key: string]: any;
         other: Record<string, any>;
+        locale?: {
+            guild: DBILocale;
+        };
+        eventName: string;
     }) => Promise<boolean> | boolean, options?: {
         once: boolean;
     }): (() => any);

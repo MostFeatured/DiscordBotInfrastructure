@@ -7,6 +7,7 @@ class DBIEvent {
     id;
     name;
     onExecute;
+    ordered;
     dbi;
     constructor(dbi, cfg) {
         this.dbi = dbi;
@@ -15,6 +16,7 @@ class DBIEvent {
         this.other = cfg.other;
         this.name = cfg.name;
         this.onExecute = cfg.onExecute;
+        this.ordered = cfg.ordered ?? false;
     }
 }
 exports.DBIEvent = DBIEvent;

@@ -1,5 +1,6 @@
 import Discord from "discord.js";
 import { DBI } from "../DBI";
+import { DBILocale } from "./Locale";
 export interface ClientEvents {
     applicationCommandPermissionsUpdate: {
         data: Discord.ApplicationCommandPermissionsUpdateData;
@@ -241,6 +242,10 @@ export declare type DBIEventCombinations = {
         name: K;
         onExecute: (ctx: ClientEvents[K] & {
             other: Record<string, any>;
+            locale?: {
+                guild: DBILocale;
+            };
+            eventName: string;
         }) => Promise<any> | any;
     };
 }[keyof ClientEvents];
@@ -251,6 +256,7 @@ export declare class DBIEvent {
     id?: string;
     name: string;
     onExecute: (...args: any[]) => any;
+    ordered?: boolean;
     dbi: DBI;
     constructor(dbi: DBI, cfg: TDBIEventOmitted);
 }
