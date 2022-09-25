@@ -16,7 +16,7 @@ class DBISelectMenu extends Interaction_1.DBIBaseInteraction {
         return {
             ...this.options,
             ...(arg?.override || {}),
-            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.tll)
+            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
         };
     }
     ;

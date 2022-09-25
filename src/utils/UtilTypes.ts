@@ -1,6 +1,6 @@
 export interface IDBIToJSONArgs<T> {
   reference?: {
-    tll?: number;
+    ttl?: number;
     data: (string | number | object)[];
   };
   override: T;
