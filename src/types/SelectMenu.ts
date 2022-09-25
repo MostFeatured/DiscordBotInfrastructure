@@ -2,6 +2,7 @@ import Discord from "discord.js";
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import { customIdBuilder } from "../utils/customId";
+import { IDBIToJSONArgs } from "../utils/UtilTypes";
 
 export interface IDBISelectMenuExecuteCtx extends IDBIBaseExecuteCtx {
   interaction: Discord.ButtonInteraction<"cached">;
@@ -16,20 +17,17 @@ export class DBISelectMenu extends DBIBaseInteraction {
       ...(args as any),
       type: "SelectMenu",
     });
-    this.referenceTTL = args.referenceTTL;
   }
 
-  declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type"> | ((data: (number | string | any)[]) => Omit<Discord.SelectMenuComponentData, "customId" | "type">);
+  declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
 
   override onExecute(ctx: IDBISelectMenuExecuteCtx): Promise<any> | any { };
 
-  declare referenceTTL?: number;
-
-  toJSON(...customData: (string | number | object)[]): Discord.SelectMenuComponentData {
+  toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
     return {
-      ...(typeof this.options == "function" ? this.options(customData) : this.options),
-      customId: customIdBuilder(this.dbi, this.name, customData, this.referenceTTL),
-      type: Discord.ComponentType.SelectMenu
-    } as any
+      ...this.options,
+      ...(arg?.override || {}),
+      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.tll)
+    } as any;
   };
 }

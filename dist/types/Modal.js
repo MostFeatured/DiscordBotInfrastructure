@@ -9,14 +9,14 @@ class DBIModal extends Interaction_1.DBIBaseInteraction {
             ...args,
             type: "Modal"
         });
-        this.referenceTTL = args.referenceTTL;
     }
     onExecute(ctx) { }
     ;
-    toJSON(...customData) {
+    toJSON(arg = {}) {
         return {
-            ...(typeof this.options == "function" ? this.options(customData) : this.options),
-            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, customData, this.referenceTTL)
+            ...this.options,
+            ...(arg?.override || {}),
+            customId: (0, customId_1.customIdBuilder)(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.tll)
         };
     }
     ;

@@ -205,7 +205,7 @@ function formatLocale(locale) {
         longAliases.forEach((longLocale) => {
             allNameLocales[longLocale] = localeData.name;
             descriptionLocales[longLocale] = localeData.description;
-            Object.entries(localeData.options || []).forEach(([optionName, optionData]) => {
+            Object.entries(localeData?.options || {}).forEach(([optionName, optionData]) => {
                 if (!optionsLocales[optionName])
                     optionsLocales[optionName] = {};
                 let optionLocale = optionsLocales[optionName];
@@ -215,7 +215,7 @@ function formatLocale(locale) {
                     optionLocale.descriptionLocales = {};
                 if (!optionLocale.choiceLocales)
                     optionLocale.choiceLocales = {};
-                Object.entries(optionData.choices).forEach(([choiceOriginalName, choiceName]) => {
+                Object.entries(optionData?.choices || {}).forEach(([choiceOriginalName, choiceName]) => {
                     if (!optionLocale.choiceLocales)
                         optionLocale.choiceLocales = {};
                     if (!optionLocale.choiceLocales[choiceOriginalName])

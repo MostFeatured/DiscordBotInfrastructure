@@ -1,0 +1,1 @@
+{"version":3,"file":"UtilTypes.js","sourceRoot":"","sources":["../../src/utils/UtilTypes.ts"],"names":[],"mappings":"","sourcesContent":["export interface IDBIToJSONArgs<T> {\r\n  reference?: {\r\n    tll?: number;\r\n    data: (string | number | object)[];\r\n  };\r\n  override: T;\r\n}"]}

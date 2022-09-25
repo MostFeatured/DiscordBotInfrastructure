@@ -2,6 +2,7 @@ import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import Discord from "discord.js";
 import { customIdBuilder } from "../utils/customId";
+import { IDBIToJSONArgs } from "../utils/UtilTypes";
 
 export interface IDBIModalExecuteCtx extends IDBIBaseExecuteCtx {
   interaction: Discord.ModalSubmitInteraction<"cached">;
@@ -22,19 +23,17 @@ export class DBIModal extends DBIBaseInteraction {
       ...(args as any),
       type: "Modal"
     });
-    this.referenceTTL = args.referenceTTL;
   }
 
-  declare options: ModalComponentData | ((data: TDBIReferencedData[]) => ModalComponentData);
+  declare options: ModalComponentData;
 
   override onExecute(ctx: IDBIModalExecuteCtx): Promise<any> | any { };
 
-  declare referenceTTL?: number;
-
-  toJSON(...customData: (string | number | object)[]): Discord.ModalComponentData {
+  toJSON(arg: IDBIToJSONArgs<ModalComponentData> = {} as any): Discord.ModalComponentData {
     return {
-      ...(typeof this.options == "function" ? this.options(customData as any) : this.options),
-      customId: customIdBuilder(this.dbi, this.name, customData, this.referenceTTL)
+      ...this.options,
+      ...(arg?.override || {}),
+      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.tll)
     } as any;
   };
 }
