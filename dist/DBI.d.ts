@@ -11,6 +11,7 @@ import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserCont
 import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
+import { TDBIInteractions } from "./types/Interaction";
 export interface DBIStore {
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<void>;
@@ -76,7 +77,6 @@ export interface DBIRegisterAPI {
     Modal(cfg: TDBIModalOmitted): DBIModal;
     onUnload(cb: () => Promise<any> | any): any;
 }
-export declare type TDBIInteractions = DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal;
 export declare class DBI<TOtherData = Record<string, any>> {
     namespace: string;
     config: DBIConfig;

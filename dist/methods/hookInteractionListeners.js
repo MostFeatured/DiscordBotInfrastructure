@@ -40,6 +40,7 @@ function hookInteractionListeners(dbi) {
                 let response = await option.onComplete({
                     value: focussed.value,
                     interaction: inter,
+                    dbiInteraction: dbiInter,
                     dbi,
                     data,
                     other,
@@ -68,6 +69,7 @@ function hookInteractionListeners(dbi) {
                 dbi.events.trigger("interactionRateLimit", {
                     dbi,
                     interaction: inter,
+                    dbiInteraction: dbiInter,
                     locale,
                     data,
                     rateLimit: {
@@ -87,13 +89,15 @@ function hookInteractionListeners(dbi) {
             // @ts-ignore
             interaction: inter,
             // @ts-ignore
+            dbiInteraction: dbiInter,
+            // @ts-ignore
             locale,
             setRateLimit,
             // @ts-ignore
             data,
             other
         });
-        dbi.events.trigger("afterInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other });
+        dbi.events.trigger("afterInteraction", { dbi, interaction: inter, dbiInteraction: dbiInter, locale, setRateLimit, data, other });
     }
     dbi.client.on("interactionCreate", handle);
     return () => {

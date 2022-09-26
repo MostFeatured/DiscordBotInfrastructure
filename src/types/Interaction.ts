@@ -1,6 +1,14 @@
 import Discord from "discord.js";
 import { DBI } from "../DBI";
+import { DBIButton } from "./Button";
+import { DBIChatInput } from "./ChatInput/ChatInput";
 import { DBILocale } from "./Locale";
+import { DBIMessageContextMenu } from "./MessageContextMenu";
+import { DBIModal } from "./Modal";
+import { DBISelectMenu } from "./SelectMenu";
+import { DBIUserContextMenu } from "./UserContextMenu";
+
+export type TDBIInteractions = DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal;
 
 export interface IDBIBaseExecuteCtx {
   interaction:
@@ -16,6 +24,7 @@ export interface IDBIBaseExecuteCtx {
     guild?: DBILocale
   }
   dbi: DBI;
+  dbiInteraction: TDBIInteractions;
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
   other: Record<string, any>;
 }
