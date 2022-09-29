@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as stuffs from "stuffs";
+import { namespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 
 export interface DBILangObject {
@@ -16,14 +17,14 @@ export type TDBILocaleConstructor = Omit<DBILocale, "data" | "dbi"> & { data: DB
 
 export class DBILocale {
   name: TDBILocaleString;
-  data: DBILangObject;
+  data: namespaceData[DBI["namespace"]]["contentLocale"];
   private _data;
   dbi: DBI;
   constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convertLang(cfg.data as any);
+    this.data = convertLang(cfg.data as any) as any;
   }
 }
 

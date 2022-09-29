@@ -1,0 +1,1 @@
+{"version":3,"file":"namespaceData.js","sourceRoot":"","sources":["../../generated/namespaceData.ts"],"names":[],"mappings":"","sourcesContent":["export interface namespaceData {\r\n  test: {\r\n    contentLocale: {\r\n      zort: {\r\n        pırt: (...args: string[]) => string;\r\n      }\r\n    }\r\n  };\r\n}\r\n\r\nexport type namespaceEnums = keyof namespaceData;"]}

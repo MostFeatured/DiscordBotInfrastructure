@@ -18,6 +18,7 @@ import * as Sharding from "discord-hybrid-sharding";
 import _ from "lodash";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
+import { namespaceEnums } from "../generated/namespaceData";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -94,8 +95,8 @@ export interface DBIRegisterAPI {
   onUnload(cb: () => Promise<any> | any): any;
 }
 
-export class DBI<TOtherData = Record<string, any>> {
-  namespace: string;
+export class DBI<TOtherData = Record<string, any>, TNamespace = namespaceEnums> {
+  namespace: TNamespace;
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
@@ -115,8 +116,8 @@ export class DBI<TOtherData = Record<string, any>> {
   cluster?: Sharding.Client;
   private _loaded: boolean;
   private _hooked: boolean;
-  constructor(namespace: string, config: DBIConfigConstructor) {
-    this.namespace = namespace;
+  constructor(namespace: namespaceEnums, config: DBIConfigConstructor) {
+    this.namespace = namespace as any;
 
     config.store = config.store as any || new MemoryStore();
     config.defaults = {
@@ -205,7 +206,7 @@ export class DBI<TOtherData = Record<string, any>> {
 
     for await (const cb of this.data.registers) {
       let ChatInput = function(cfg: DBIChatInput) {
-        let dbiChatInput = new DBIChatInput(self, cfg);
+        let dbiChatInput = new DBIChatInput(self as any, cfg);
         if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type}"!`);
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
@@ -213,7 +214,7 @@ export class DBI<TOtherData = Record<string, any>> {
       ChatInput = Object.assign(ChatInput, class { constructor(...args: any[]) { return ChatInput.apply(this, args as any); } });
 
       let Event = function(cfg: TDBIEventOmitted) {
-        let dbiEvent = new DBIEvent(self, cfg);
+        let dbiEvent = new DBIEvent(self as any, cfg);
         if (self.config.strict && self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
         self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
@@ -221,7 +222,7 @@ export class DBI<TOtherData = Record<string, any>> {
       Event = Object.assign(Event, class { constructor(...args: any[]) { return Event.apply(this, args as any); } });
 
       let Button = function(cfg: TDBIButtonOmitted) {
-        let dbiButton = new DBIButton(self, cfg);
+        let dbiButton = new DBIButton(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
         self.data.interactions.set(dbiButton.name, dbiButton);
         return dbiButton;
@@ -229,7 +230,7 @@ export class DBI<TOtherData = Record<string, any>> {
       Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
 
       let SelectMenu = function(cfg: TDBISelectMenuOmitted) {
-        let dbiSelectMenu = new DBISelectMenu(self, cfg);
+        let dbiSelectMenu = new DBISelectMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
         self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
         return dbiSelectMenu;
@@ -237,7 +238,7 @@ export class DBI<TOtherData = Record<string, any>> {
       SelectMenu = Object.assign(SelectMenu, class { constructor(...args: any[]) { return SelectMenu.apply(this, args as any); } });
 
       let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted) {
-        let dbiMessageContextMenu = new DBIMessageContextMenu(self, cfg);
+        let dbiMessageContextMenu = new DBIMessageContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
         return dbiMessageContextMenu;
@@ -245,7 +246,7 @@ export class DBI<TOtherData = Record<string, any>> {
       MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args: any[]) { return MessageContextMenu.apply(this, args as any); } });
 
       let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted) {
-        let dbiUserContextMenu = new DBIUserContextMenu(self, cfg);
+        let dbiUserContextMenu = new DBIUserContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
         return dbiUserContextMenu;
@@ -253,7 +254,7 @@ export class DBI<TOtherData = Record<string, any>> {
       UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args: any[]) { return UserContextMenu.apply(this, args as any); } });
 
       let Modal = function(cfg: TDBIModalOmitted) {
-        let dbiModal = new DBIModal(self, cfg);
+        let dbiModal = new DBIModal(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
         self.data.interactions.set(dbiModal.name, dbiModal);
         return dbiModal;
@@ -261,7 +262,7 @@ export class DBI<TOtherData = Record<string, any>> {
       Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
 
       let Locale = function(cfg: TDBILocaleConstructor) {
-        let dbiLocale = new DBILocale(self, cfg);
+        let dbiLocale = new DBILocale(self as any, cfg);
         if (self.config.strict && self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
         self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
