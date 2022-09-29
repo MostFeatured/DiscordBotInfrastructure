@@ -7,4 +7,4 @@ export function createDBI<TOtherType = Record<string, any>, TNamespace extends n
   return new DBI<TOtherType, TNamespace>(namespace, cfg);
 }
 
-// let testDbi = createDBI<{},"test">("test", {discord: {token: "sa", options: {intents: []}}})
+let testDbi = createDBI<{},"test">("test", {discord: {token: "sa", options: {intents: []}}})
