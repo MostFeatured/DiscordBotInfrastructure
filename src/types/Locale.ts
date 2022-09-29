@@ -24,11 +24,11 @@ export class DBILocale {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convertLang(cfg.data as any) as any;
+    this.data = convertLang(cfg.data as any);
   }
 }
 
-export function convertLang(data: DBILangConstructorObject): DBILangObject {
+export function convertLang(data: DBILangConstructorObject): namespaceData[DBI["namespace"]]["contentLocale"] {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
       return [key, (...args: any[]) => {
