@@ -8,14 +8,14 @@ import { DBIMessageContextMenu } from "./MessageContextMenu";
 import { DBIModal } from "./Modal";
 import { DBISelectMenu } from "./SelectMenu";
 import { DBIUserContextMenu } from "./UserContextMenu";
-export declare type TDBIInteractions = DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal;
-export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> {
+export declare type TDBIInteractions = DBIChatInput<NamespaceEnums> | DBIButton<NamespaceEnums> | DBISelectMenu<NamespaceEnums> | DBIMessageContextMenu<NamespaceEnums> | DBIUserContextMenu<NamespaceEnums> | DBIModal<NamespaceEnums>;
+export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
     interaction: Discord.ChatInputCommandInteraction | Discord.UserContextMenuCommandInteraction | Discord.MessageContextMenuCommandInteraction | Discord.ModalSubmitInteraction | Discord.AutocompleteInteraction | Discord.SelectMenuInteraction | Discord.ButtonInteraction;
     locale: {
         user: DBILocale<TNamespace>;
         guild?: DBILocale<TNamespace>;
     };
-    dbi: DBI;
+    dbi: DBI<TNamespace>;
     dbiInteraction: TDBIInteractions;
     setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
     other: Record<string, any>;
@@ -35,8 +35,8 @@ export declare type DBIRateLimit = {
     duration: number;
 };
 export declare class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
-    constructor(dbi: DBI, cfg: Omit<DBIBaseInteraction<TNamespace>, "dbi">);
-    dbi: DBI;
+    constructor(dbi: DBI<TNamespace>, cfg: Omit<DBIBaseInteraction<TNamespace>, "dbi">);
+    dbi: DBI<TNamespace>;
     name: string;
     description: string;
     readonly type: TDBIInteractionTypes;

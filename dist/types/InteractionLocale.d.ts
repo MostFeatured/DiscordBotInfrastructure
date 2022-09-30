@@ -1,3 +1,4 @@
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { TDBILocaleString } from "./Locale";
 export declare type TDBIInteractionLocaleData = {
@@ -19,7 +20,7 @@ export declare type TDBIInteractionLocaleOmitted = Omit<DBIInteractionLocale, "d
 export declare class DBIInteractionLocale {
     name: string;
     data: TDBIInteractionLocaleData;
-    dbi: DBI;
+    dbi: DBI<NamespaceEnums>;
     constructor(dbi: any, cfg: TDBIInteractionLocaleOmitted);
 }
 //# sourceMappingURL=InteractionLocale.d.ts.map

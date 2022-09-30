@@ -1,13 +1,14 @@
+import { NamespaceEnums } from "../generated/namespaceData";
 import { DBI } from "./DBI";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
 import { DBILocale } from "./types/Locale";
 
 export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent";
 
-export class Events {
-  DBI: DBI;
+export class Events<TNamespace extends NamespaceEnums> {
+  DBI: DBI<TNamespace>;
   handlers: Record<string, Array<(data: any) => boolean | Promise<boolean>>>;
-  constructor(DBI: DBI) {
+  constructor(DBI: DBI<TNamespace>) {
     this.DBI = DBI;
 
     this.handlers = {
@@ -32,19 +33,19 @@ export class Events {
 
   on(
     eventName: "beforeInteraction" | "afterInteraction",
-    handler: (data: IDBIBaseExecuteCtx) => Promise<boolean> | boolean,
+    handler: (data: IDBIBaseExecuteCtx<TNamespace>) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
   on(
     eventName: "beforeEvent" | "afterEvent",
-    handler: (data: { [key: string]: any, other: Record<string, any>, locale?: { guild: DBILocale }, eventName: string }) => Promise<boolean> | boolean,
+    handler: (data: { [key: string]: any, other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
   on(
     eventName: "interactionRateLimit",
-    handler: (data: Omit<IDBIBaseExecuteCtx, "other" | "setRateLimit"> & { rateLimit: { type: TDBIRateLimitTypes, duration: number, at: number } }) => Promise<boolean> | boolean,
+    handler: (data: Omit<IDBIBaseExecuteCtx<TNamespace>, "other" | "setRateLimit"> & { rateLimit: { type: TDBIRateLimitTypes, duration: number, at: number } }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 

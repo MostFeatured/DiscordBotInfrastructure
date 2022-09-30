@@ -1,8 +1,9 @@
 import { DBI } from "../DBI";
 import Discord from "discord.js";
 import { parseCustomId } from "../utils/customId";
+import { NamespaceEnums } from "../../generated/namespaceData";
 
-export function hookInteractionListeners(dbi: DBI): () => any {
+export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(inter: Discord.Interaction<"cached">) {
 
     const dbiInter =

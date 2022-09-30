@@ -90,7 +90,7 @@ export interface ClientEvents {
   guildScheduledEventUserRemove: { guildScheduledEvent: Discord.GuildScheduledEvent, user: Discord.User };
 }
 
-export type DBIEventCombinations<TNamespace extends NamespaceEnums = NamespaceEnums> = {
+export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
   [K in keyof ClientEvents]: {
     name: K,
     onExecute: (ctx: ClientEvents[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string }) => Promise<any> | any
@@ -106,8 +106,8 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
   name: string;
   onExecute: (...args: any[]) => any;
   ordered?: boolean;
-  dbi: DBI;
-  constructor(dbi: DBI, cfg: TDBIEventOmitted<TNamespace>) {
+  dbi: DBI<TNamespace>;
+  constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>) {
     this.dbi = dbi;
     this.type = "Event";
     this.id = cfg.id;

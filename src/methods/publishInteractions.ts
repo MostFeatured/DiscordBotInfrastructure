@@ -6,13 +6,14 @@ import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
 import { DBI } from "../DBI";
 import { DBIInteractionLocale } from "../types/InteractionLocale";
+import { NamespaceEnums } from "../../generated/namespaceData";
 
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
 
 export async function publishInteractions(
   clientToken: string,
-  interactions: Discord.Collection<string, DBIChatInput>,
+  interactions: Discord.Collection<string, DBIChatInput<NamespaceEnums>>,
   interactionsLocales: Discord.Collection<string, DBIInteractionLocale>,
   publishType: "Guild" | "Global",
   guildId?: string

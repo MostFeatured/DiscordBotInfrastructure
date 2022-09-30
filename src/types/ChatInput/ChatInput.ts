@@ -10,7 +10,7 @@ export interface IDBIChatInputExecuteCtx<TNamespace extends NamespaceEnums> exte
 export type TDBIChatInputOmitted<TNamespace extends NamespaceEnums> = Omit<DBIChatInput<TNamespace>, "type" | "dbi">;
 
 export class DBIChatInput<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
-  constructor(dbi: DBI, cfg: TDBIChatInputOmitted<TNamespace>) {
+  constructor(dbi: DBI<TNamespace, {}>, cfg: TDBIChatInputOmitted<TNamespace>) {
     super(dbi, {
       ...(cfg as any),
       type: "ChatInput",

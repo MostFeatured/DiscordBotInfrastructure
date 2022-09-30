@@ -65,10 +65,10 @@ export interface DBIConfigConstructor {
     };
     strict?: boolean;
 }
-export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnums> {
-    ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
+export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
+    ChatInput(cfg: TDBIChatInputOmitted<TNamespace>): DBIChatInput<TNamespace>;
     ChatInputOptions: typeof DBIChatInputOptions;
-    Event(cfg: TDBIEventOmitted): DBIEvent;
+    Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
     Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
     Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
     SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
@@ -78,15 +78,15 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnu
     Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
     onUnload(cb: () => Promise<any> | any): any;
 }
-export declare class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceEnums = NamespaceEnums> {
+export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, any>> {
     namespace: TNamespace;
     config: DBIConfig;
     client: Discord.Client<true>;
     data: {
         interactions: Discord.Collection<string, TDBIInteractions>;
-        events: Discord.Collection<string, DBIEvent>;
+        events: Discord.Collection<string, DBIEvent<TNamespace>>;
         plugins: Discord.Collection<string, any>;
-        locales: Discord.Collection<string, DBILocale>;
+        locales: Discord.Collection<string, DBILocale<TNamespace>>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
         eventMap: Record<string, string[]>;
@@ -99,7 +99,7 @@ export declare class DBI<TOtherData = Record<string, any>, TNamespace extends Na
             ttl?: number;
         }>;
     };
-    events: Events;
+    events: Events<TNamespace>;
     cluster?: Sharding.Client;
     private _loaded;
     private _hooked;
@@ -115,7 +115,7 @@ export declare class DBI<TOtherData = Record<string, any>, TNamespace extends Na
     /**
      * this.data.events.get(name)
      */
-    event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent;
+    event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent<TNamespace>;
     /**
      * this.data.locales.get(name)
      */
