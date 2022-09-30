@@ -82,9 +82,9 @@ export interface DBIConfigConstructor {
 }
 
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnums> {
-  ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
+  ChatInput(cfg: TDBIChatInputOmitted<TNamespace>): DBIChatInput<TNamespace>;
   ChatInputOptions: typeof DBIChatInputOptions;
-  Event(cfg: TDBIEventOmitted): DBIEvent;
+  Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
   Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
   SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
@@ -101,7 +101,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
   client: Discord.Client<true>;
   data: {
     interactions: Discord.Collection<string, TDBIInteractions>;
-    events: Discord.Collection<string, DBIEvent>;
+    events: Discord.Collection<string, DBIEvent<TNamespace>>;
     plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale>;
     interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
@@ -205,7 +205,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
     const self = this;
 
     for await (const cb of this.data.registers) {
-      let ChatInput = function(cfg: DBIChatInput) {
+      let ChatInput = function(cfg: DBIChatInput<TNamespace>) {
         let dbiChatInput = new DBIChatInput(self as any, cfg);
         if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type}"!`);
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
@@ -213,7 +213,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       ChatInput = Object.assign(ChatInput, class { constructor(...args: any[]) { return ChatInput.apply(this, args as any); } });
 
-      let Event = function(cfg: TDBIEventOmitted) {
+      let Event = function(cfg: TDBIEventOmitted<TNamespace>) {
         let dbiEvent = new DBIEvent(self as any, cfg);
         if (self.config.strict && self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
         self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
@@ -221,7 +221,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       Event = Object.assign(Event, class { constructor(...args: any[]) { return Event.apply(this, args as any); } });
 
-      let Button = function(cfg: TDBIButtonOmitted) {
+      let Button = function(cfg: TDBIButtonOmitted<TNamespace>) {
         let dbiButton = new DBIButton(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
         self.data.interactions.set(dbiButton.name, dbiButton);
@@ -229,7 +229,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
 
-      let SelectMenu = function(cfg: TDBISelectMenuOmitted) {
+      let SelectMenu = function(cfg: TDBISelectMenuOmitted<TNamespace>) {
         let dbiSelectMenu = new DBISelectMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
         self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
@@ -237,7 +237,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       SelectMenu = Object.assign(SelectMenu, class { constructor(...args: any[]) { return SelectMenu.apply(this, args as any); } });
 
-      let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted) {
+      let MessageContextMenu = function(cfg: TDBIMessageContextMenuOmitted<TNamespace>) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
@@ -245,7 +245,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args: any[]) { return MessageContextMenu.apply(this, args as any); } });
 
-      let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted) {
+      let UserContextMenu = function(cfg: TDBIUserContextMenuOmitted<TNamespace>) {
         let dbiUserContextMenu = new DBIUserContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
         self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
@@ -253,7 +253,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
       };
       UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args: any[]) { return UserContextMenu.apply(this, args as any); } });
 
-      let Modal = function(cfg: TDBIModalOmitted) {
+      let Modal = function(cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
         self.data.interactions.set(dbiModal.name, dbiModal);
@@ -305,7 +305,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
   /**
    * this.data.events.get(name)
    */
-  event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent {
+  event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent<TNamespace> {
     return this.data.events.get(name);
   }
 
