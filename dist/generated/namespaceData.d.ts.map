@@ -1,1 +1,0 @@
-{"version":3,"file":"namespaceData.d.ts","sourceRoot":"","sources":["../../generated/namespaceData.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,aAAa;IAC5B,IAAI,EAAE;QACJ,aAAa,EAAE;YACb,IAAI,EAAE;gBACJ,IAAI,EAAE,CAAC,GAAG,IAAI,EAAE,MAAM,EAAE,KAAK,MAAM,CAAC;aACrC,CAAA;SACF,CAAA;KACF,CAAC;CACH;AAED,oBAAY,cAAc,GAAG,MAAM,aAAa,CAAC"}

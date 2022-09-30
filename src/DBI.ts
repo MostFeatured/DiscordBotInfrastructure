@@ -18,7 +18,7 @@ import * as Sharding from "discord-hybrid-sharding";
 import _ from "lodash";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
-import { NamespaceEnums } from "../generated/namespaceData";
+import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -298,22 +298,22 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
   /**
    * this.data.interactions.get(name)
    */
-  interaction(name: string): TDBIInteractions {
-    return this.data.interactions.get(name);
+  interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName] {
+    return this.data.interactions.get(name as any) as any;
   }
 
   /**
    * this.data.events.get(name)
    */
-  event(name: string): DBIEvent {
+  event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent {
     return this.data.events.get(name);
   }
 
   /**
    * this.data.locales.get(name)
    */
-  locale(name: string): DBILocale {
-    return this.data.locales.get(name);
+  locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(name: TLocaleName): DBILocale<TNamespace> {
+    return this.data.locales.get(name) as any;
   }
 
   /**

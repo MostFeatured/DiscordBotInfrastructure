@@ -12,6 +12,7 @@ import { DBIModal, TDBIModalOmitted } from "./types/Modal";
 import * as Sharding from "discord-hybrid-sharding";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
+import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
 export interface DBIStore {
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<void>;
@@ -64,21 +65,21 @@ export interface DBIConfigConstructor {
     };
     strict?: boolean;
 }
-export interface DBIRegisterAPI {
+export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnums> {
     ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
     ChatInputOptions: typeof DBIChatInputOptions;
     Event(cfg: TDBIEventOmitted): DBIEvent;
-    Locale(cfg: TDBILocaleConstructor): DBILocale;
-    Button(cfg: TDBIButtonOmitted): DBIButton;
-    SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
-    MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
-    UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
+    Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
+    Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
+    SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
+    MessageContextMenu(cfg: TDBIMessageContextMenuOmitted<TNamespace>): DBIMessageContextMenu<TNamespace>;
+    UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
     InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
-    Modal(cfg: TDBIModalOmitted): DBIModal;
+    Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
     onUnload(cb: () => Promise<any> | any): any;
 }
-export declare class DBI<TOtherData = Record<string, any>> {
-    namespace: string;
+export declare class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceEnums = NamespaceEnums> {
+    namespace: TNamespace;
     config: DBIConfig;
     client: Discord.Client<true>;
     data: {
@@ -102,7 +103,7 @@ export declare class DBI<TOtherData = Record<string, any>> {
     cluster?: Sharding.Client;
     private _loaded;
     private _hooked;
-    constructor(namespace: string, config: DBIConfigConstructor);
+    constructor(namespace: TNamespace, config: DBIConfigConstructor);
     private _hookListeners;
     private _unhookListeners;
     private _unregisterAll;
@@ -110,15 +111,15 @@ export declare class DBI<TOtherData = Record<string, any>> {
     /**
      * this.data.interactions.get(name)
      */
-    interaction(name: string): TDBIInteractions;
+    interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName];
     /**
      * this.data.events.get(name)
      */
-    event(name: string): DBIEvent;
+    event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent;
     /**
      * this.data.locales.get(name)
      */
-    locale(name: string): DBILocale;
+    locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(name: TLocaleName): DBILocale<TNamespace>;
     /**
      * this.data.plugins.get(name)
      */
@@ -140,7 +141,7 @@ export declare class DBI<TOtherData = Record<string, any>> {
      */
     delete(k: string): boolean;
     login(): Promise<any>;
-    register(cb: (api: DBIRegisterAPI) => void): Promise<any>;
+    register(cb: (api: DBIRegisterAPI<TNamespace>) => void): Promise<any>;
     load(): Promise<boolean>;
     unload(): Promise<boolean>;
     get loaded(): boolean;
