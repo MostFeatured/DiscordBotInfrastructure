@@ -1,14 +1,15 @@
 import Discord from "discord.js";
+import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBI } from "../../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "../Interaction";
 
-export interface IDBIChatInputExecuteCtx extends IDBIBaseExecuteCtx {
+export interface IDBIChatInputExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ChatInputCommandInteraction<"cached">;
 }
 
 export type TDBIChatInputOmitted = Omit<DBIChatInput, "type" | "dbi">;
 
-export class DBIChatInput extends DBIBaseInteraction {
+export class DBIChatInput<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI, cfg: TDBIChatInputOmitted) {
     super(dbi, {
       ...(cfg as any),
@@ -23,5 +24,5 @@ export class DBIChatInput extends DBIBaseInteraction {
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];
   declare options?: any[];
-  override onExecute(ctx: IDBIChatInputExecuteCtx) {}
+  override onExecute(ctx: IDBIChatInputExecuteCtx<TNamespace>) {}
 }

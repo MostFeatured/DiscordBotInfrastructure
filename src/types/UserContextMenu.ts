@@ -1,14 +1,15 @@
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "./Interaction";
 import Discord from "discord.js";
+import { NamespaceEnums } from "../../generated/namespaceData";
 
-export type TDBIUserContextMenuOmitted = Omit<DBIUserContextMenu, "type" | "description" | "dbi" | "options">;
+export type TDBIUserContextMenuOmitted<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBIUserContextMenu<TNamespace>, "type" | "description" | "dbi" | "options">;
 
-export interface IDBIUserContextMenuExecuteCtx extends IDBIBaseExecuteCtx {
+export interface IDBIUserContextMenuExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.UserContextMenuCommandInteraction<"cached">;
 }
 
-export class DBIUserContextMenu extends DBIBaseInteraction {
+export class DBIUserContextMenu<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI, cfg: TDBIUserContextMenuOmitted) {
     super(dbi, {
       ...(cfg as any),
@@ -20,5 +21,5 @@ export class DBIUserContextMenu extends DBIBaseInteraction {
   }
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];
-  override onExecute(ctx: IDBIUserContextMenuExecuteCtx): Promise<any> | any {}
+  override onExecute(ctx: IDBIUserContextMenuExecuteCtx<TNamespace>): Promise<any> | any {}
 }

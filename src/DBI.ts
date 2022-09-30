@@ -85,13 +85,13 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnu
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
   Event(cfg: TDBIEventOmitted): DBIEvent;
-  Locale(cfg: TDBILocaleConstructor): DBILocale<TNamespace>;
-  Button(cfg: TDBIButtonOmitted): DBIButton;
-  SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
-  MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
-  UserContextMenu(cfg: TDBIUserContextMenuOmitted): DBIUserContextMenu;
+  Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
+  Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
+  SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
+  MessageContextMenu(cfg: TDBIMessageContextMenuOmitted<TNamespace>): DBIMessageContextMenu<TNamespace>;
+  UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
   InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
-  Modal(cfg: TDBIModalOmitted): DBIModal;
+  Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
   onUnload(cb: () => Promise<any> | any): any;
 }
 
@@ -116,7 +116,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceE
   cluster?: Sharding.Client;
   private _loaded: boolean;
   private _hooked: boolean;
-  constructor(namespace: NamespaceEnums, config: DBIConfigConstructor) {
+  constructor(namespace: TNamespace, config: DBIConfigConstructor) {
     this.namespace = namespace as any;
 
     config.store = config.store as any || new MemoryStore();
