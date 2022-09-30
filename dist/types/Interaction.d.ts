@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { DBIButton } from "./Button";
 import { DBIChatInput } from "./ChatInput/ChatInput";
@@ -8,11 +9,11 @@ import { DBIModal } from "./Modal";
 import { DBISelectMenu } from "./SelectMenu";
 import { DBIUserContextMenu } from "./UserContextMenu";
 export declare type TDBIInteractions = DBIChatInput | DBIButton | DBISelectMenu | DBIMessageContextMenu | DBIUserContextMenu | DBIModal;
-export interface IDBIBaseExecuteCtx {
+export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> {
     interaction: Discord.ChatInputCommandInteraction | Discord.UserContextMenuCommandInteraction | Discord.MessageContextMenuCommandInteraction | Discord.ModalSubmitInteraction | Discord.AutocompleteInteraction | Discord.SelectMenuInteraction | Discord.ButtonInteraction;
     locale: {
-        user: DBILocale;
-        guild?: DBILocale;
+        user: DBILocale<TNamespace>;
+        guild?: DBILocale<TNamespace>;
     };
     dbi: DBI;
     dbiInteraction: TDBIInteractions;
@@ -33,8 +34,8 @@ export declare type DBIRateLimit = {
      */
     duration: number;
 };
-export declare class DBIBaseInteraction {
-    constructor(dbi: DBI, cfg: Omit<DBIBaseInteraction, "dbi">);
+export declare class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
+    constructor(dbi: DBI, cfg: Omit<DBIBaseInteraction<TNamespace>, "dbi">);
     dbi: DBI;
     name: string;
     description: string;
@@ -42,6 +43,6 @@ export declare class DBIBaseInteraction {
     options?: any | any[];
     other?: Record<string, any>;
     rateLimits?: DBIRateLimit[];
-    onExecute(ctx: IDBIBaseExecuteCtx): Promise<any> | any;
+    onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<any> | any;
 }
 //# sourceMappingURL=Interaction.d.ts.map

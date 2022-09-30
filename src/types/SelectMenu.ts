@@ -3,16 +3,17 @@ import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
+import { NamespaceEnums } from "../../generated/namespaceData";
 
-export interface IDBISelectMenuExecuteCtx extends IDBIBaseExecuteCtx {
+export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ButtonInteraction<"cached">;
   data: TDBIReferencedData[];
 }
 
-export type TDBISelectMenuOmitted = Omit<DBISelectMenu, "type" | "description" | "dbi" | "toJSON">;
+export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
 
-export class DBISelectMenu extends DBIBaseInteraction {
-  constructor(dbi: DBI, args: TDBISelectMenuOmitted) {
+export class DBISelectMenu<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
+  constructor(dbi: DBI, args: TDBISelectMenuOmitted<TNamespace>) {
     super(dbi, {
       ...(args as any),
       type: "SelectMenu",
@@ -21,7 +22,7 @@ export class DBISelectMenu extends DBIBaseInteraction {
 
   declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
 
-  override onExecute(ctx: IDBISelectMenuExecuteCtx): Promise<any> | any { };
+  override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<any> | any { };
 
   toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
     return {
