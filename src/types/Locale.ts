@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as stuffs from "stuffs";
-import { namespaceData } from "../../generated/namespaceData";
+import { NamespaceData, NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 
 export interface DBILangObject {
@@ -15,9 +15,9 @@ export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | 
 
 export type TDBILocaleConstructor = Omit<DBILocale, "data" | "dbi"> & { data: DBILangConstructorObject };
 
-export class DBILocale {
+export class DBILocale<TNamespace extends NamespaceEnums = NamespaceEnums> {
   name: TDBILocaleString;
-  data: namespaceData[DBI["namespace"]]["contentLocale"];
+  data: NamespaceData[TNamespace]["contentLocale"];
   private _data;
   dbi: DBI;
   constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
@@ -28,7 +28,7 @@ export class DBILocale {
   }
 }
 
-export function convertLang(data: DBILangConstructorObject): namespaceData[DBI["namespace"]]["contentLocale"] {
+export function convertLang(data: DBILangConstructorObject): NamespaceData[DBI["namespace"]]["contentLocale"] {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
       return [key, (...args: any[]) => {

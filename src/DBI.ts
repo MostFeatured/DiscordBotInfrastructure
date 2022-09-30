@@ -18,7 +18,7 @@ import * as Sharding from "discord-hybrid-sharding";
 import _ from "lodash";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
-import { namespaceEnums } from "../generated/namespaceData";
+import { NamespaceEnums } from "../generated/namespaceData";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -81,11 +81,11 @@ export interface DBIConfigConstructor {
   strict?: boolean;
 }
 
-export interface DBIRegisterAPI {
+export interface DBIRegisterAPI<TNamespace extends NamespaceEnums = NamespaceEnums> {
   ChatInput(cfg: TDBIChatInputOmitted): DBIChatInput;
   ChatInputOptions: typeof DBIChatInputOptions;
   Event(cfg: TDBIEventOmitted): DBIEvent;
-  Locale(cfg: TDBILocaleConstructor): DBILocale;
+  Locale(cfg: TDBILocaleConstructor): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted): DBIButton;
   SelectMenu(cfg: TDBISelectMenuOmitted): DBISelectMenu;
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted): DBIMessageContextMenu;
@@ -95,7 +95,7 @@ export interface DBIRegisterAPI {
   onUnload(cb: () => Promise<any> | any): any;
 }
 
-export class DBI<TOtherData = Record<string, any>, TNamespace = namespaceEnums> {
+export class DBI<TOtherData = Record<string, any>, TNamespace extends NamespaceEnums = NamespaceEnums> {
   namespace: TNamespace;
   config: DBIConfig;
   client: Discord.Client<true>;
@@ -116,7 +116,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace = namespaceEnums> 
   cluster?: Sharding.Client;
   private _loaded: boolean;
   private _hooked: boolean;
-  constructor(namespace: namespaceEnums, config: DBIConfigConstructor) {
+  constructor(namespace: NamespaceEnums, config: DBIConfigConstructor) {
     this.namespace = namespace as any;
 
     config.store = config.store as any || new MemoryStore();
@@ -359,7 +359,7 @@ export class DBI<TOtherData = Record<string, any>, TNamespace = namespaceEnums> 
     await this.client.login(this.config.sharding == "default" ? undefined : this.config.discord.token);
   }
 
-  async register(cb: (api: DBIRegisterAPI) => void): Promise<any> {
+  async register(cb: (api: DBIRegisterAPI<TNamespace>) => void): Promise<any> {
     this.data.registers.add(cb);
   }
 

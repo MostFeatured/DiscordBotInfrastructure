@@ -1,6 +1,6 @@
 import { DBILangObject } from "../src/types/Locale";
 
-export interface namespaceData {
+export interface NamespaceData {
   // [key: string]: {
   //   contentLocale: DBILangObject
   // }
@@ -13,14 +13,12 @@ export interface namespaceData {
   };
   bum: {
     contentLocale: {
-      zort: {
-        pırt: (...args: string[]) => string;
-      }
+        sort: (...args: string[]) => string;
     }
   }
 }
 
-export type namespaceEnums = keyof namespaceData;
+export type NamespaceEnums = keyof NamespaceData;
 
 /**
 export interface namespaceData {
