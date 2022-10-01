@@ -42,7 +42,8 @@ export class Events<TNamespace extends NamespaceEnums> {
     eventName: "beforeEvent" | "afterEvent",
     handler: (data: {
       [K in keyof ClientEvents]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & ClientEvents[K]
-    }[keyof ClientEvents]) => Promise<boolean> | boolean,    options?: { once: boolean }
+    }[keyof ClientEvents]) => Promise<boolean> | boolean,
+    options?: { once: boolean }
   ): (() => any);
 
   on(
