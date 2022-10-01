@@ -18,7 +18,7 @@ export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBIL
 export class DBILocale<TNamespace extends NamespaceEnums> {
   name: TDBILocaleString;
   data: NamespaceData[TNamespace]["contentLocale"];
-  private _data: TDBILocaleConstructor<TNamespace>["data"];
+  private _data: DBILangConstructorObject;
   dbi: DBI<TNamespace, {}>;
   constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>) {
     this.dbi = dbi;
