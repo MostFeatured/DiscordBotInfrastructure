@@ -1,3 +1,4 @@
 import { DBI } from "../DBI";
-export declare function hookInteractionListeners(dbi: DBI): () => any;
+import { NamespaceEnums } from "../../generated/namespaceData";
+export declare function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any;
 //# sourceMappingURL=hookInteractionListeners.d.ts.map

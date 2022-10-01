@@ -5,15 +5,15 @@ import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
-export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
+export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ButtonInteraction<"cached">;
   data: TDBIReferencedData[];
 }
 
-export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
 
-export class DBISelectMenu<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
-  constructor(dbi: DBI, args: TDBISelectMenuOmitted<TNamespace>) {
+export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
+  constructor(dbi: DBI<TNamespace>, args: TDBISelectMenuOmitted<TNamespace>) {
     super(dbi, {
       ...(args as any),
       type: "SelectMenu",

@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { DBILocale } from "./Locale";
 export interface ClientEvents {
@@ -237,27 +238,27 @@ export interface ClientEvents {
         user: Discord.User;
     };
 }
-export declare type DBIEventCombinations = {
+export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
     [K in keyof ClientEvents]: {
         name: K;
         onExecute: (ctx: ClientEvents[K] & {
             other: Record<string, any>;
             locale?: {
-                guild: DBILocale;
+                guild: DBILocale<TNamespace>;
             };
             eventName: string;
         }) => Promise<any> | any;
     };
 }[keyof ClientEvents];
-export declare type TDBIEventOmitted = Omit<DBIEvent, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations;
-export declare class DBIEvent {
+export declare type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations<TNamespace>;
+export declare class DBIEvent<TNamespace extends NamespaceEnums> {
     readonly type: "Event";
     other?: Record<string, any>;
     id?: string;
     name: string;
     onExecute: (...args: any[]) => any;
     ordered?: boolean;
-    dbi: DBI;
-    constructor(dbi: DBI, cfg: TDBIEventOmitted);
+    dbi: DBI<TNamespace>;
+    constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>);
 }
 //# sourceMappingURL=Event.d.ts.map

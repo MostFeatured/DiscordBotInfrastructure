@@ -1,7 +1,8 @@
 import { DBI } from "../DBI";
 import * as stuffs from "stuffs";
+import { NamespaceEnums } from "../../generated/namespaceData";
 
-export function customIdBuilder(dbi: DBI, name: string, customData: any[], ttl?:number): string {
+export function customIdBuilder(dbi: DBI<NamespaceEnums>, name: string, customData: any[], ttl?:number): string {
   let customId = [
     name,
     ...customData.map(value => {
@@ -21,7 +22,7 @@ export function customIdBuilder(dbi: DBI, name: string, customData: any[], ttl?:
   return customId;
 }
 
-export function parseCustomId(dbi: DBI, customId: string): {name: string, data: any[]} {
+export function parseCustomId(dbi: DBI<NamespaceEnums>, customId: string): {name: string, data: any[]} {
   let splitted = customId.split("—");
   let name = splitted.shift();
   let data = splitted.map(value => {

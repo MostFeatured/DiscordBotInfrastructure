@@ -1,7 +1,8 @@
 import { Guild } from "discord.js";
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 
-export function hookEventListeners(dbi: DBI): () => any {
+export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(eventName: string, ...args: any[]) {
     if (!dbi.data.eventMap[eventName]) return;
 

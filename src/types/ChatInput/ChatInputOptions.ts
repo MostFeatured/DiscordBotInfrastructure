@@ -1,4 +1,5 @@
 import Discord from "discord.js";
+import { NamespaceEnums } from "../../../generated/namespaceData";
 import { IDBIBaseExecuteCtx } from "../Interaction";
 
 type TValueName<T> = { value: T, name: string };
@@ -7,7 +8,7 @@ type TNameDescription = { name: string, description: string, required?: boolean 
 type TMinMaxLength = { maxLength?: number, minLength?: number };
 type TMinMaxValue = { maxValue?: number, minValue?: number };
 
-export interface IDBICompleteCtx<TValueType = string | number> extends IDBIBaseExecuteCtx {
+export interface IDBICompleteCtx<TValueType = string | number> extends IDBIBaseExecuteCtx<NamespaceEnums> {
   interaction: Discord.AutocompleteInteraction;
   value: TValueType;
 }

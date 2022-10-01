@@ -1,3 +1,4 @@
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { TDBILocaleString } from "./Locale";
 
@@ -22,7 +23,7 @@ export type TDBIInteractionLocaleOmitted = Omit<DBIInteractionLocale, "dbi">;
 export class DBIInteractionLocale {
   name: string;
   data: TDBIInteractionLocaleData;
-  dbi: DBI;
+  dbi: DBI<NamespaceEnums>;
   constructor(dbi, cfg: TDBIInteractionLocaleOmitted) {
     this.dbi = dbi;
     this.name = cfg.name;

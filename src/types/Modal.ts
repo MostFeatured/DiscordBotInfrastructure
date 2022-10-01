@@ -5,7 +5,7 @@ import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
-export interface IDBIModalExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
+export interface IDBIModalExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ModalSubmitInteraction<"cached">;
 
   data: TDBIReferencedData[];
@@ -16,10 +16,10 @@ export interface ModalComponentData {
   components: (Discord.ActionRowData<Discord.ModalActionRowComponentData>)[];
 }
 
-export type TDBIModalOmitted<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
 
-export class DBIModal<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
-  constructor(dbi: DBI, args: TDBIModalOmitted) {
+export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
+  constructor(dbi: DBI<TNamespace>, args: TDBIModalOmitted<TNamespace>) {
     super(dbi, {
       ...(args as any),
       type: "Modal"

@@ -3,14 +3,14 @@ import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "./Interaction";
 import Discord from "discord.js";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
-export type TDBIUserContextMenuOmitted<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBIUserContextMenu<TNamespace>, "type" | "description" | "dbi" | "options">;
+export type TDBIUserContextMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIUserContextMenu<TNamespace>, "type" | "description" | "dbi" | "options">;
 
-export interface IDBIUserContextMenuExecuteCtx<TNamespace extends NamespaceEnums = NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
+export interface IDBIUserContextMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.UserContextMenuCommandInteraction<"cached">;
 }
 
-export class DBIUserContextMenu<TNamespace extends NamespaceEnums = NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
-  constructor(dbi: DBI, cfg: TDBIUserContextMenuOmitted) {
+export class DBIUserContextMenu<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
+  constructor(dbi: DBI<TNamespace>, cfg: TDBIUserContextMenuOmitted<TNamespace>) {
     super(dbi, {
       ...(cfg as any),
       type: "UserContextMenu"

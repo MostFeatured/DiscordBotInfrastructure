@@ -13,14 +13,14 @@ export interface DBILangConstructorObject {
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor<TNamespace extends NamespaceEnums = NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi"> & { data: DBILangConstructorObject };
+export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi"> & { data: DBILangConstructorObject };
 
-export class DBILocale<TNamespace extends NamespaceEnums = NamespaceEnums> {
+export class DBILocale<TNamespace extends NamespaceEnums> {
   name: TDBILocaleString;
   data: NamespaceData[TNamespace]["contentLocale"];
   private _data;
-  dbi: DBI;
-  constructor(dbi: DBI, cfg: TDBILocaleConstructor) {
+  dbi: DBI<TNamespace, {}>;
+  constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>) {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
@@ -28,7 +28,7 @@ export class DBILocale<TNamespace extends NamespaceEnums = NamespaceEnums> {
   }
 }
 
-export function convertLang<TNamespace extends NamespaceEnums = NamespaceEnums>(data: DBILangConstructorObject): NamespaceData[TNamespace]["contentLocale"] {
+export function convertLang<TNamespace extends NamespaceEnums>(data: DBILangConstructorObject): NamespaceData[TNamespace]["contentLocale"] {
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
       return [key, (...args: any[]) => {
