@@ -9,7 +9,6 @@ dbi.register(({ ChatInput, ChatInputOptions }) => {
             let gender = interaction.options.get("cinsiyet").value;
             let genderNames = locale.user.data.genders;
             let genderText = locale.user.data.genderText(interaction.user, genderNames[gender]());
-            const clickText = locale.user.data.clickText();
 
             interaction.reply({
                 content: genderText,
@@ -17,7 +16,7 @@ dbi.register(({ ChatInput, ChatInputOptions }) => {
                     {
                         type: Discord.ComponentType.ActionRow,
                         components: [
-                            dbi.interaction("viewGender").toJSON({ gender, clickText }),
+                            dbi.interaction("viewGender").toJSON({ override: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
                         ]
                     }
                 ]

@@ -108,39 +108,41 @@ Remember, you can summon as many features as you want at the same time!
 ```js
 const dbi = require("../dbi");
 const Discord = require("discord.js");
-dbi.register(({ ChatInput, ChatInputOptions })=>{
-  ChatInput({
-    name: "cinsiyet seç",
-    description: "Cinsiyet seçmenizi sağlar.",
-    onExecute({ interaction, locale }) {
-      let gender = interaction.options.get("cinsiyet").value;
-      let genderNames = locale.user.data.genders;
-      let genderText = locale.user.data.genderText(interaction.user, genderNames[gender]());
-      interaction.reply({ 
-        content: genderText,
-        components: [
-          {
-            type: Discord.ComponentType.ActionRow,
-            components: [
-              dbi.interaction("viewGender").toJSON({ gender }),
-            ]
-          }
-        ]
-      });
-    },
-    options: [
-      ChatInputOptions.stringChoices({
-        name: "cinsiyet",
-        description: "Seçeceğiniz cinsiyet.",
-        required: true,
-        choices: [
-          { name: "Erkek", value: "erkek" },
-          { name: "Kadın", value: "kadın" },
-          { name: "Diğer", value: "diğer" },
-        ]
-      })
-    ],
-  });
+
+dbi.register(({ ChatInput, ChatInputOptions }) => {
+    ChatInput({
+        name: "cinsiyet seç",
+        description: "Cinsiyet seçmenizi sağlar.",
+        onExecute({ interaction, locale }) {
+            let gender = interaction.options.get("cinsiyet").value;
+            let genderNames = locale.user.data.genders;
+            let genderText = locale.user.data.genderText(interaction.user, genderNames[gender]());
+
+            interaction.reply({
+                content: genderText,
+                components: [
+                    {
+                        type: Discord.ComponentType.ActionRow,
+                        components: [
+                            dbi.interaction("viewGender").toJSON({ override: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
+                        ]
+                    }
+                ]
+            });
+        },
+        options: [
+            ChatInputOptions.stringChoices({
+                name: "cinsiyet",
+                description: "Seçeceğiniz cinsiyet.",
+                required: true,
+                choices: [
+                    { name: "Erkek", value: "erkek" },
+                    { name: "Kadın", value: "kadın" },
+                    { name: "Diğer", value: "diğer" },
+                ]
+            })
+        ],
+    });
 });
 ```
 In general, the structure of `ChatInput` may seem familiar to you, except for `options`. When you try to fill something in options directly, you will not get autocomplete. Because options expect static functions in ChatInputOptions class. The functions are similar to: `stringChoices`, `user`, `numberAutocomplete` etc.
@@ -170,7 +172,7 @@ When defining an event, you can write the name of the event you want in the `nam
 
 ```js
 const dbi = require("../dbi");
-dbi.register(({ Locale })=>{
+dbi.register(({ Locale }) => {
   Locale({
     name: "tr",
     data: {
@@ -207,11 +209,11 @@ In this section, we will look at three of our features. (Actually, it's all the 
 ```js
 const dbi = require("../dbi");
 const Discord = require("discord.js");
-dbi.register(({ Button, SelectMenu, Modal })=>{
+dbi.register(({ Button, SelectMenu, Modal }) => {
   Button({
     name: "viewGender",
     onExecute({ interaction, data }) {
-      interaction.reply(`\`${data[0].gender}\``);
+      interaction.reply(`\`${data[0]}\``);
     },
     options: {
       style: Discord.ButtonStyle.Primary,
@@ -402,7 +404,7 @@ dbi.register(({ ChatInput, ChatInputOptions })=>{
           {
             type: Discord.ComponentType.ActionRow,
             components: [
-              dbi.interaction("viewGender").toJSON({ gender }),
+              dbi.interaction("viewGender").toJSON({ override: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
             ]
           }
         ]
@@ -495,7 +497,7 @@ dbi.register(({ Button, SelectMenu, Modal })=>{
   Button({
     name: "viewGender",
     onExecute({ interaction, data }) {
-      interaction.reply(`\`${data[0].gender}\``);
+      interaction.reply(`\`${data[0]}\``);
     },
     options: {
       style: Discord.ButtonStyle.Primary,
