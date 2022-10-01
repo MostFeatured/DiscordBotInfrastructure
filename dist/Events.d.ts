@@ -1,5 +1,6 @@
 import { NamespaceEnums } from "../generated/namespaceData";
 import { DBI } from "./DBI";
+import { ClientEvents } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
 import { DBILocale } from "./types/Locale";
 export declare type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent";
@@ -12,13 +13,14 @@ export declare class Events<TNamespace extends NamespaceEnums> {
         once: boolean;
     }): (() => any);
     on(eventName: "beforeEvent" | "afterEvent", handler: (data: {
-        [key: string]: any;
-        other: Record<string, any>;
-        locale?: {
-            guild: DBILocale<TNamespace>;
-        };
-        eventName: string;
-    }) => Promise<boolean> | boolean, options?: {
+        [K in keyof ClientEvents]: {
+            other: Record<string, any>;
+            locale?: {
+                guild: DBILocale<TNamespace>;
+            };
+            eventName: K;
+        } & ClientEvents[K];
+    }[keyof ClientEvents]) => Promise<boolean> | boolean, options?: {
         once: boolean;
     }): (() => any);
     on(eventName: "interactionRateLimit", handler: (data: Omit<IDBIBaseExecuteCtx<TNamespace>, "other" | "setRateLimit"> & {
