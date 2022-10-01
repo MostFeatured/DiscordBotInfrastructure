@@ -184,8 +184,8 @@ class DBI {
             });
             let Locale = function (cfg) {
                 let dbiLocale = new Locale_1.DBILocale(self, cfg);
-                if (self.config.strict && self.data.locales.has(dbiLocale.name))
-                    throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
+                if (self.data.locales.has(dbiLocale.name))
+                    dbiLocale.mergeLocale(self.data.locales.get(dbiLocale.name));
                 self.data.locales.set(dbiLocale.name, dbiLocale);
                 return dbiLocale;
             };

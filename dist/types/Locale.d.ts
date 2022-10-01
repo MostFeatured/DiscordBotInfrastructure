@@ -7,7 +7,7 @@ export interface DBILangConstructorObject {
     [property: string]: DBILangConstructorObject | string;
 }
 export declare type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
-export declare type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi"> & {
+export declare type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi" | "mergeLocale"> & {
     data: DBILangConstructorObject;
 };
 export declare class DBILocale<TNamespace extends NamespaceEnums> {
@@ -16,6 +16,7 @@ export declare class DBILocale<TNamespace extends NamespaceEnums> {
     private _data;
     dbi: DBI<TNamespace, {}>;
     constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>);
+    mergeLocale(locale: DBILocale<TNamespace>): DBILocale<TNamespace>;
 }
 export declare function convertLang<TNamespace extends NamespaceEnums>(data: DBILangConstructorObject): NamespaceData[TNamespace]["contentLocale"];
 //# sourceMappingURL=Locale.d.ts.map

@@ -13,18 +13,27 @@ export interface DBILangConstructorObject {
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi"> & { data: DBILangConstructorObject };
+export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi" | "mergeLocale"> & { data: DBILangConstructorObject };
 
 export class DBILocale<TNamespace extends NamespaceEnums> {
   name: TDBILocaleString;
   data: NamespaceData[TNamespace]["contentLocale"];
-  private _data;
+  private _data: DBILangConstructorObject;
   dbi: DBI<TNamespace, {}>;
   constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>) {
     this.dbi = dbi;
     this.name = cfg.name;
     this._data = cfg.data;
-    this.data = convertLang<TNamespace>(cfg.data as any);
+    this.data = convertLang<TNamespace>(cfg.data);
+  }
+  mergeLocale(locale: DBILocale<TNamespace>): DBILocale<TNamespace> {
+    this._data = { ...locale._data, ...this._data };
+    this.data = convertLang<TNamespace>(this._data);
+
+    locale.data = this.data;
+    locale._data = this._data;
+
+    return this;
   }
 }
 

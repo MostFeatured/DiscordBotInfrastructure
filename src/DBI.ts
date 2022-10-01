@@ -263,7 +263,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
       let Locale = function (cfg: TDBILocaleConstructor<TNamespace>) {
         let dbiLocale = new DBILocale(self as any, cfg);
-        if (self.config.strict && self.data.locales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
+        if (self.data.locales.has(dbiLocale.name)) dbiLocale.mergeLocale(self.data.locales.get(dbiLocale.name));
         self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };

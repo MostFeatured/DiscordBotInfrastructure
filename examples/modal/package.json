@@ -9,7 +9,7 @@
   "author": "risy",
   "license": "ISC",
   "dependencies": {
-    "@mostfeatured/dbi": "^0.0.33",
+    "@mostfeatured/dbi": "^0.0.43",
     "discord.js": "^14.3.0"
   }
 }
