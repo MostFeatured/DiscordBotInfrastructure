@@ -15,6 +15,13 @@ class DBILocale {
         this._data = cfg.data;
         this.data = convertLang(cfg.data);
     }
+    mergeLocale(locale) {
+        this._data = { ...locale._data, ...this._data };
+        this.data = convertLang(this._data);
+        locale.data = this.data;
+        locale._data = this._data;
+        return this;
+    }
 }
 exports.DBILocale = DBILocale;
 function convertLang(data) {
