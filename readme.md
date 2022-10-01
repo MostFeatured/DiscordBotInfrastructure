@@ -92,7 +92,7 @@ const dbi = require("../dbi");
 ```
 And then we call the `register()` function on the infrastructure and put a `callback` function in it. This `callback` function presents as the first parameter everything you can define on the infrastructure as an object. You can perform the definition to the infrastructure by calling the feature function you want from this object.
 ```js
-dbi.register(({ ChatInput, Event })=>{
+dbi.register(({ ChatInput, Event }) => {
   ChatInput({ ... });
   Event({ ... });
 })
@@ -154,7 +154,7 @@ You can also find more examples below for a sample demonstration of how the Loca
 
 ```js
 const dbi = require("../dbi");
-dbi.register(({ Event })=>{
+dbi.register(({ Event }) => {
   Event({
     name: "ready",
     id: "botIsReady",
@@ -237,7 +237,7 @@ For example, the command that appears as `/select gender` to a Turkish user may 
 
 ```js
 const dbi = require("../dbi");
-dbi.register(({ InteractionLocale })=>{
+dbi.register(({ InteractionLocale }) => {
   InteractionLocale({
     name: "cinsiyet seç",
     data: {
@@ -373,7 +373,7 @@ const dbi = require("../dbi");
 ```
 Ve devamında altyapının üzerindeki `register()` fonksiyonunu çağırıp içerisine bir `callback` fonksiyonu koyuyoruz. Bu `callback` fonksiyonu ilk parametre olarak size altyapı üzerine tanımlayabilceğiniz tüm her şeyi bir obje olarak sunuyor. Bu obje içerisinden istediğiniz özellik fonksiyonunu çağırarak altyapıya tanımlama işlemini gerçekleştirebiliyorsunuz.
 ```js
-dbi.register(({ ChatInput, Event })=>{
+dbi.register(({ ChatInput, Event }) => {
   ChatInput({ ... });
   Event({ ... });
 })
@@ -390,7 +390,7 @@ Unutmayın ki aynı anda istediğiniz kadar özelliği çağırabilirsiniz!
 const dbi = require("../dbi");
 const Discord = require("discord.js");
 
-dbi.register(({ ChatInput, ChatInputOptions })=>{
+dbi.register(({ ChatInput, ChatInputOptions }) => {
   ChatInput({
     name: "cinsiyet seç",
     description: "Cinsiyet seçmenizi sağlar.",
@@ -435,7 +435,7 @@ Ayrıca yukarıda göstermiş olduğumuz Locale ve Component sisteminin nasıl k
 ```js
 const dbi = require("../dbi");
 
-dbi.register(({ Event })=>{
+dbi.register(({ Event }) => {
   Event({
     name: "ready",
     id: "botIsReady",
@@ -454,7 +454,7 @@ Event yani olay tanımlarken `name` kısmına istediğiniz olayın ismini yazabi
 ```js
 const dbi = require("../dbi");
 
-dbi.register(({ Locale })=>{
+dbi.register(({ Locale }) => {
   Locale({
     name: "tr",
     data: {
@@ -493,7 +493,7 @@ Bu bölümde ise üç adet özelliğimize bakacağız. (Aslında arka planda hep
 const dbi = require("../dbi");
 const Discord = require("discord.js");
 
-dbi.register(({ Button, SelectMenu, Modal })=>{
+dbi.register(({ Button, SelectMenu, Modal }) => {
   Button({
     name: "viewGender",
     onExecute({ interaction, data }) {
@@ -522,7 +522,7 @@ Bir eşsiz özelliği daha sizlere sunuyoruz. Artık her kullanıcıya özel kom
 ```js
 const dbi = require("../dbi");
 
-dbi.register(({ InteractionLocale })=>{
+dbi.register(({ InteractionLocale }) => {
   InteractionLocale({
     name: "cinsiyet seç",
     data: {
