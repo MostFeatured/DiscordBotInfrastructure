@@ -67,7 +67,7 @@ export interface DBIConfigConstructor {
 }
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
     ChatInput(cfg: TDBIChatInputOmitted<TNamespace>): DBIChatInput<TNamespace>;
-    ChatInputOptions: typeof DBIChatInputOptions;
+    ChatInputOptions: DBIChatInputOptions<TNamespace>;
     Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
     Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
     Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
@@ -85,7 +85,6 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
     data: {
         interactions: Discord.Collection<string, TDBIInteractions>;
         events: Discord.Collection<string, DBIEvent<TNamespace>>;
-        plugins: Discord.Collection<string, any>;
         locales: Discord.Collection<string, DBILocale<TNamespace>>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
@@ -120,10 +119,6 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
      * this.data.locales.get(name)
      */
     locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(name: TLocaleName): DBILocale<TNamespace>;
-    /**
-     * this.data.plugins.get(name)
-     */
-    plugin(name: string): any;
     /**
      * Shorthands for modifying `dbi.data.other`
      */

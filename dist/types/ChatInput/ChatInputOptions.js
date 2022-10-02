@@ -4,7 +4,11 @@ exports.DBIChatInputOptions = void 0;
 const tslib_1 = require("tslib");
 const discord_js_1 = tslib_1.__importDefault(require("discord.js"));
 class DBIChatInputOptions {
-    static stringAutocomplete(cfg) {
+    dbi;
+    constructor(dbi) {
+        this.dbi = dbi;
+    }
+    stringAutocomplete(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.String,
             name: cfg.name,
@@ -16,7 +20,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static stringChoices(cfg) {
+    stringChoices(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.String,
             name: cfg.name,
@@ -27,7 +31,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static string(cfg) {
+    string(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.String,
             name: cfg.name,
@@ -37,7 +41,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static numberAutocomplete(cfg) {
+    numberAutocomplete(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Number,
             name: cfg.name,
@@ -49,7 +53,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static numberChoices(cfg) {
+    numberChoices(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Number,
             name: cfg.name,
@@ -60,7 +64,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static number(cfg) {
+    number(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Number,
             name: cfg.name,
@@ -70,7 +74,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static integerAutocomplete(cfg) {
+    integerAutocomplete(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Integer,
             name: cfg.name,
@@ -82,7 +86,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static integerChoices(cfg) {
+    integerChoices(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Integer,
             name: cfg.name,
@@ -93,7 +97,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static integer(cfg) {
+    integer(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Integer,
             name: cfg.name,
@@ -103,7 +107,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static boolean(cfg) {
+    boolean(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Boolean,
             name: cfg.name,
@@ -111,7 +115,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static attachment(cfg) {
+    attachment(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Attachment,
             name: cfg.name,
@@ -119,7 +123,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static channel(cfg) {
+    channel(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Channel,
             name: cfg.name,
@@ -128,7 +132,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static role(cfg) {
+    role(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Role,
             name: cfg.name,
@@ -136,7 +140,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static mentionable(cfg) {
+    mentionable(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.Mentionable,
             name: cfg.name,
@@ -144,7 +148,7 @@ class DBIChatInputOptions {
             required: cfg.required
         };
     }
-    static user(cfg) {
+    user(cfg) {
         return {
             type: discord_js_1.default.ApplicationCommandOptionType.User,
             name: cfg.name,

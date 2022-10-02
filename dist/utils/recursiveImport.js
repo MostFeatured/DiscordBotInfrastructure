@@ -9,13 +9,17 @@ const path_1 = tslib_1.__importDefault(require("path"));
  */
 async function recursiveImport(folderPath, exts = [".js", ".ts"]) {
     let files = await fs_1.default.promises.readdir(folderPath, { withFileTypes: true });
+    let dirName = __dirname;
     for (const file of files) {
         let filePath = path_1.default.resolve(folderPath, file.name);
-        if (file.isDirectory()) {
-            await recursiveImport(filePath, exts);
-        }
-        else if (exts.some(i => filePath.endsWith(i))) {
-            await Promise.resolve().then(() => tslib_1.__importStar(require(filePath)));
+        let relative = path_1.default.relative(dirName, filePath);
+        if (!relative.includes(`${path_1.default.sep}-`)) {
+            if (file.isDirectory()) {
+                await recursiveImport(filePath, exts);
+            }
+            else if (exts.some(i => file.name.endsWith(i))) {
+                await Promise.resolve().then(() => tslib_1.__importStar(require(filePath)));
+            }
         }
     }
 }

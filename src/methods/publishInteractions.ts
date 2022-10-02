@@ -20,7 +20,7 @@ export async function publishInteractions(
 ) {
   interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
 
-  const rest = new REST({ version: "9" });
+  const rest = new REST({ version: "10" });
   rest.setToken(clientToken);
 
   const me: RESTGetAPIUserResult = await rest.get(Routes.user()) as any;

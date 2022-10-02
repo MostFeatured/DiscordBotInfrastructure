@@ -15,7 +15,6 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
 
     let other = {};
 
-    
     let guildLocaleName = args.reduce((all, current) => {
       if (current?.guild?.id) return current?.guild?.preferredLocale?.split?.("-")?.[0];
       if (current instanceof Guild) return current?.preferredLocale?.split?.("-")?.[0];

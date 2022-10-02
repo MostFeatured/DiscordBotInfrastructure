@@ -8,7 +8,7 @@ const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"]
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
 async function publishInteractions(clientToken, interactions, interactionsLocales, publishType, guildId) {
     interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
-    const rest = new rest_1.REST({ version: "9" });
+    const rest = new rest_1.REST({ version: "10" });
     rest.setToken(clientToken);
     const me = await rest.get(v9_1.Routes.user());
     interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);

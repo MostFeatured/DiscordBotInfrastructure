@@ -2,8 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertLang = exports.DBILocale = void 0;
 const tslib_1 = require("tslib");
-// @ts-ignore
-const stuffs = tslib_1.__importStar(require("stuffs"));
+const stuffs_1 = tslib_1.__importDefault(require("stuffs"));
 class DBILocale {
     name;
     data;
@@ -16,7 +15,7 @@ class DBILocale {
         this.data = convertLang(cfg.data);
     }
     mergeLocale(locale) {
-        this._data = { ...locale._data, ...this._data };
+        this._data = stuffs_1.default.defaultify(locale._data, this._data, true);
         this.data = convertLang(this._data);
         locale.data = this.data;
         locale._data = this._data;
@@ -28,7 +27,7 @@ function convertLang(data) {
     return Object.fromEntries(Object.entries(data).map(([key, value]) => {
         if (typeof value === "string") {
             return [key, (...args) => {
-                    return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]));
+                    return stuffs_1.default.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]));
                 }];
         }
         else {

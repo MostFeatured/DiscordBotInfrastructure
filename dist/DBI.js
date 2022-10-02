@@ -50,7 +50,6 @@ class DBI {
         this.data = {
             interactions: new discord_js_1.default.Collection(),
             events: new discord_js_1.default.Collection(),
-            plugins: new discord_js_1.default.Collection(),
             locales: new discord_js_1.default.Collection(),
             interactionLocales: new discord_js_1.default.Collection(),
             other: {},
@@ -107,10 +106,10 @@ class DBI {
         }
         this.data.events.clear();
         this.data.interactions.clear();
-        this.data.plugins.clear();
     }
     async _registerAll() {
         const self = this;
+        const ChatInputOptions = new ChatInputOptions_1.DBIChatInputOptions(self);
         for await (const cb of this.data.registers) {
             let ChatInput = function (cfg) {
                 let dbiChatInput = new ChatInput_1.DBIChatInput(self, cfg);
@@ -207,7 +206,7 @@ class DBI {
             await cb({
                 ChatInput,
                 Event,
-                ChatInputOptions: ChatInputOptions_1.DBIChatInputOptions,
+                ChatInputOptions,
                 Locale,
                 Button,
                 SelectMenu,
@@ -238,12 +237,6 @@ class DBI {
      */
     locale(name) {
         return this.data.locales.get(name);
-    }
-    /**
-     * this.data.plugins.get(name)
-     */
-    plugin(name) {
-        return this.data.plugins.get(name);
     }
     /**
      * Shorthands for modifying `dbi.data.other`
