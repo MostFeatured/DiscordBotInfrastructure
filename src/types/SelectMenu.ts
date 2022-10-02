@@ -4,6 +4,8 @@ import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./In
 import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
+import stuffs from "stuffs";
+
 
 export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ButtonInteraction<"cached">;
@@ -26,9 +28,9 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
 
   toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
     return {
-      ...this.options,
-      ...(arg?.override || {}),
-      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
+      ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
+      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
+      type: Discord.ComponentType.SelectMenu,
     } as any;
   };
 }

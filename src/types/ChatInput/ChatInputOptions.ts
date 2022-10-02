@@ -1,20 +1,25 @@
 import Discord from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
+import { DBI } from "../../DBI";
 import { IDBIBaseExecuteCtx } from "../Interaction";
 
-type TValueName<T> = { value: T, name: string };
-type TNameDescription = { name: string, description: string, required?: boolean };
+export type TDBIValueName<T> = { value: T, name: string };
+export type TDBIBaseOption = { name: string, description: string, required?: boolean };
 
-type TMinMaxLength = { maxLength?: number, minLength?: number };
-type TMinMaxValue = { maxValue?: number, minValue?: number };
+export type TDBIMinMaxLength = { maxLength?: number, minLength?: number };
+export type TDBIMinMaxValue = { maxValue?: number, minValue?: number };
 
-export interface IDBICompleteCtx<TValueType = string | number> extends IDBIBaseExecuteCtx<NamespaceEnums> {
+export interface IDBICompleteCtx<TNamespace extends NamespaceEnums, TValueType = string | number> extends IDBIBaseExecuteCtx<TNamespace> { 
   interaction: Discord.AutocompleteInteraction;
   value: TValueType;
 }
 
-export class DBIChatInputOptions {
-  static stringAutocomplete(cfg: TNameDescription & TMinMaxLength & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<string>[]> }) {
+export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
+  dbi: DBI<TNamespace>;
+  constructor(dbi: DBI<TNamespace>) {
+    this.dbi = dbi;
+  }
+  stringAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxLength & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<string>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -26,7 +31,7 @@ export class DBIChatInputOptions {
       required: cfg.required
     };
   }
-  static stringChoices(cfg: TNameDescription & TMinMaxLength & { choices: TValueName<string>[] }) {
+  stringChoices(cfg: TDBIBaseOption & TDBIMinMaxLength & { choices: TDBIValueName<string>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -38,7 +43,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static string(cfg: TNameDescription & TMinMaxLength) {
+  string(cfg: TDBIBaseOption & TDBIMinMaxLength) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -49,7 +54,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static numberAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]> }) {
+  numberAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -62,7 +67,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static numberChoices(cfg: TNameDescription & TMinMaxValue & { choices: TValueName<number>[] }) {
+  numberChoices(cfg: TDBIBaseOption & TDBIMinMaxValue & { choices: TDBIValueName<number>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -74,7 +79,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static number(cfg: TNameDescription & TMinMaxValue) {
+  number(cfg: TDBIBaseOption & TDBIMinMaxValue) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -85,7 +90,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static integerAutocomplete(cfg: TNameDescription & TMinMaxValue & { onComplete(ctx: IDBICompleteCtx<string>): Promise<TValueName<number>[]> }) {
+  integerAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> }) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,
@@ -98,7 +103,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static integerChoices(cfg: TNameDescription & TMinMaxValue & { choices: TValueName<number>[] }) {
+  integerChoices(cfg: TDBIBaseOption & TDBIMinMaxValue & { choices: TDBIValueName<number>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,
@@ -110,7 +115,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static integer(cfg: TNameDescription & TMinMaxValue) {
+  integer(cfg: TDBIBaseOption & TDBIMinMaxValue) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,
@@ -121,7 +126,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static boolean(cfg: TNameDescription) {
+  boolean(cfg: TDBIBaseOption) {
     return {
       type: Discord.ApplicationCommandOptionType.Boolean,
       name: cfg.name,
@@ -130,7 +135,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static attachment(cfg: TNameDescription) {
+  attachment(cfg: TDBIBaseOption) {
     return {
       type: Discord.ApplicationCommandOptionType.Attachment,
       name: cfg.name,
@@ -139,7 +144,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static channel(cfg: TNameDescription & { channelTypes: Discord.ChannelType[] }) {
+  channel(cfg: TDBIBaseOption & { channelTypes: Discord.ChannelType[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.Channel,
       name: cfg.name,
@@ -149,7 +154,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static role(cfg: TNameDescription) {
+  role(cfg: TDBIBaseOption) {
     return {
       type: Discord.ApplicationCommandOptionType.Role,
       name: cfg.name,
@@ -158,7 +163,7 @@ export class DBIChatInputOptions {
     }
   }
 
-  static mentionable(cfg: TNameDescription) {
+  mentionable(cfg: TDBIBaseOption) {
     return {
       type: Discord.ApplicationCommandOptionType.Mentionable,
       name: cfg.name,
@@ -167,7 +172,7 @@ export class DBIChatInputOptions {
     };
   }
 
-  static user(cfg: TNameDescription) {
+  user(cfg: TDBIBaseOption) {
     return {
       type: Discord.ApplicationCommandOptionType.User,
       name: cfg.name,

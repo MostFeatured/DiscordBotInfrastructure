@@ -83,7 +83,7 @@ export interface DBIConfigConstructor {
 
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   ChatInput(cfg: TDBIChatInputOmitted<TNamespace>): DBIChatInput<TNamespace>;
-  ChatInputOptions: typeof DBIChatInputOptions;
+  ChatInputOptions: DBIChatInputOptions<TNamespace>;
   Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
   Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
@@ -102,7 +102,6 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   data: {
     interactions: Discord.Collection<string, TDBIInteractions>;
     events: Discord.Collection<string, DBIEvent<TNamespace>>;
-    plugins: Discord.Collection<string, any>;
     locales: Discord.Collection<string, DBILocale<TNamespace>>;
     interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
     other: TOtherData;
@@ -139,7 +138,6 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     this.data = {
       interactions: new Discord.Collection(),
       events: new Discord.Collection(),
-      plugins: new Discord.Collection(),
       locales: new Discord.Collection(),
       interactionLocales: new Discord.Collection(),
       other: {} as TOtherData,
@@ -198,11 +196,11 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     }
     this.data.events.clear();
     this.data.interactions.clear();
-    this.data.plugins.clear();
   }
 
   private async _registerAll() {
     const self = this;
+    const ChatInputOptions = new DBIChatInputOptions(self);
 
     for await (const cb of this.data.registers) {
       let ChatInput = function (cfg: DBIChatInput<TNamespace>) {
@@ -281,7 +279,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       await cb({
         ChatInput,
         Event,
-        ChatInputOptions: DBIChatInputOptions,
+        ChatInputOptions,
         Locale,
         Button,
         SelectMenu,
@@ -315,13 +313,6 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
    */
   locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(name: TLocaleName): DBILocale<TNamespace> {
     return this.data.locales.get(name) as any;
-  }
-
-  /**
-   * this.data.plugins.get(name)
-   */
-  plugin(name: string): any {
-    return this.data.plugins.get(name);
   }
 
   /**

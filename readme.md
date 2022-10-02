@@ -124,7 +124,7 @@ dbi.register(({ ChatInput, ChatInputOptions }) => {
                     {
                         type: Discord.ComponentType.ActionRow,
                         components: [
-                            dbi.interaction("viewGender").toJSON({ override: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
+                            dbi.interaction("viewGender").toJSON({ overrides: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
                         ]
                     }
                 ]
@@ -404,7 +404,7 @@ dbi.register(({ ChatInput, ChatInputOptions }) => {
           {
             type: Discord.ComponentType.ActionRow,
             components: [
-              dbi.interaction("viewGender").toJSON({ override: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
+              dbi.interaction("viewGender").toJSON({ overrides: { label: locale.user.data.clickText() }, reference: { ttl: 1000 * 60 * 10, data: [gender] } }),
             ]
           }
         ]

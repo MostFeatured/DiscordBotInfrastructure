@@ -1,7 +1,7 @@
-// @ts-ignore
-import * as stuffs from "stuffs";
+import stuffs from "stuffs";
 import { NamespaceData, NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
+
 
 export interface DBILangObject {
   [property: string]: DBILangObject & ((...args: any[]) => string);
@@ -27,7 +27,7 @@ export class DBILocale<TNamespace extends NamespaceEnums> {
     this.data = convertLang<TNamespace>(cfg.data);
   }
   mergeLocale(locale: DBILocale<TNamespace>): DBILocale<TNamespace> {
-    this._data = { ...locale._data, ...this._data };
+    this._data = stuffs.defaultify(locale._data, this._data, true) as any;
     this.data = convertLang<TNamespace>(this._data);
 
     locale.data = this.data;

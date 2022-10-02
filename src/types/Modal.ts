@@ -4,6 +4,8 @@ import Discord from "discord.js";
 import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
+import stuffs from "stuffs";
+
 
 export interface IDBIModalExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ModalSubmitInteraction<"cached">;
@@ -32,8 +34,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
 
   toJSON(arg: IDBIToJSONArgs<ModalComponentData> = {} as any): Discord.ModalComponentData {
     return {
-      ...this.options,
-      ...(arg?.override || {}),
+      ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
     } as any;
   };
