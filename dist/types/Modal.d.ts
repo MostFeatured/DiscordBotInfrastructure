@@ -15,7 +15,7 @@ export declare type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<D
 export declare class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
     constructor(dbi: DBI<TNamespace>, args: TDBIModalOmitted<TNamespace>);
     options: ModalComponentData;
-    onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<any> | any;
+    onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<void> | void;
     toJSON(arg?: IDBIToJSONArgs<ModalComponentData>): Discord.ModalComponentData;
 }
 //# sourceMappingURL=Modal.d.ts.map

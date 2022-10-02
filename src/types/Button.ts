@@ -23,7 +23,7 @@ export class DBIButton<TNamespace extends NamespaceEnums> extends DBIBaseInterac
 
   declare options?: Omit<Discord.ButtonComponentData, "customId" | "type">;
 
-  override onExecute(ctx: IDBIButtonExecuteCtx<TNamespace>): Promise<any> | any { };
+  override onExecute(ctx: IDBIButtonExecuteCtx<TNamespace>): Promise<void> | void { };
   toJSON(arg: IDBIToJSONArgs<Omit<Discord.ButtonComponentData, "customId" | "type">> = {} as any): Discord.ButtonComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),

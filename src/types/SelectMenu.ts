@@ -24,7 +24,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
 
   declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
 
-  override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<any> | any { };
+  override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
   toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
     return {

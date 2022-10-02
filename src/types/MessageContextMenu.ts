@@ -23,5 +23,5 @@ export class DBIMessageContextMenu<TNamespace extends NamespaceEnums> extends DB
 
   directMessages?: boolean;
   defaultMemberPermissions?: Discord.PermissionsString[];
-  override onExecute(ctx: IDBIMessageContextMenuExecuteCtx<TNamespace>): Promise<any> | any {}
+  override onExecute(ctx: IDBIMessageContextMenuExecuteCtx<TNamespace>): Promise<void> | void {}
 }

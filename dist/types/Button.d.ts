@@ -11,7 +11,7 @@ export declare type TDBIButtonOmitted<TNamespace extends NamespaceEnums> = Omit<
 export declare class DBIButton<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
     constructor(dbi: DBI<TNamespace>, args: TDBIButtonOmitted<TNamespace>);
     options?: Omit<Discord.ButtonComponentData, "customId" | "type">;
-    onExecute(ctx: IDBIButtonExecuteCtx<TNamespace>): Promise<any> | any;
+    onExecute(ctx: IDBIButtonExecuteCtx<TNamespace>): Promise<void> | void;
     toJSON(arg?: IDBIToJSONArgs<Omit<Discord.ButtonComponentData, "customId" | "type">>): Discord.ButtonComponentData;
 }
 //# sourceMappingURL=Button.d.ts.map

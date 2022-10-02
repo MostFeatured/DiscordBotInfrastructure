@@ -30,7 +30,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
 
   declare options: ModalComponentData;
 
-  override onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<any> | any { };
+  override onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<void> | void { };
 
   toJSON(arg: IDBIToJSONArgs<ModalComponentData> = {} as any): Discord.ModalComponentData {
     return {

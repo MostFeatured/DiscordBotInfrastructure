@@ -10,6 +10,6 @@ export declare class DBIMessageContextMenu<TNamespace extends NamespaceEnums> ex
     constructor(dbi: DBI<TNamespace>, cfg: TDBIMessageContextMenuOmitted<TNamespace>);
     directMessages?: boolean;
     defaultMemberPermissions?: Discord.PermissionsString[];
-    onExecute(ctx: IDBIMessageContextMenuExecuteCtx<TNamespace>): Promise<any> | any;
+    onExecute(ctx: IDBIMessageContextMenuExecuteCtx<TNamespace>): Promise<void> | void;
 }
 //# sourceMappingURL=MessageContextMenu.d.ts.map
