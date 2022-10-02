@@ -16,6 +16,8 @@ class Events {
     }
     async trigger(name, data) {
         let handlers = this.handlers[name];
+        if (!handlers)
+            return true;
         for (let i = 0; i < handlers.length; i++) {
             const handler = handlers[i];
             let returned = await handler(data);
@@ -25,6 +27,8 @@ class Events {
         return true;
     }
     on(eventName, handler, options = { once: false }) {
+        if (!this.handlers.hasOwnProperty(eventName))
+            this.handlers[eventName] = [];
         if (options.once) {
             let h = (data) => {
                 this.off(eventName, h);
@@ -44,7 +48,9 @@ class Events {
     }
     off(eventName, handler) {
         let l = this.handlers[eventName];
-        l.splice(l.indexOf(handler), 1);
+        if (!l)
+            return [];
+        return l.splice(l.indexOf(handler), 1);
     }
 }
 exports.Events = Events;

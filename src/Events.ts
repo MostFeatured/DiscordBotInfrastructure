@@ -21,8 +21,9 @@ export class Events<TNamespace extends NamespaceEnums> {
     }
   }
   
-  async trigger(name: TDBIEventNames, data: any): Promise<boolean>{
+  async trigger(name: TDBIEventNames, data: any): Promise<boolean> {
     let handlers = this.handlers[name];
+    if (!handlers) return true;
     for (let i = 0; i < handlers.length; i++) {
       const handler = handlers[i];
       let returned = await handler(data);
@@ -53,6 +54,7 @@ export class Events<TNamespace extends NamespaceEnums> {
   ): (() => any);
 
   on(eventName: TDBIEventNames, handler: (data: any) => Promise<boolean> | boolean, options: { once: boolean } = { once: false }): (() => any) {
+    if (!this.handlers.hasOwnProperty(eventName)) this.handlers[eventName] = [];
     if (options.once) {
       let h = (data) => {
         this.off(eventName, h);
@@ -72,6 +74,7 @@ export class Events<TNamespace extends NamespaceEnums> {
 
   off(eventName: TDBIEventNames, handler: (data: any) => Promise<boolean> | boolean) {
     let l = this.handlers[eventName];
-    l.splice(l.indexOf(handler), 1);
+    if (!l) return [];
+    return l.splice(l.indexOf(handler), 1);
   }
 }

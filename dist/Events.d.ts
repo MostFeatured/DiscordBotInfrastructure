@@ -32,6 +32,6 @@ export declare class Events<TNamespace extends NamespaceEnums> {
     }) => Promise<boolean> | boolean, options?: {
         once: boolean;
     }): (() => any);
-    off(eventName: TDBIEventNames, handler: (data: any) => Promise<boolean> | boolean): void;
+    off(eventName: TDBIEventNames, handler: (data: any) => Promise<boolean> | boolean): ((data: any) => boolean | Promise<boolean>)[];
 }
 //# sourceMappingURL=Events.d.ts.map
