@@ -41,8 +41,8 @@ export function convertLang<TNamespace extends NamespaceEnums>(data: DBILangCons
   return Object.fromEntries(Object.entries(data).map(([key, value]) => {
     if (typeof value === "string") {
       return [key, (...args: any[]) => {
-        return stuffs.mapReplace(value, Object.fromEntries(args.map((t, i) => [`{${i}}`, t])))
-      }]
+        return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]))
+      }];
     } else {
       return [key, convertLang(value)];
     }

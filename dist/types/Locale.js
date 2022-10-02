@@ -28,7 +28,7 @@ function convertLang(data) {
     return Object.fromEntries(Object.entries(data).map(([key, value]) => {
         if (typeof value === "string") {
             return [key, (...args) => {
-                    return stuffs.mapReplace(value, Object.fromEntries(args.map((t, i) => [`{${i}}`, t])));
+                    return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]));
                 }];
         }
         else {
