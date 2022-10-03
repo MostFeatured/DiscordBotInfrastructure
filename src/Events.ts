@@ -1,10 +1,10 @@
-import { NamespaceEnums } from "../generated/namespaceData";
+import { NamespaceEnums, NamespaceData } from "../generated/namespaceData";
 import { DBI } from "./DBI";
 import { ClientEvents } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
 import { DBILocale } from "./types/Locale";
 
-export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent";
+export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError";
 
 export class Events<TNamespace extends NamespaceEnums> {
   DBI: DBI<TNamespace>;
@@ -17,7 +17,9 @@ export class Events<TNamespace extends NamespaceEnums> {
       afterInteraction: [],
       interactionRateLimit: [],
       beforeEvent: [],
-      afterEvent: []
+      afterEvent: [],
+      interactionError: [],
+      eventError: []
     }
   }
   
@@ -40,10 +42,24 @@ export class Events<TNamespace extends NamespaceEnums> {
   ): (() => any);
 
   on(
+    eventName: "interactionError",
+    handler: (data: IDBIBaseExecuteCtx<TNamespace> & { error: any }) => Promise<boolean> | boolean,
+    options?: { once: boolean }
+  ): (() => any);
+
+  on(
     eventName: "beforeEvent" | "afterEvent",
     handler: (data: {
-      [K in keyof ClientEvents]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & ClientEvents[K]
-    }[keyof ClientEvents]) => Promise<boolean> | boolean,
+      [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
+    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean,
+    options?: { once: boolean }
+  ): (() => any);
+
+  on(
+    eventName: "eventError",
+    handler: (data: {
+      [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K, error: any } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
+    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 

@@ -1,9 +1,9 @@
-import { NamespaceEnums } from "../generated/namespaceData";
+import { NamespaceEnums, NamespaceData } from "../generated/namespaceData";
 import { DBI } from "./DBI";
 import { ClientEvents } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
 import { DBILocale } from "./types/Locale";
-export declare type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent";
+export declare type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError";
 export declare class Events<TNamespace extends NamespaceEnums> {
     DBI: DBI<TNamespace>;
     handlers: Record<string, Array<(data: any) => boolean | Promise<boolean>>>;
@@ -12,15 +12,32 @@ export declare class Events<TNamespace extends NamespaceEnums> {
     on(eventName: "beforeInteraction" | "afterInteraction", handler: (data: IDBIBaseExecuteCtx<TNamespace>) => Promise<boolean> | boolean, options?: {
         once: boolean;
     }): (() => any);
+    on(eventName: "interactionError", handler: (data: IDBIBaseExecuteCtx<TNamespace> & {
+        error: any;
+    }) => Promise<boolean> | boolean, options?: {
+        once: boolean;
+    }): (() => any);
     on(eventName: "beforeEvent" | "afterEvent", handler: (data: {
-        [K in keyof ClientEvents]: {
+        [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
             other: Record<string, any>;
             locale?: {
                 guild: DBILocale<TNamespace>;
             };
             eventName: K;
-        } & ClientEvents[K];
-    }[keyof ClientEvents]) => Promise<boolean> | boolean, options?: {
+        } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K];
+    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean, options?: {
+        once: boolean;
+    }): (() => any);
+    on(eventName: "eventError", handler: (data: {
+        [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
+            other: Record<string, any>;
+            locale?: {
+                guild: DBILocale<TNamespace>;
+            };
+            eventName: K;
+            error: any;
+        } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K];
+    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean, options?: {
         once: boolean;
     }): (() => any);
     on(eventName: "interactionRateLimit", handler: (data: Omit<IDBIBaseExecuteCtx<TNamespace>, "other" | "setRateLimit"> & {

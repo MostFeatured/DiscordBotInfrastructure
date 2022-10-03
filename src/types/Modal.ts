@@ -35,7 +35,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
   toJSON(arg: IDBIToJSONArgs<ModalComponentData> = {} as any): Discord.ModalComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
-      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
+      customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
     } as any;
   };
 }

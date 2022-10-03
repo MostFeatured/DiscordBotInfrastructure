@@ -11,7 +11,9 @@ class Events {
             afterInteraction: [],
             interactionRateLimit: [],
             beforeEvent: [],
-            afterEvent: []
+            afterEvent: [],
+            interactionError: [],
+            eventError: []
         };
     }
     async trigger(name, data) {

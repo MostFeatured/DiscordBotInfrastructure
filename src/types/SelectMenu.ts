@@ -29,7 +29,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
   toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
-      customId: customIdBuilder(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
+      customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
       type: Discord.ComponentType.SelectMenu,
     } as any;
   };

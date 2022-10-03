@@ -2,7 +2,7 @@ import Discord from "discord.js";
 import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput";
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { publishInteractions } from "./methods/publishInteractions";
-import { DBIEvent, TDBIEventOmitted } from "./types/Event";
+import { ClientEvents, DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
@@ -19,6 +19,7 @@ import _ from "lodash";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
+import { DBICustomEvent, TDBICustomEventOmitted } from "./types/CustomEvent";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -92,6 +93,7 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
   InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
   Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
+  CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(cfg: TDBICustomEventOmitted<TNamespace, T>): DBICustomEvent<TNamespace, T>;
   onUnload(cb: () => Promise<any> | any): any;
 }
 
@@ -100,12 +102,13 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   config: DBIConfig;
   client: Discord.Client<true>;
   data: {
-    interactions: Discord.Collection<string, TDBIInteractions>;
+    interactions: Discord.Collection<string, TDBIInteractions<TNamespace>>;
     events: Discord.Collection<string, DBIEvent<TNamespace>>;
     locales: Discord.Collection<string, DBILocale<TNamespace>>;
     interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
     other: TOtherData;
-    eventMap: Record<string, string[]>;
+    eventMap: Record<string, string[] | { [k: string]: string }>;
+    customEventNames: Set<string>;
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
@@ -142,6 +145,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       interactionLocales: new Discord.Collection(),
       other: {} as TOtherData,
       eventMap,
+      customEventNames: new Set(),
       unloaders: new Set(),
       registers: new Set(),
       registerUnloaders: new Set(),
@@ -196,6 +200,10 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     }
     this.data.events.clear();
     this.data.interactions.clear();
+    this.data.customEventNames.forEach((value) => {
+      delete this.data.eventMap[value];
+    });
+    this.data.customEventNames.clear();
   }
 
   private async _registerAll() {
@@ -204,7 +212,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
     for await (const cb of this.data.registers) {
       let ChatInput = function (cfg: DBIChatInput<TNamespace>) {
-        let dbiChatInput = new DBIChatInput(self as any, cfg);
+        let dbiChatInput = new DBIChatInput(self, cfg);
         if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type}"!`);
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
@@ -222,7 +230,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let Button = function (cfg: TDBIButtonOmitted<TNamespace>) {
         let dbiButton = new DBIButton(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
-        self.data.interactions.set(dbiButton.name, dbiButton);
+        self.data.interactions.set(dbiButton.name, dbiButton as any);
         return dbiButton;
       };
       Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
@@ -230,7 +238,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let SelectMenu = function (cfg: TDBISelectMenuOmitted<TNamespace>) {
         let dbiSelectMenu = new DBISelectMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
+        self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu as any);
         return dbiSelectMenu;
       };
       SelectMenu = Object.assign(SelectMenu, class { constructor(...args: any[]) { return SelectMenu.apply(this, args as any); } });
@@ -238,7 +246,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let MessageContextMenu = function (cfg: TDBIMessageContextMenuOmitted<TNamespace>) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu);
+        self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu as any);
         return dbiMessageContextMenu;
       };
       MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args: any[]) { return MessageContextMenu.apply(this, args as any); } });
@@ -246,7 +254,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let UserContextMenu = function (cfg: TDBIUserContextMenuOmitted<TNamespace>) {
         let dbiUserContextMenu = new DBIUserContextMenu(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu);
+        self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu as any);
         return dbiUserContextMenu;
       };
       UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args: any[]) { return UserContextMenu.apply(this, args as any); } });
@@ -254,7 +262,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let Modal = function (cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
-        self.data.interactions.set(dbiModal.name, dbiModal);
+        self.data.interactions.set(dbiModal.name, dbiModal as any);
         return dbiModal;
       };
       Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
@@ -268,7 +276,16 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       };
       Locale = Object.assign(Locale, class { constructor(...args: any[]) { return Locale.apply(this, args as any); } });
 
-      let InteractionLocale = function (cfg: TDBIInteractionLocaleOmitted) {
+      let CustomEvent = function (cfg: TDBICustomEventOmitted<TNamespace>) {
+        let dbiCustomEvent = new DBICustomEvent(self, cfg) as any;
+        if (self.config.strict && self.data.eventMap[dbiCustomEvent.name]) throw new Error(`DBICustomEvent "${dbiCustomEvent.name}" already loaded!`);
+        self.data.eventMap[dbiCustomEvent.name] = dbiCustomEvent.map;
+        self.data.customEventNames.add(dbiCustomEvent.name);
+        return dbiCustomEvent;
+      };
+      CustomEvent = Object.assign(CustomEvent, class { constructor(...args: any[]) { return CustomEvent.apply(this, args as any); } });
+
+      let InteractionLocale = function(cfg: TDBIInteractionLocaleOmitted) {
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
         if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
         self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
@@ -285,6 +302,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         SelectMenu,
         MessageContextMenu,
         UserContextMenu,
+        CustomEvent,
         Modal,
         InteractionLocale,
         onUnload(cb: () => Promise<any> | any) {
@@ -300,6 +318,16 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName] {
     return this.data.interactions.get(name as any) as any;
   }
+
+  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName] ): void {
+    this.client.emit(name as any, {...args, direct: true } as any);
+  }
+
+/**
+ * 
+ * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
+ * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
+ */
 
   /**
    * this.data.events.get(name)

@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import { NamespaceEnums } from "../../generated/namespaceData";
+import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { DBILocale } from "./Locale";
 export interface ClientEvents {
@@ -239,9 +239,9 @@ export interface ClientEvents {
     };
 }
 export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
-    [K in keyof ClientEvents]: {
+    [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
         name: K;
-        onExecute: (ctx: ClientEvents[K] & {
+        onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & {
             other: Record<string, any>;
             locale?: {
                 guild: DBILocale<TNamespace>;
@@ -249,7 +249,7 @@ export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
             eventName: string;
         }) => Promise<any> | any;
     };
-}[keyof ClientEvents];
+}[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
 export declare type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations<TNamespace>;
 export declare class DBIEvent<TNamespace extends NamespaceEnums> {
     readonly type: "Event";

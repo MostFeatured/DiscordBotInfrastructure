@@ -6,11 +6,16 @@ function hookEventListeners(dbi) {
     async function handle(eventName, ...args) {
         if (!dbi.data.eventMap[eventName])
             return;
-        let ctxArgs = dbi.data.eventMap[eventName]
-            .reduce((all, current, index) => {
-            all[current] = args[index];
-            return all;
-        }, {});
+        let isDirect = args?.[0]?.direct ?? false;
+        if (isDirect)
+            delete args[0].direct;
+        let ctxArgs = isDirect
+            ? args[0]
+            : dbi.data.eventMap[eventName]
+                .reduce((all, current, index) => {
+                all[current] = args[index];
+                return all;
+            }, {});
         let other = {};
         let guildLocaleName = args.reduce((all, current) => {
             if (current?.guild?.id)
@@ -36,15 +41,40 @@ function hookEventListeners(dbi) {
                 }
             }
         }
+        let arg = { eventName, ...ctxArgs, other, locale };
         for (let i = 0; i < unOrdered.length; i++) {
             const value = unOrdered[i];
-            value.onExecute({ eventName, ...ctxArgs, other, locale });
+            if (dbi.config.strict) {
+                value.onExecute(arg);
+            }
+            else {
+                try {
+                    value.onExecute(arg)?.catch(error => {
+                        dbi.events.trigger("eventError", Object.assign(arg, { error }));
+                    });
+                }
+                catch (error) {
+                    dbi.events.trigger("eventError", Object.assign(arg, { error }));
+                }
+            }
         }
         for (let i = 0; i < ordered.length; i++) {
             const value = ordered[i];
-            await value.onExecute({ eventName, ...ctxArgs, other, locale });
+            if (dbi.config.strict) {
+                await value.onExecute(arg);
+            }
+            else {
+                try {
+                    await value.onExecute(arg)?.catch(error => {
+                        dbi.events.trigger("eventError", Object.assign(arg, { error }));
+                    });
+                }
+                catch (error) {
+                    await dbi.events.trigger("eventError", Object.assign(arg, { error }));
+                }
+            }
         }
-        dbi.events.trigger("afterEvent", { eventName, ...ctxArgs, other, locale });
+        dbi.events.trigger("afterEvent", arg);
     }
     let originalEmit = dbi.client.emit;
     dbi.client.emit = function (eventName, ...args) {

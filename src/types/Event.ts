@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import { NamespaceEnums } from "../../generated/namespaceData";
+import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { DBILocale } from "./Locale";
 
@@ -91,11 +91,11 @@ export interface ClientEvents {
 }
 
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
-  [K in keyof ClientEvents]: {
+  [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
     name: K,
-    onExecute: (ctx: ClientEvents[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string }) => Promise<any> | any
+    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string }) => Promise<any> | any
   }
-}[keyof ClientEvents];
+}[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
 
 export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations<TNamespace>;
 
@@ -112,7 +112,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
     this.type = "Event";
     this.id = cfg.id;
     this.other = cfg.other;
-    this.name = cfg.name;
+    this.name = cfg.name as any;
     this.onExecute = cfg.onExecute;
     this.ordered = cfg.ordered ?? false;
   }

@@ -9,7 +9,7 @@ import { DBIModal } from "./Modal";
 import { DBISelectMenu } from "./SelectMenu";
 import { DBIUserContextMenu } from "./UserContextMenu";
 
-export type TDBIInteractions = DBIChatInput<NamespaceEnums> | DBIButton<NamespaceEnums> | DBISelectMenu<NamespaceEnums> | DBIMessageContextMenu<NamespaceEnums> | DBIUserContextMenu<NamespaceEnums> | DBIModal<NamespaceEnums>;
+export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBISelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
 
 export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   interaction:
@@ -25,7 +25,7 @@ export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
     guild?: DBILocale<TNamespace>
   }
   dbi: DBI<TNamespace>;
-  dbiInteraction: TDBIInteractions;
+  dbiInteraction: TDBIInteractions<TNamespace>;
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
   other: Record<string, any>;
 }

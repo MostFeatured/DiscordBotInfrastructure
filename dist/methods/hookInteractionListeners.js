@@ -84,7 +84,7 @@ function hookInteractionListeners(dbi) {
             // @ts-ignore
             await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
         }
-        await dbiInter.onExecute({
+        let arg = {
             dbi,
             // @ts-ignore
             interaction: inter,
@@ -96,7 +96,18 @@ function hookInteractionListeners(dbi) {
             // @ts-ignore
             data,
             other
-        });
+        };
+        if (dbi.config.strict) {
+            await dbiInter.onExecute(arg);
+        }
+        else {
+            try {
+                await dbiInter.onExecute(arg);
+            }
+            catch (error) {
+                await dbi.events.trigger("interactionError", Object.assign(arg, { error }));
+            }
+        }
         dbi.events.trigger("afterInteraction", { dbi, interaction: inter, dbiInteraction: dbiInter, locale, setRateLimit, data, other });
     }
     dbi.client.on("interactionCreate", handle);

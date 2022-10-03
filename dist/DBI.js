@@ -21,6 +21,7 @@ const Modal_1 = require("./types/Modal");
 const Sharding = tslib_1.__importStar(require("discord-hybrid-sharding"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
 const InteractionLocale_1 = require("./types/InteractionLocale");
+const CustomEvent_1 = require("./types/CustomEvent");
 class DBI {
     namespace;
     config;
@@ -54,6 +55,7 @@ class DBI {
             interactionLocales: new discord_js_1.default.Collection(),
             other: {},
             eventMap: eventMap_json_1.default,
+            customEventNames: new Set(),
             unloaders: new Set(),
             registers: new Set(),
             registerUnloaders: new Set(),
@@ -106,6 +108,10 @@ class DBI {
         }
         this.data.events.clear();
         this.data.interactions.clear();
+        this.data.customEventNames.forEach((value) => {
+            delete this.data.eventMap[value];
+        });
+        this.data.customEventNames.clear();
     }
     async _registerAll() {
         const self = this;
@@ -193,6 +199,17 @@ class DBI {
             Locale = Object.assign(Locale, class {
                 constructor(...args) { return Locale.apply(this, args); }
             });
+            let CustomEvent = function (cfg) {
+                let dbiCustomEvent = new CustomEvent_1.DBICustomEvent(self, cfg);
+                if (self.config.strict && self.data.eventMap[dbiCustomEvent.name])
+                    throw new Error(`DBICustomEvent "${dbiCustomEvent.name}" already loaded!`);
+                self.data.eventMap[dbiCustomEvent.name] = dbiCustomEvent.map;
+                self.data.customEventNames.add(dbiCustomEvent.name);
+                return dbiCustomEvent;
+            };
+            CustomEvent = Object.assign(CustomEvent, class {
+                constructor(...args) { return CustomEvent.apply(this, args); }
+            });
             let InteractionLocale = function (cfg) {
                 let dbiInteractionLocale = new InteractionLocale_1.DBIInteractionLocale(self, cfg);
                 if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name))
@@ -212,6 +229,7 @@ class DBI {
                 SelectMenu,
                 MessageContextMenu,
                 UserContextMenu,
+                CustomEvent,
                 Modal,
                 InteractionLocale,
                 onUnload(cb) {
@@ -226,6 +244,14 @@ class DBI {
     interaction(name) {
         return this.data.interactions.get(name);
     }
+    emit(name, args) {
+        this.client.emit(name, { ...args, direct: true });
+    }
+    /**
+     *
+     * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
+     * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
+     */
     /**
      * this.data.events.get(name)
      */

@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput";
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
-import { DBIEvent, TDBIEventOmitted } from "./types/Event";
+import { ClientEvents, DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { Events } from "./Events";
 import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Button";
@@ -13,6 +13,7 @@ import * as Sharding from "discord-hybrid-sharding";
 import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
+import { DBICustomEvent, TDBICustomEventOmitted } from "./types/CustomEvent";
 export interface DBIStore {
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<void>;
@@ -76,6 +77,7 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
     UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
     InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
     Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
+    CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(cfg: TDBICustomEventOmitted<TNamespace, T>): DBICustomEvent<TNamespace, T>;
     onUnload(cb: () => Promise<any> | any): any;
 }
 export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, any>> {
@@ -83,12 +85,13 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
     config: DBIConfig;
     client: Discord.Client<true>;
     data: {
-        interactions: Discord.Collection<string, TDBIInteractions>;
+        interactions: Discord.Collection<string, TDBIInteractions<TNamespace>>;
         events: Discord.Collection<string, DBIEvent<TNamespace>>;
         locales: Discord.Collection<string, DBILocale<TNamespace>>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
         eventMap: Record<string, string[]>;
+        customEventNames: Set<string>;
         unloaders: Set<() => void>;
         registers: Set<(...args: any[]) => any>;
         registerUnloaders: Set<(...args: any[]) => any>;
@@ -111,6 +114,12 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
      * this.data.interactions.get(name)
      */
     interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName];
+    emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void;
+    /**
+     *
+     * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
+     * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
+     */
     /**
      * this.data.events.get(name)
      */
