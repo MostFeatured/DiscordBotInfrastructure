@@ -245,7 +245,7 @@ class DBI {
         return this.data.interactions.get(name);
     }
     emit(name, args) {
-        this.client.emit(name, { ...args, direct: true });
+        this.client.emit(name, { ...args, _DIRECT_: true });
     }
     /**
      *

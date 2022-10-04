@@ -6,14 +6,13 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(eventName: string, ...args: any[]) {
     if (!dbi.data.eventMap[eventName]) return;
 
-    let isDirect = args?.[0]?.direct ?? false;
-    if (isDirect) delete args[0].direct;
+    let isDirect = args?.[0]?._DIRECT_ ?? false;
+    if (isDirect) delete args[0]._DIRECT_;
     
     let ctxArgs =
       isDirect
         ? args[0]
-        : dbi.data.eventMap[eventName]
-        .reduce((all, current, index) => {
+        : (dbi.data.eventMap[eventName] as any).reduce((all, current, index) => {
           all[current] = args[index];
           return all;
         }, {});

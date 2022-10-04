@@ -90,7 +90,9 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
         locales: Discord.Collection<string, DBILocale<TNamespace>>;
         interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
         other: TOtherData;
-        eventMap: Record<string, string[]>;
+        eventMap: Record<string, string[] | {
+            [k: string]: string;
+        }>;
         customEventNames: Set<string>;
         unloaders: Set<() => void>;
         registers: Set<(...args: any[]) => any>;

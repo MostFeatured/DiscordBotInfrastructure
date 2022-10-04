@@ -6,13 +6,12 @@ function hookEventListeners(dbi) {
     async function handle(eventName, ...args) {
         if (!dbi.data.eventMap[eventName])
             return;
-        let isDirect = args?.[0]?.direct ?? false;
+        let isDirect = args?.[0]?._DIRECT_ ?? false;
         if (isDirect)
-            delete args[0].direct;
+            delete args[0]._DIRECT_;
         let ctxArgs = isDirect
             ? args[0]
-            : dbi.data.eventMap[eventName]
-                .reduce((all, current, index) => {
+            : dbi.data.eventMap[eventName].reduce((all, current, index) => {
                 all[current] = args[index];
                 return all;
             }, {});

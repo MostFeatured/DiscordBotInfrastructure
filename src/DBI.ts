@@ -320,7 +320,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   }
 
   emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName] ): void {
-    this.client.emit(name as any, {...args, direct: true } as any);
+    this.client.emit(name as any, { ...args, _DIRECT_: true } as any);
   }
 
 /**
