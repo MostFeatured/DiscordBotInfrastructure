@@ -7,7 +7,7 @@ export interface NamespaceData {
     interactionMapping: { [k: string]: TDBIInteractions<NamespaceEnums> };
     eventNames: string;
     localeNames: TDBILocaleString;
-    customEvents: { [k: string]: DBICustomEvent<NamespaceEnums> }
+    customEvents: { }
   }
 }
 
