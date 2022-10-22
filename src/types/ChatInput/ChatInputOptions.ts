@@ -150,6 +150,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       name: cfg.name,
       description: cfg.description,
       channelTypes: cfg.channelTypes,
+      channel_types: cfg.channelTypes,
       required: cfg.required
     };
   }
