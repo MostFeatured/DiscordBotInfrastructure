@@ -138,6 +138,7 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         name: string;
         description: string;
         channelTypes: Discord.ChannelType[];
+        channel_types: Discord.ChannelType[];
         required: boolean;
     };
     role(cfg: TDBIBaseOption): {
