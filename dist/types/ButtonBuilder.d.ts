@@ -20,6 +20,7 @@ export declare class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
         };
     });
     setTTL(ttl: number): DBIButtonBuilder<TNamespace>;
+    addTTL(ttl: number): DBIButtonBuilder<TNamespace>;
     setData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace>;
     addData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace>;
     setOverrides(overrides: DBIButtonOverrides): DBIButtonBuilder<TNamespace>;

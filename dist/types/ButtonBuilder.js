@@ -12,6 +12,10 @@ class DBIButtonBuilder {
         this.reference = arg.reference ?? { data: [] };
     }
     setTTL(ttl) {
+        this.reference.ttl = ttl;
+        return this;
+    }
+    addTTL(ttl) {
         this.reference.ttl = (this.reference.ttl ?? 0) + ttl;
         return this;
     }

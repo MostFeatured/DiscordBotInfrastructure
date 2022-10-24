@@ -18,6 +18,7 @@ export declare class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
         };
     });
     setTTL(ttl: number): DBISelectMenuBuilder<TNamespace>;
+    addTTL(ttl: number): DBISelectMenuBuilder<TNamespace>;
     setData(...data: (string | number | object)[]): DBISelectMenuBuilder<TNamespace>;
     addData(...data: (string | number | object)[]): DBISelectMenuBuilder<TNamespace>;
     setOverrides(overrides: DBISelectMenuOverrides): DBISelectMenuBuilder<TNamespace>;

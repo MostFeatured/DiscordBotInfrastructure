@@ -21,6 +21,7 @@ export declare class DBIModalBuilder<TNamespace extends NamespaceEnums> {
         };
     });
     setTTL(ttl: number): DBIModalBuilder<TNamespace>;
+    addTTL(ttl: number): DBIModalBuilder<TNamespace>;
     setData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace>;
     addData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace>;
     setOverrides(overrides: DBIModalOverrides): DBIModalBuilder<TNamespace>;

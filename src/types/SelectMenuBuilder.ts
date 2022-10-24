@@ -16,6 +16,11 @@ export class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
   }
 
   setTTL(ttl: number): DBISelectMenuBuilder<TNamespace> {
+    this.reference.ttl = ttl;
+    return this;
+  }
+
+  addTTL(ttl: number): DBISelectMenuBuilder<TNamespace> {
     this.reference.ttl = (this.reference.ttl ?? 0) + ttl;
     return this;
   }
