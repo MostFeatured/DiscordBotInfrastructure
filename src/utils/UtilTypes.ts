@@ -3,5 +3,5 @@ export interface IDBIToJSONArgs<T> {
     ttl?: number;
     data: (string | number | object)[];
   };
-  overrides: T;
+  overrides?: T;
 }

@@ -6,6 +6,7 @@ const discord_js_1 = tslib_1.__importDefault(require("discord.js"));
 const Interaction_1 = require("./Interaction");
 const customId_1 = require("../utils/customId");
 const stuffs_1 = tslib_1.__importDefault(require("stuffs"));
+const SelectMenuBuilder_1 = require("./SelectMenuBuilder");
 class DBISelectMenu extends Interaction_1.DBIBaseInteraction {
     constructor(dbi, args) {
         super(dbi, {
@@ -23,6 +24,9 @@ class DBISelectMenu extends Interaction_1.DBIBaseInteraction {
         };
     }
     ;
+    createBuilder(arg = {}) {
+        return new SelectMenuBuilder_1.DBISelectMenuBuilder({ component: this, ...arg });
+    }
 }
 exports.DBISelectMenu = DBISelectMenu;
 //# sourceMappingURL=SelectMenu.js.map

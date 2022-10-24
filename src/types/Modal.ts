@@ -5,6 +5,7 @@ import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import stuffs from "stuffs";
+import { DBIModalBuilder, DBIModalOverrides } from "./ModalBuilder";
 
 
 export interface IDBIModalExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
@@ -18,7 +19,7 @@ export interface ModalComponentData {
   components: (Discord.ActionRowData<Discord.ModalActionRowComponentData>)[];
 }
 
-export type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 
 export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace>, args: TDBIModalOmitted<TNamespace>) {
@@ -32,10 +33,15 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
 
   override onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<ModalComponentData> = {} as any): Discord.ModalComponentData {
+  toJSON(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): Discord.ModalComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
     } as any;
   };
+
+  createBuilder(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): DBIModalBuilder<TNamespace> {
+    return new DBIModalBuilder({ component: this, ...arg })
+  }
+
 }
