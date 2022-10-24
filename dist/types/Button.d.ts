@@ -8,7 +8,7 @@ export interface IDBIButtonExecuteCtx<TNamespace extends NamespaceEnums> extends
     interaction: Discord.ButtonInteraction<"cached">;
     data: TDBIReferencedData[];
 }
-export declare type TDBIButtonOmitted<TNamespace extends NamespaceEnums> = Omit<DBIButton<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export declare type TDBIButtonOmitted<TNamespace extends NamespaceEnums> = Omit<DBIButton<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 export declare class DBIButton<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
     constructor(dbi: DBI<TNamespace>, args: TDBIButtonOmitted<TNamespace>);
     options?: Omit<Discord.ButtonComponentData, "customId" | "type">;

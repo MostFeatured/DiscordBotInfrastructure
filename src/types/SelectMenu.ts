@@ -13,7 +13,7 @@ export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> ext
   data: TDBIReferencedData[];
 }
 
-export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 
 export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace>, args: TDBISelectMenuOmitted<TNamespace>) {

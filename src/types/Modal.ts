@@ -19,7 +19,7 @@ export interface ModalComponentData {
   components: (Discord.ActionRowData<Discord.ModalActionRowComponentData>)[];
 }
 
-export type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBIModalOmitted<TNamespace extends NamespaceEnums> = Omit<DBIModal<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 
 export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace>, args: TDBIModalOmitted<TNamespace>) {

@@ -12,7 +12,7 @@ export interface IDBIButtonExecuteCtx<TNamespace extends NamespaceEnums> extends
   data: TDBIReferencedData[];
 }
 
-export type TDBIButtonOmitted<TNamespace extends NamespaceEnums> = Omit<DBIButton<TNamespace>, "type" | "description" | "dbi" | "toJSON">;
+export type TDBIButtonOmitted<TNamespace extends NamespaceEnums> = Omit<DBIButton<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 
 export class DBIButton<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace>, args: TDBIButtonOmitted<TNamespace>) {
