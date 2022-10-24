@@ -15,32 +15,32 @@ export class DBIModalBuilder<TNamespace extends NamespaceEnums> {
     this.reference = arg.reference ?? { data: [] };
   }
 
-  setTTL(ttl: number) {
+  setTTL(ttl: number): DBIModalBuilder<TNamespace> {
     this.reference.ttl = (this.reference.ttl ?? 0) + ttl;
     return this;
   }
 
-  setData(...data: (string | number | object)[]) {
+  setData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]) {
+  addData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }
 
-  setOverrides(overrides: DBIModalOverrides) {
+  setOverrides(overrides: DBIModalOverrides): DBIModalBuilder<TNamespace> {
     this.overrides = overrides;
     return this;
   }
 
-  addOverrides(overrides: DBIModalOverrides) {
+  addOverrides(overrides: DBIModalOverrides): DBIModalBuilder<TNamespace> {
     this.overrides = defaultify(overrides, this.overrides, true);
     return this;
   }
 
-  toJSON() {
+  toJSON(): ModalComponentData {
     return this.component.toJSON({ overrides: this.overrides, reference: this.reference });
   }
 

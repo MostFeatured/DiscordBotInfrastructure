@@ -32,7 +32,7 @@ export class DBIButton<TNamespace extends NamespaceEnums> extends DBIBaseInterac
       type: Discord.ComponentType.Button,
     } as any;
   };
-  createBuilder(arg: IDBIToJSONArgs<DBIButtonOverrides> = {}) {
+  createBuilder(arg: IDBIToJSONArgs<DBIButtonOverrides> = {}): DBIButtonBuilder<TNamespace> {
     return new DBIButtonBuilder({ component: this, ...arg })
   }
 

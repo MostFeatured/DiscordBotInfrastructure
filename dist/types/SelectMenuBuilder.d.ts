@@ -17,11 +17,11 @@ export declare class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
             ttl?: number;
         };
     });
-    setTTL(ttl: number): this;
-    setData(...data: (string | number | object)[]): this;
-    addData(...data: (string | number | object)[]): this;
-    setOverrides(overrides: DBISelectMenuOverrides): this;
-    addOverrides(overrides: DBISelectMenuOverrides): this;
+    setTTL(ttl: number): DBISelectMenuBuilder<TNamespace>;
+    setData(...data: (string | number | object)[]): DBISelectMenuBuilder<TNamespace>;
+    addData(...data: (string | number | object)[]): DBISelectMenuBuilder<TNamespace>;
+    setOverrides(overrides: DBISelectMenuOverrides): DBISelectMenuBuilder<TNamespace>;
+    addOverrides(overrides: DBISelectMenuOverrides): DBISelectMenuBuilder<TNamespace>;
     toJSON(): SelectMenuComponentData;
 }
 //# sourceMappingURL=SelectMenuBuilder.d.ts.map

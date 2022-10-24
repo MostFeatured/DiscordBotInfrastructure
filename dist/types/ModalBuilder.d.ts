@@ -20,11 +20,11 @@ export declare class DBIModalBuilder<TNamespace extends NamespaceEnums> {
             ttl?: number;
         };
     });
-    setTTL(ttl: number): this;
-    setData(...data: (string | number | object)[]): this;
-    addData(...data: (string | number | object)[]): this;
-    setOverrides(overrides: DBIModalOverrides): this;
-    addOverrides(overrides: DBIModalOverrides): this;
+    setTTL(ttl: number): DBIModalBuilder<TNamespace>;
+    setData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace>;
+    addData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace>;
+    setOverrides(overrides: DBIModalOverrides): DBIModalBuilder<TNamespace>;
+    addOverrides(overrides: DBIModalOverrides): DBIModalBuilder<TNamespace>;
     toJSON(): ModalComponentData;
 }
 //# sourceMappingURL=ModalBuilder.d.ts.map

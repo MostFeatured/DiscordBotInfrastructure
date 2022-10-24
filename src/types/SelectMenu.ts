@@ -35,7 +35,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
     } as any;
   };
 
-  createBuilder(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}) {
+  createBuilder(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}): DBISelectMenuBuilder<TNamespace> {
     return new DBISelectMenuBuilder({ component: this, ...arg })
   }
 

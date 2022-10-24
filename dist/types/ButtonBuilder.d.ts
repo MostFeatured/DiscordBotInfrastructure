@@ -19,11 +19,11 @@ export declare class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
             ttl?: number;
         };
     });
-    setTTL(ttl: number): this;
-    setData(...data: (string | number | object)[]): this;
-    addData(...data: (string | number | object)[]): this;
-    setOverrides(overrides: DBIButtonOverrides): this;
-    addOverrides(overrides: DBIButtonOverrides): this;
+    setTTL(ttl: number): DBIButtonBuilder<TNamespace>;
+    setData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace>;
+    addData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace>;
+    setOverrides(overrides: DBIButtonOverrides): DBIButtonBuilder<TNamespace>;
+    addOverrides(overrides: DBIButtonOverrides): DBIButtonBuilder<TNamespace>;
     toJSON(): ButtonComponentData;
 }
 //# sourceMappingURL=ButtonBuilder.d.ts.map

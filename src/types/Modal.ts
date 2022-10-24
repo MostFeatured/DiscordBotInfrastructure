@@ -40,7 +40,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
     } as any;
   };
 
-  createBuilder(arg: IDBIToJSONArgs<DBIModalOverrides> = {}) {
+  createBuilder(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): DBIModalBuilder<TNamespace> {
     return new DBIModalBuilder({ component: this, ...arg })
   }
 

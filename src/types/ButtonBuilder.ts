@@ -15,32 +15,32 @@ export class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
     this.reference = arg.reference ?? { data: [] };
   }
 
-  setTTL(ttl: number) {
+  setTTL(ttl: number): DBIButtonBuilder<TNamespace> {
     this.reference.ttl = (this.reference.ttl ?? 0) + ttl;
     return this;
   }
 
-  setData(...data: (string | number | object)[]) {
+  setData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]) {
+  addData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }
 
-  setOverrides(overrides: DBIButtonOverrides) {
+  setOverrides(overrides: DBIButtonOverrides): DBIButtonBuilder<TNamespace> {
     this.overrides = overrides;
     return this;
   }
 
-  addOverrides(overrides: DBIButtonOverrides) {
+  addOverrides(overrides: DBIButtonOverrides): DBIButtonBuilder<TNamespace> {
     this.overrides = defaultify(overrides, this.overrides, true);
     return this;
   }
 
-  toJSON() {
+  toJSON(): ButtonComponentData {
     return this.component.toJSON({ overrides: this.overrides, reference: this.reference });
   }
 
