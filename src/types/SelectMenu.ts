@@ -5,6 +5,7 @@ import { customIdBuilder } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import stuffs from "stuffs";
+import { DBISelectMenuBuilder, DBISelectMenuOverrides } from "./SelectMenuBuilder";
 
 
 export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
@@ -26,11 +27,16 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
 
   override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<Omit<Discord.SelectMenuComponentData, "customId" | "type">> = {} as any): Discord.SelectMenuComponentData {
+  toJSON(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}): Discord.SelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
       type: Discord.ComponentType.SelectMenu,
     } as any;
   };
+
+  createBuilder(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}) {
+    return new DBISelectMenuBuilder({ component: this, ...arg })
+  }
+
 }

@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const Interaction_1 = require("./Interaction");
 const customId_1 = require("../utils/customId");
 const stuffs_1 = tslib_1.__importDefault(require("stuffs"));
+const ModalBuilder_1 = require("./ModalBuilder");
 class DBIModal extends Interaction_1.DBIBaseInteraction {
     constructor(dbi, args) {
         super(dbi, {
@@ -21,6 +22,9 @@ class DBIModal extends Interaction_1.DBIBaseInteraction {
         };
     }
     ;
+    createBuilder(arg = {}) {
+        return new ModalBuilder_1.DBIModalBuilder({ component: this, ...arg });
+    }
 }
 exports.DBIModal = DBIModal;
 //# sourceMappingURL=Modal.js.map

@@ -3,6 +3,7 @@ import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
+import { DBIButtonOverrides } from "./ButtonBuilder";
 export interface IDBIButtonExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
     interaction: Discord.ButtonInteraction<"cached">;
     data: TDBIReferencedData[];
@@ -12,6 +13,7 @@ export declare class DBIButton<TNamespace extends NamespaceEnums> extends DBIBas
     constructor(dbi: DBI<TNamespace>, args: TDBIButtonOmitted<TNamespace>);
     options?: Omit<Discord.ButtonComponentData, "customId" | "type">;
     onExecute(ctx: IDBIButtonExecuteCtx<TNamespace>): Promise<void> | void;
-    toJSON(arg?: IDBIToJSONArgs<Omit<Discord.ButtonComponentData, "customId" | "type">>): Discord.ButtonComponentData;
+    toJSON(arg?: IDBIToJSONArgs<DBIButtonOverrides>): Discord.ButtonComponentData;
+    createBuilder(arg?: IDBIToJSONArgs<DBIButtonOverrides>): any;
 }
 //# sourceMappingURL=Button.d.ts.map

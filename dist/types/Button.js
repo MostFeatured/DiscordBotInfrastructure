@@ -6,6 +6,7 @@ const discord_js_1 = tslib_1.__importDefault(require("discord.js"));
 const Interaction_1 = require("./Interaction");
 const customId_1 = require("../utils/customId");
 const stuffs_1 = tslib_1.__importDefault(require("stuffs"));
+const ButtonBuilder_1 = require("./ButtonBuilder");
 class DBIButton extends Interaction_1.DBIBaseInteraction {
     constructor(dbi, args) {
         super(dbi, {
@@ -23,6 +24,9 @@ class DBIButton extends Interaction_1.DBIBaseInteraction {
         };
     }
     ;
+    createBuilder(arg = {}) {
+        return new ButtonBuilder_1.DBIButtonBuilder({ component: this, ...arg });
+    }
 }
 exports.DBIButton = DBIButton;
 //# sourceMappingURL=Button.js.map
