@@ -16,7 +16,9 @@ class DBIChatInputOptions {
             onComplete: cfg.onComplete,
             description: cfg.description,
             maxLength: cfg.maxLength,
+            max_length: cfg.maxLength,
             minLength: cfg.minLength,
+            min_length: cfg.minLength,
             required: cfg.required
         };
     }
@@ -27,7 +29,9 @@ class DBIChatInputOptions {
             choices: cfg.choices,
             description: cfg.description,
             maxLength: cfg.maxLength,
+            max_length: cfg.maxLength,
             minLength: cfg.minLength,
+            min_length: cfg.minLength,
             required: cfg.required
         };
     }
@@ -37,7 +41,9 @@ class DBIChatInputOptions {
             name: cfg.name,
             description: cfg.description,
             maxLength: cfg.maxLength,
+            max_length: cfg.maxLength,
             minLength: cfg.minLength,
+            min_length: cfg.minLength,
             required: cfg.required
         };
     }
@@ -49,7 +55,9 @@ class DBIChatInputOptions {
             onComplete: cfg.onComplete,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }
@@ -60,7 +68,9 @@ class DBIChatInputOptions {
             choices: cfg.choices,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }
@@ -70,7 +80,9 @@ class DBIChatInputOptions {
             name: cfg.name,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }
@@ -82,7 +94,9 @@ class DBIChatInputOptions {
             onComplete: cfg.onComplete,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }
@@ -93,7 +107,9 @@ class DBIChatInputOptions {
             choices: cfg.choices,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }
@@ -103,7 +119,9 @@ class DBIChatInputOptions {
             name: cfg.name,
             description: cfg.description,
             maxValue: cfg.maxValue,
+            max_value: cfg.maxValue,
             minValue: cfg.minValue,
+            min_value: cfg.minValue,
             required: cfg.required
         };
     }

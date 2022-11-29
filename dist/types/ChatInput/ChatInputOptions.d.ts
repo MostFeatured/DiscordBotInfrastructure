@@ -35,7 +35,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         onComplete: (ctx: IDBICompleteCtx<TNamespace, string>) => Promise<TDBIValueName<string>[]>;
         description: string;
         maxLength: number;
+        max_length: number;
         minLength: number;
+        min_length: number;
         required: boolean;
     };
     stringChoices(cfg: TDBIBaseOption & TDBIMinMaxLength & {
@@ -46,7 +48,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         choices: TDBIValueName<string>[];
         description: string;
         maxLength: number;
+        max_length: number;
         minLength: number;
+        min_length: number;
         required: boolean;
     };
     string(cfg: TDBIBaseOption & TDBIMinMaxLength): {
@@ -54,7 +58,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         name: string;
         description: string;
         maxLength: number;
+        max_length: number;
         minLength: number;
+        min_length: number;
         required: boolean;
     };
     numberAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & {
@@ -66,7 +72,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         onComplete: (ctx: IDBICompleteCtx<TNamespace, string>) => Promise<TDBIValueName<number>[]>;
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     numberChoices(cfg: TDBIBaseOption & TDBIMinMaxValue & {
@@ -77,7 +85,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         choices: TDBIValueName<number>[];
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     number(cfg: TDBIBaseOption & TDBIMinMaxValue): {
@@ -85,7 +95,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         name: string;
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     integerAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & {
@@ -97,7 +109,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         onComplete: (ctx: IDBICompleteCtx<TNamespace, string>) => Promise<TDBIValueName<number>[]>;
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     integerChoices(cfg: TDBIBaseOption & TDBIMinMaxValue & {
@@ -108,7 +122,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         choices: TDBIValueName<number>[];
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     integer(cfg: TDBIBaseOption & TDBIMinMaxValue): {
@@ -116,7 +132,9 @@ export declare class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
         name: string;
         description: string;
         maxValue: number;
+        max_value: number;
         minValue: number;
+        min_value: number;
         required: boolean;
     };
     boolean(cfg: TDBIBaseOption): {

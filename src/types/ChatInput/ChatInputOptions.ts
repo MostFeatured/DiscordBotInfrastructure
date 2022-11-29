@@ -27,7 +27,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxLength: cfg.maxLength,
+      max_length: cfg.maxLength,
       minLength: cfg.minLength,
+      min_length: cfg.minLength,
       required: cfg.required
     };
   }
@@ -38,7 +40,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       choices: cfg.choices,
       description: cfg.description,
       maxLength: cfg.maxLength,
+      max_length: cfg.maxLength,
       minLength: cfg.minLength,
+      min_length: cfg.minLength,
       required: cfg.required
     };
   }
@@ -49,7 +53,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       name: cfg.name,
       description: cfg.description,
       maxLength: cfg.maxLength,
+      max_length: cfg.maxLength,
       minLength: cfg.minLength,
+      min_length: cfg.minLength,
       required: cfg.required
     };
   }
@@ -62,7 +68,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
@@ -74,7 +82,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       choices: cfg.choices,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
@@ -85,7 +95,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       name: cfg.name,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
@@ -98,7 +110,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       onComplete: cfg.onComplete,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
@@ -110,7 +124,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       choices: cfg.choices,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
@@ -121,7 +137,9 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       name: cfg.name,
       description: cfg.description,
       maxValue: cfg.maxValue,
+      max_value: cfg.maxValue,
       minValue: cfg.minValue,
+      min_value: cfg.minValue,
       required: cfg.required
     };
   }
