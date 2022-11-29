@@ -103,7 +103,7 @@ Remember, you can summon as many features as you want at the same time!
 
 `ChatInput` is defined as "Slash Command" as you can understand.
 
-<sub>`src/chatInput.js` dosyası:</sub>
+<sub>`src/chatInput.js` file:</sub>
 
 ```js
 const dbi = require("../dbi");
@@ -150,7 +150,7 @@ You can also find more examples below for a sample demonstration of how the Loca
 
 # Event
 
-<sub>`src/event.js` dosyası:</sub>
+<sub>`src/event.js` file:</sub>
 
 ```js
 const dbi = require("../dbi");
@@ -168,7 +168,7 @@ When defining an event, you can write the name of the event you want in the `nam
 
 # Locale
 
-<sub>`src/locales.js` dosyası:</sub>
+<sub>`src/locales.js` file:</sub>
 
 ```js
 const dbi = require("../dbi");
@@ -204,7 +204,7 @@ Thanks to Locale, there is information in each interaction that will make it eas
 
 In this section, we will look at three of our features. (Actually, it's all the same feature in the background.)
 
-<sub>`src/components.js` dosyası:</sub>
+<sub>`src/components.js` file:</sub>
 
 ```js
 const dbi = require("../dbi");
@@ -233,7 +233,7 @@ It has exactly the same properties as `ChatInput` but does not take `options` va
 We offer you another unique feature. You can now define a custom script language for each user.
 For example, the command that appears as `/select gender` to a Turkish user may appear as `/select gender` to a foreign user. (You can configure it as you wish.)
 
-<sub>`src/interactionlocales.js` dosyası:</sub>
+<sub>`src/interactionlocales.js` file:</sub>
 
 ```js
 const dbi = require("../dbi");

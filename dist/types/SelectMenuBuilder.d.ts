@@ -1,7 +1,7 @@
-import { SelectMenuComponentData } from "discord.js";
+import { BaseSelectMenuComponentData } from "discord.js";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBISelectMenu } from "./SelectMenu";
-export declare type DBISelectMenuOverrides = Omit<SelectMenuComponentData, "customId" | "type">;
+export declare type DBISelectMenuOverrides = Omit<BaseSelectMenuComponentData, "customId" | "type">;
 export declare class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
     component: DBISelectMenu<TNamespace>;
     overrides: DBISelectMenuOverrides;
@@ -23,6 +23,6 @@ export declare class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
     addData(...data: (string | number | object)[]): DBISelectMenuBuilder<TNamespace>;
     setOverrides(overrides: DBISelectMenuOverrides): DBISelectMenuBuilder<TNamespace>;
     addOverrides(overrides: DBISelectMenuOverrides): DBISelectMenuBuilder<TNamespace>;
-    toJSON(): SelectMenuComponentData;
+    toJSON(): BaseSelectMenuComponentData;
 }
 //# sourceMappingURL=SelectMenuBuilder.d.ts.map

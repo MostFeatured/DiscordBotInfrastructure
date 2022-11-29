@@ -23,11 +23,11 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
     });
   }
 
-  declare options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
+  declare options: Omit<Discord.BaseSelectMenuComponentData, "customId" | "type">;
 
   override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}): Discord.SelectMenuComponentData {
+  toJSON(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}): Discord.BaseSelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),

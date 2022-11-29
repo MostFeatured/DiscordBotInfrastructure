@@ -11,9 +11,9 @@ export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> ext
 export declare type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
 export declare class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
     constructor(dbi: DBI<TNamespace>, args: TDBISelectMenuOmitted<TNamespace>);
-    options: Omit<Discord.SelectMenuComponentData, "customId" | "type">;
+    options: Omit<Discord.BaseSelectMenuComponentData, "customId" | "type">;
     onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<void> | void;
-    toJSON(arg?: IDBIToJSONArgs<DBISelectMenuOverrides>): Discord.SelectMenuComponentData;
+    toJSON(arg?: IDBIToJSONArgs<DBISelectMenuOverrides>): Discord.BaseSelectMenuComponentData;
     createBuilder(arg?: IDBIToJSONArgs<DBISelectMenuOverrides>): DBISelectMenuBuilder<TNamespace>;
 }
 //# sourceMappingURL=SelectMenu.d.ts.map
