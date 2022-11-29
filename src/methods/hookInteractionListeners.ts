@@ -106,6 +106,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     }
 
     let arg = {
+      // @ts-ignore
       dbi,
       // @ts-ignore
       interaction: inter as any,
@@ -113,22 +114,28 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       dbiInteraction: dbiInter,
       // @ts-ignore
       locale,
+      // @ts-ignore
       setRateLimit,
       // @ts-ignore
       data,
+      // @ts-ignore
       other
     };
 
     if (dbi.config.strict) {
+      // @ts-ignore
       await dbiInter.onExecute(arg);
     } else {
       try {
+        // @ts-ignore
         await dbiInter.onExecute(arg);
       } catch (error) {
+        // @ts-ignore
         await dbi.events.trigger("interactionError", Object.assign(arg, { error }));
       }
     }
     
+    // @ts-ignore
     dbi.events.trigger("afterInteraction", { dbi, interaction: inter, dbiInteraction: dbiInter, locale, setRateLimit, data, other });
   }
 
