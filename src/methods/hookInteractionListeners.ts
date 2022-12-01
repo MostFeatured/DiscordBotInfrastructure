@@ -8,7 +8,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
 
     const dbiInter =
       dbi.data.interactions.find(i => {
-        let isUsesCustomId = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit());
+        let isUsesCustomId = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit());
         let parsedId = isUsesCustomId ? parseCustomId(dbi, (inter as any).customId) : null;
         return (
           (
@@ -44,11 +44,11 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       guild: guildLocale
     };
 
-    let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
+    let data = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
 
     let other = {};
 
-    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other }))) return;
+    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other, dbiInteraction: dbiInter }))) return;
     
     if (inter.isAutocomplete()) {
       let focussed = inter.options.getFocused(true);

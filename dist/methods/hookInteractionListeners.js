@@ -5,7 +5,7 @@ const customId_1 = require("../utils/customId");
 function hookInteractionListeners(dbi) {
     async function handle(inter) {
         const dbiInter = dbi.data.interactions.find(i => {
-            let isUsesCustomId = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit());
+            let isUsesCustomId = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit());
             let parsedId = isUsesCustomId ? (0, customId_1.parseCustomId)(dbi, inter.customId) : null;
             return ((i.type == "ChatInput"
                 && (inter.isChatInputCommand() || inter.isAutocomplete())
@@ -29,9 +29,9 @@ function hookInteractionListeners(dbi) {
             user: userLocale,
             guild: guildLocale
         };
-        let data = (inter.isButton() || inter.isSelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
+        let data = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
         let other = {};
-        if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other })))
+        if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other, dbiInteraction: dbiInter })))
             return;
         if (inter.isAutocomplete()) {
             let focussed = inter.options.getFocused(true);
