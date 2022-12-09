@@ -64,6 +64,14 @@ export interface DBIConfigConstructor {
             ttl: number;
         };
     };
+    data?: {
+        other?: Record<string, any>;
+        refs?: Map<string, {
+            at: number;
+            value: any;
+            ttl?: number;
+        }>;
+    };
     strict?: boolean;
 }
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {

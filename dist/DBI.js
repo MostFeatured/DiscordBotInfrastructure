@@ -53,13 +53,13 @@ class DBI {
             events: new discord_js_1.default.Collection(),
             locales: new discord_js_1.default.Collection(),
             interactionLocales: new discord_js_1.default.Collection(),
-            other: {},
+            other: config.data?.other ?? {},
             eventMap: eventMap_json_1.default,
             customEventNames: new Set(),
             unloaders: new Set(),
             registers: new Set(),
             registerUnloaders: new Set(),
-            refs: new Map()
+            refs: config.data?.refs ?? new Map()
         };
         this.events = new Events_1.Events(this);
         this.client = new discord_js_1.default.Client({

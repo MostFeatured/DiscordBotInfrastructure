@@ -38,7 +38,6 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                             type: v9_1.ApplicationCommandOptionType.Subcommand,
                             name: nameSplitted[1],
                             description: current.description,
-                            default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                             dm_permission: current.directMessages,
                             options: localeifyOptions(current.options || [], localeData.optionsLocales),
                             name_localizations: localeData.nameLocales(1),
@@ -48,6 +47,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                             all.push({
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
+                                default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                 name_localizations: localeData.nameLocales(0),
                                 description: "...",
                                 options: [
@@ -68,6 +68,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
                                 name_localizations: localeData.nameLocales(0),
+                                default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                 description: "...",
                                 options: [
                                     {
@@ -80,7 +81,6 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                                                 type: v9_1.ApplicationCommandOptionType.Subcommand,
                                                 name: nameSplitted[2],
                                                 description: current.description,
-                                                default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                                 dm_permission: current.directMessages,
                                                 options: localeifyOptions(current.options || [], localeData.optionsLocales),
                                                 name_localizations: localeData.nameLocales(2),
@@ -104,7 +104,6 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                                             type: v9_1.ApplicationCommandOptionType.Subcommand,
                                             name: nameSplitted[2],
                                             description: current.description,
-                                            default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                             dm_permission: current.directMessages,
                                             options: localeifyOptions(current.options || [], localeData.optionsLocales),
                                             name_localizations: localeData.nameLocales(2),
@@ -118,7 +117,6 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                                     type: v9_1.ApplicationCommandOptionType.Subcommand,
                                     name: nameSplitted[2],
                                     description: current.description,
-                                    default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                                     dm_permission: current.directMessages,
                                     options: localeifyOptions(current.options || [], localeData.optionsLocales),
                                     name_localizations: localeData.nameLocales(2),
