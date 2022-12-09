@@ -79,6 +79,11 @@ export interface DBIConfigConstructor {
     }
   };
 
+  data?: {
+    other?: Record<string, any>;
+    refs?: Map<string, { at: number, value: any, ttl?: number }>;
+  }
+
   strict?: boolean;
 }
 
@@ -143,13 +148,13 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       events: new Discord.Collection(),
       locales: new Discord.Collection(),
       interactionLocales: new Discord.Collection(),
-      other: {} as TOtherData,
+      other: (config.data?.other as any) ?? ({} as TOtherData),
       eventMap,
       customEventNames: new Set(),
       unloaders: new Set(),
       registers: new Set(),
       registerUnloaders: new Set(),
-      refs: new Map()
+      refs: config.data?.refs ?? new Map()
     }
 
     this.events = new Events(this as any);
