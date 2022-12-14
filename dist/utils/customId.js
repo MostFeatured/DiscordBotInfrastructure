@@ -1,16 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseCustomId = exports.customIdBuilder = void 0;
+exports.parseCustomId = exports.buildCustomId = void 0;
 const tslib_1 = require("tslib");
 const stuffs = tslib_1.__importStar(require("stuffs"));
-function customIdBuilder(dbi, name, customData, ttl) {
+function buildCustomId(dbi, name, data, ttl) {
     let customId = [
         name,
-        ...customData.map(value => {
+        ...data.map(value => {
             if (typeof value == "string")
                 return value;
             if (typeof value == "number")
                 return `π${value}`;
+            if (typeof value == "boolean")
+                return `𝞫${value ? 1 : 0}`;
             let id = stuffs.randomString(8);
             Object.assign(value, {
                 $ref: id,
@@ -26,13 +28,15 @@ function customIdBuilder(dbi, name, customData, ttl) {
         throw new Error("Custom id cannot be longer than 100 characters.");
     return customId;
 }
-exports.customIdBuilder = customIdBuilder;
+exports.buildCustomId = buildCustomId;
 function parseCustomId(dbi, customId) {
     let splitted = customId.split("—");
     let name = splitted.shift();
     let data = splitted.map(value => {
         if (value.startsWith("π"))
             return Number(value.slice(1));
+        if (value.startsWith("𝞫"))
+            return !!Number(value.slice(1));
         if (value.startsWith("¤"))
             return dbi.data.refs.get(value.slice(1))?.value;
         return value;

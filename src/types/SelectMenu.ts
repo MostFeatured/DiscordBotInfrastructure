@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
-import { customIdBuilder } from "../utils/customId";
+import { buildCustomId } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import stuffs from "stuffs";
@@ -30,7 +30,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
   toJSON(arg: IDBIToJSONArgs<DBISelectMenuOverrides> = {}): Discord.BaseSelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
-      customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
+      customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
       type: Discord.ComponentType.SelectMenu,
     } as any;
   };

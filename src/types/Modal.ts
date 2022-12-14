@@ -1,7 +1,7 @@
 import { DBI } from "../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx, TDBIReferencedData } from "./Interaction";
 import Discord from "discord.js";
-import { customIdBuilder } from "../utils/customId";
+import { buildCustomId } from "../utils/customId";
 import { IDBIToJSONArgs } from "../utils/UtilTypes";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import stuffs from "stuffs";
@@ -36,7 +36,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
   toJSON(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): Discord.ModalComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
-      customId: customIdBuilder(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
+      customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl)
     } as any;
   };
 
