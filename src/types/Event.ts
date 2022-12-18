@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
-import { DBI } from "../DBI";
+import { DBI, DBIClientData } from "../DBI";
 import { DBILocale } from "./Locale";
 
 export interface ClientEvents {
@@ -93,7 +93,7 @@ export interface ClientEvents {
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
   [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
     name: K,
-    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string }) => Promise<any> | any
+    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string, nextClient: DBIClientData<TNamespace> }) => Promise<any> | any
   }
 }[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
 
@@ -102,6 +102,7 @@ export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<
 export class DBIEvent<TNamespace extends NamespaceEnums> {
   readonly type: "Event";
   other?: Record<string, any>;
+  triggerType?: "OneByOne" | "OneByOneGlobal" | "Random" | "First";
   id?: string;
   name: string;
   onExecute: (...args: any[]) => any;
@@ -115,5 +116,6 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
     this.name = cfg.name as any;
     this.onExecute = cfg.onExecute;
     this.ordered = cfg.ordered ?? false;
+    this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
   }
 }

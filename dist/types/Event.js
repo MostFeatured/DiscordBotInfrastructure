@@ -4,6 +4,7 @@ exports.DBIEvent = void 0;
 class DBIEvent {
     type;
     other;
+    triggerType;
     id;
     name;
     onExecute;
@@ -17,6 +18,7 @@ class DBIEvent {
         this.name = cfg.name;
         this.onExecute = cfg.onExecute;
         this.ordered = cfg.ordered ?? false;
+        this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
     }
 }
 exports.DBIEvent = DBIEvent;

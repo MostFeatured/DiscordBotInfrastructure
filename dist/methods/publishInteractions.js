@@ -6,20 +6,19 @@ const v9_1 = require("discord-api-types/v9");
 const permissions_1 = require("../utils/permissions");
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
-async function publishInteractions(clientToken, interactions, interactionsLocales, publishType, guildId) {
+async function publishInteractions(clients, interactions, interactionsLocales, publishType, guildId) {
     interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
-    const rest = new rest_1.REST({ version: "10" });
-    rest.setToken(clientToken);
-    const me = await rest.get(v9_1.Routes.user());
     interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);
     let body = interactions.reduce((all, current) => {
+        if (current.publish && !all[current.publish])
+            all[current.publish] = [];
         switch (current.type) {
             case "ChatInput": {
                 let nameSplitted = current.name.split(" ");
                 let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                 switch (nameSplitted.length) {
                     case 1: {
-                        all.push({
+                        all[current.publish].push({
                             type: v9_1.ApplicationCommandType.ChatInput,
                             description: current.description,
                             name: nameSplitted[0],
@@ -32,7 +31,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                         break;
                     }
                     case 2: {
-                        let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
+                        let baseItem = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
                         let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         let option = {
                             type: v9_1.ApplicationCommandOptionType.Subcommand,
@@ -44,7 +43,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                             description_localizations: localeData.descriptionLocales,
                         };
                         if (!baseItem) {
-                            all.push({
+                            all[current.publish].push({
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
                                 default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
@@ -61,10 +60,10 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
                         break;
                     }
                     case 3: {
-                        let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
+                        let level1Item = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == v9_1.ApplicationCommandType.ChatInput);
                         let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
                         if (!level1Item) {
-                            all.push({
+                            all[current.publish].push({
                                 type: v9_1.ApplicationCommandType.ChatInput,
                                 name: nameSplitted[0],
                                 name_localizations: localeData.nameLocales(0),
@@ -131,7 +130,7 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
             }
             case "MessageContextMenu": {
                 let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
-                all.push({
+                all[current.publish].push({
                     type: v9_1.ApplicationCommandType.Message,
                     name: current.name,
                     default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
@@ -143,27 +142,33 @@ async function publishInteractions(clientToken, interactions, interactionsLocale
             }
             case "UserContextMenu": {
                 let localeData = formatLocale(interactionsLocales.get(current.name) ?? {});
-                all.push({
+                all[current.publish].push({
                     type: v9_1.ApplicationCommandType.User,
                     name: current.name,
                     default_member_permissions: (0, permissions_1.reducePermissions)(current.defaultMemberPermissions).toString(),
                     dm_permission: current.directMessages,
                     name_localizations: localeData.allNameLocales,
-                    description_localizations: localeData.descriptionLocales
+                    description_localizations: localeData.descriptionLocales,
                 });
                 break;
             }
         }
         return all;
-    }, []);
-    switch (publishType) {
-        case "Guild": {
-            await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body });
-            break;
-        }
-        case "Global": {
-            await rest.put(v9_1.Routes.applicationCommands(me.id), { body });
-            break;
+    }, {});
+    for (let i = 0; i < clients.length; i++) {
+        const client = clients[i];
+        const rest = new rest_1.REST({ version: "10" });
+        rest.setToken(client.token);
+        const me = await rest.get(v9_1.Routes.user());
+        switch (publishType) {
+            case "Guild": {
+                await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] });
+                break;
+            }
+            case "Global": {
+                await rest.put(v9_1.Routes.applicationCommands(me.id), { body: body[client.namespace] });
+                break;
+            }
         }
     }
 }

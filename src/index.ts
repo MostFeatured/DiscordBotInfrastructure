@@ -1,6 +1,6 @@
 import { NamespaceEnums } from "../generated/namespaceData";
 import { DBI, DBIConfigConstructor } from "./DBI";
-export { recursiveImport } from "./utils/recursiveImport";
+import { recursiveImport as _recursiveImport } from "./utils/recursiveImport";
 export { MemoryStore } from "./utils/MemoryStore";
 
 import path from "path";
@@ -14,5 +14,11 @@ export function createDBI<TNamespace extends NamespaceEnums, TOtherType = Record
 
 export const Utils = {
   parseCustomId,
-  buildCustomId
+  buildCustomId,
+  recursiveImport: _recursiveImport
+}
+
+export async function recursiveImport(...args) {
+  console.log("[DEPRECTED] recursiveImport is a deprected api. Please use Utils.recursiveImport instead.", Error().stack);
+  return await _recursiveImport(...(args as any));
 }

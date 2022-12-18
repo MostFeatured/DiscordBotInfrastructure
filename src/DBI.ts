@@ -20,6 +20,7 @@ import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/Inte
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
 import { DBICustomEvent, TDBICustomEventOmitted } from "./types/CustomEvent";
+import aaq from "async-and-quick";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -27,6 +28,8 @@ export interface DBIStore {
   delete(key: string): Promise<void>;
   has(key: string): Promise<boolean>;
 }
+
+export type DBIClientData<TNamespace extends NamespaceEnums> = { namespace: NamespaceData[TNamespace]["clientNamespaces"], token: string, options: Discord.Options, client: Discord.Client<true> };
 
 export interface DBIConfig {
   discord: {
@@ -59,7 +62,12 @@ export interface DBIConfigConstructor {
   discord: {
     token: string;
     options: Discord.ClientOptions
-  }
+  } | {
+    namespace: string,
+    token: string,
+    options: Discord.ClientOptions,
+  }[];
+
   defaults?: {
     locale?: TDBILocaleString,
     directMessages?: boolean,
@@ -105,7 +113,6 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
 export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, any>> {
   namespace: TNamespace;
   config: DBIConfig;
-  client: Discord.Client<true>;
   data: {
     interactions: Discord.Collection<string, TDBIInteractions<TNamespace>>;
     events: Discord.Collection<string, DBIEvent<TNamespace>>;
@@ -118,6 +125,15 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
     refs: Map<string, { at: number, value: any, ttl?: number }>;
+    clients:
+    & DBIClientData<TNamespace>[]
+    & {
+      next(key?: string): DBIClientData<TNamespace>,
+      random(): DBIClientData<TNamespace>,
+      first(): DBIClientData<TNamespace>,
+      get(namespace: NamespaceData[TNamespace]["clientNamespaces"]): DBIClientData<TNamespace>,
+      indexes: Record<string, number>
+    }
   };
   events: Events<TNamespace>;
   cluster?: Sharding.Client;
@@ -125,6 +141,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   private _hooked: boolean;
   constructor(namespace: TNamespace, config: DBIConfigConstructor) {
     this.namespace = namespace as any;
+    const self = this;
 
     config.store = config.store as any || new MemoryStore();
     config.defaults = {
@@ -154,18 +171,50 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       unloaders: new Set(),
       registers: new Set(),
       registerUnloaders: new Set(),
-      refs: config.data?.refs ?? new Map()
+      refs: config.data?.refs ?? new Map(),
+      clients: Object.assign([], {
+        next(key = "global") {
+          this.indexes[key] = (((this.indexes[key] ?? -1) + 1) % this.length);
+          return this[this.indexes[key]];
+        },
+        random() {
+          return this[Math.floor(Math.random() * this.length)];
+        },
+        first() {
+          return this[0];
+        },
+        get(namespace: string) {
+          return this.find((i: any) => i.namespace === namespace);
+        },
+        indexes: {}
+      }) as any
     }
 
     this.events = new Events(this as any);
-    this.client = new Discord.Client({
-      ...(config.discord?.options || {}) as any,
-      ...(config.sharding == "hybrid" ? {
-        shards: (Sharding as any).data.SHARD_LIST,
-        shardCount: (Sharding as any).data.TOTAL_SHARDS
-      } : {})
-    });
-    this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.client) : undefined;
+
+    this.data.clients.push(...(
+      (
+        Array.isArray(config.discord) ?
+          config.discord :
+          [{ token: config.discord.token, options: config.discord.options, namespace: "default" }]
+      ) as any
+    ));
+    for (let clientContext of this.data.clients) {
+      let client = new Discord.Client({
+        ...(clientContext.options || {}) as any,
+        ...(config.sharding == "hybrid" ? {
+          shards: (Sharding as any).data.SHARD_LIST,
+          shardCount: (Sharding as any).data.TOTAL_SHARDS
+        } : {})
+      });
+      clientContext.client = client;
+    }
+
+    if (this.data.clients.length === 0) throw new Error("No clients provided.");
+    if (this.data.clients.length !== 1 && !(config.sharding && config.sharding === "off"))
+      throw new Error("Sharding only supports 1 client.");
+
+    this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.data.clients[0].client) : undefined;
     this._loaded = false;
     this._hooked = false;
   }
@@ -290,7 +339,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       };
       CustomEvent = Object.assign(CustomEvent, class { constructor(...args: any[]) { return CustomEvent.apply(this, args as any); } });
 
-      let InteractionLocale = function(cfg: TDBIInteractionLocaleOmitted) {
+      let InteractionLocale = function (cfg: TDBIInteractionLocaleOmitted) {
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
         if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
         self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
@@ -324,16 +373,17 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     return this.data.interactions.get(name as any) as any;
   }
 
-  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName] ): void {
-    this.client.emit(name as any, { ...args, _DIRECT_: true } as any);
+  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
+    this.data.clients.forEach((d) => d.client.emit(name as any, { ...args, _DIRECT_: true } as any));
   }
 
-/**
- * 
- * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
- * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
- */
-
+  /**
+   * @deprecated
+   */
+  get client() {
+    console.log("[DEPRECTED] dbi.client is a deprected api. Please use dbi.data.clients.first().client instead.", Error().stack);
+    return this.data.clients[0]?.client;
+  }
   /**
    * this.data.events.get(name)
    */
@@ -381,7 +431,9 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   }
 
   async login(): Promise<any> {
-    await this.client.login(this.config.sharding == "default" ? undefined : this.config.discord.token);
+    await aaq.quickForEach(this.data.clients, async (clientContext) => {
+      await clientContext.client.login(this.config.sharding == "default" ? null : clientContext.token);
+    });
   }
 
   async register(cb: (api: DBIRegisterAPI<TNamespace>) => void): Promise<any> {
@@ -416,7 +468,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     switch (args[0]) {
       case "Global": {
         return await publishInteractions(
-          this.config.discord.token,
+          this.data.clients,
           args[1] ? new Discord.Collection() : interactions,
           this.data.interactionLocales,
           args[0]
@@ -424,7 +476,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       }
       case "Guild": {
         return await publishInteractions(
-          this.config.discord.token,
+          this.data.clients,
           args[2] ? new Discord.Collection() : interactions,
           this.data.interactionLocales,
           args[0],

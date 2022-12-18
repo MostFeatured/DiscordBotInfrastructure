@@ -10,7 +10,9 @@ class DBIBaseInteraction {
         this.type = cfg.type;
         this.options = cfg.options;
         this.other = cfg.other;
+        this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
     }
+    publish;
     dbi;
     name;
     description;

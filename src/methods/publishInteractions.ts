@@ -4,7 +4,7 @@ import { REST } from "@discordjs/rest";
 import { Routes, RESTGetAPIUserResult, RESTPutAPIApplicationCommandsJSONBody, ApplicationCommandType, ApplicationCommandOptionType } from "discord-api-types/v9";
 import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
-import { DBI } from "../DBI";
+import { DBI, DBIClientData } from "../DBI";
 import { DBIInteractionLocale } from "../types/InteractionLocale";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
@@ -12,29 +12,25 @@ const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"]
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
 
 export async function publishInteractions(
-  clientToken: string,
+  clients: DBIClientData<NamespaceEnums>[],
   interactions: Discord.Collection<string, DBIChatInput<NamespaceEnums>>,
   interactionsLocales: Discord.Collection<string, DBIInteractionLocale>,
   publishType: "Guild" | "Global",
   guildId?: string
 ) {
   interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
-
-  const rest = new REST({ version: "10" });
-  rest.setToken(clientToken);
-
-  const me: RESTGetAPIUserResult = await rest.get(Routes.user()) as any;
   interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);
 
-  let body: RESTPutAPIApplicationCommandsJSONBody =
+  let body: {[k: string]: RESTPutAPIApplicationCommandsJSONBody} =
     interactions.reduce((all, current) => {
+      if (current.publish && !all[current.publish]) all[current.publish] = [];
       switch (current.type) {
         case "ChatInput": {
           let nameSplitted = current.name.split(" ");
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
           switch (nameSplitted.length) {
             case 1: {
-              all.push({
+              all[current.publish].push({
                 type: ApplicationCommandType.ChatInput,
                 description: current.description,
                 name: nameSplitted[0],
@@ -47,7 +43,7 @@ export async function publishInteractions(
               break;
             }
             case 2: {
-              let baseItem = all.find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
+              let baseItem = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               let option = {
                 type: ApplicationCommandOptionType.Subcommand,
@@ -59,7 +55,7 @@ export async function publishInteractions(
                 description_localizations: localeData.descriptionLocales,
               };
               if (!baseItem) {
-                all.push({
+                all[current.publish].push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
                   default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
@@ -75,10 +71,10 @@ export async function publishInteractions(
               break;
             }
             case 3: {
-              let level1Item = all.find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
+              let level1Item = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               if (!level1Item) {
-                all.push({
+                all[current.publish].push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
                   name_localizations: localeData.nameLocales(0),
@@ -143,7 +139,7 @@ export async function publishInteractions(
         }
         case "MessageContextMenu": {
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
-          all.push({
+          all[current.publish].push({
             type: ApplicationCommandType.Message,
             name: current.name,
             default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
@@ -155,29 +151,38 @@ export async function publishInteractions(
         }
         case "UserContextMenu": {
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
-          all.push({
+          all[current.publish].push({
             type: ApplicationCommandType.User,
             name: current.name,
             default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
             dm_permission: current.directMessages,
             name_localizations: localeData.allNameLocales,
-            description_localizations: localeData.descriptionLocales
+            description_localizations: localeData.descriptionLocales,
           });
           break;
         }
       }
 
       return all;
-    }, []);
+    }, {} as {[k: string]: any});
+    
+
+  for (let i = 0; i < clients.length; i++) {
+    const client = clients[i];
+    const rest = new REST({ version: "10" });
+    rest.setToken(client.token);
   
-  switch (publishType) {
-    case "Guild": {
-      await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body });
-      break;
-    }
-    case "Global": {
-      await rest.put(Routes.applicationCommands(me.id), { body });
-      break;
+    const me: RESTGetAPIUserResult = await rest.get(Routes.user()) as any;
+  
+    switch (publishType) {
+      case "Guild": {
+        await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] });
+        break;
+      }
+      case "Global": {
+        await rest.put(Routes.applicationCommands(me.id), { body: body[client.namespace] });
+        break;
+      }
     }
   }
   

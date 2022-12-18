@@ -139,9 +139,13 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     dbi.events.trigger("afterInteraction", { dbi, interaction: inter, dbiInteraction: dbiInter, locale, setRateLimit, data, other });
   }
 
-  dbi.client.on("interactionCreate", handle);
+  dbi.data.clients.forEach(d=>{
+    d.client.on("interactionCreate", handle);
+  });
 
   return () => { 
-    dbi.client.off("interactionCreate", handle);
+    dbi.data.clients.forEach(d=>{
+      d.client.off("interactionCreate", handle);
+    });
   };
 }

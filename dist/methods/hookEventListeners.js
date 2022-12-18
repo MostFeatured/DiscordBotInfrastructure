@@ -3,6 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.hookEventListeners = void 0;
 const discord_js_1 = require("discord.js");
 function hookEventListeners(dbi) {
+    function getClientByEvent(value) {
+        return value.triggerType == "OneByOne"
+            ? dbi.data.clients.next(`Event:${value.id}`)
+            : value.triggerType == "OneByOneGlobal"
+                ? dbi.data.clients.next("Event")
+                : value.triggerType == "Random"
+                    ? dbi.data.clients.random()
+                    : dbi.data.clients.first();
+    }
     async function handle(eventName, ...args) {
         if (!dbi.data.eventMap[eventName])
             return;
@@ -44,11 +53,11 @@ function hookEventListeners(dbi) {
         for (let i = 0; i < unOrdered.length; i++) {
             const value = unOrdered[i];
             if (dbi.config.strict) {
-                value.onExecute(arg);
+                value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
             }
             else {
                 try {
-                    value.onExecute(arg)?.catch(error => {
+                    value.onExecute({ ...arg, nextClient: getClientByEvent(value) })?.catch(error => {
                         dbi.events.trigger("eventError", Object.assign(arg, { error }));
                     });
                 }
@@ -60,11 +69,11 @@ function hookEventListeners(dbi) {
         for (let i = 0; i < ordered.length; i++) {
             const value = ordered[i];
             if (dbi.config.strict) {
-                await value.onExecute(arg);
+                await value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
             }
             else {
                 try {
-                    await value.onExecute(arg)?.catch(error => {
+                    await value.onExecute({ ...arg, nextClient: getClientByEvent(value) })?.catch(error => {
                         dbi.events.trigger("eventError", Object.assign(arg, { error }));
                     });
                 }
@@ -75,13 +84,14 @@ function hookEventListeners(dbi) {
         }
         dbi.events.trigger("afterEvent", arg);
     }
-    let originalEmit = dbi.client.emit;
-    dbi.client.emit = function (eventName, ...args) {
+    let firstClient = dbi.data.clients.first().client;
+    let originalEmit = firstClient.emit;
+    firstClient.emit = function (eventName, ...args) {
         handle(eventName, ...args);
         return originalEmit.call(this, eventName, ...args);
     };
     return () => {
-        dbi.client.emit = originalEmit;
+        firstClient.emit = originalEmit;
     };
 }
 exports.hookEventListeners = hookEventListeners;

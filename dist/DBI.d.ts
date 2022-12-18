@@ -20,6 +20,12 @@ export interface DBIStore {
     delete(key: string): Promise<void>;
     has(key: string): Promise<boolean>;
 }
+export declare type DBIClientData<TNamespace extends NamespaceEnums> = {
+    namespace: NamespaceData[TNamespace]["clientNamespaces"];
+    token: string;
+    options: Discord.Options;
+    client: Discord.Client<true>;
+};
 export interface DBIConfig {
     discord: {
         token: string;
@@ -47,7 +53,11 @@ export interface DBIConfigConstructor {
     discord: {
         token: string;
         options: Discord.ClientOptions;
-    };
+    } | {
+        namespace: string;
+        token: string;
+        options: Discord.ClientOptions;
+    }[];
     defaults?: {
         locale?: TDBILocaleString;
         directMessages?: boolean;
@@ -91,7 +101,6 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
 export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, any>> {
     namespace: TNamespace;
     config: DBIConfig;
-    client: Discord.Client<true>;
     data: {
         interactions: Discord.Collection<string, TDBIInteractions<TNamespace>>;
         events: Discord.Collection<string, DBIEvent<TNamespace>>;
@@ -110,6 +119,13 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
             value: any;
             ttl?: number;
         }>;
+        clients: DBIClientData<TNamespace>[] & {
+            next(key?: string): DBIClientData<TNamespace>;
+            random(): DBIClientData<TNamespace>;
+            first(): DBIClientData<TNamespace>;
+            get(namespace: NamespaceData[TNamespace]["clientNamespaces"]): DBIClientData<TNamespace>;
+            indexes: Record<string, number>;
+        };
     };
     events: Events<TNamespace>;
     cluster?: Sharding.Client;
@@ -126,10 +142,9 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
     interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName];
     emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void;
     /**
-     *
-     * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
-     * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
+     * @deprecated
      */
+    get client(): Discord.Client<true>;
     /**
      * this.data.events.get(name)
      */

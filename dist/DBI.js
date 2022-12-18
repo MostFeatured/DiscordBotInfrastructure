@@ -22,10 +22,10 @@ const Sharding = tslib_1.__importStar(require("discord-hybrid-sharding"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
 const InteractionLocale_1 = require("./types/InteractionLocale");
 const CustomEvent_1 = require("./types/CustomEvent");
+const async_and_quick_1 = tslib_1.__importDefault(require("async-and-quick"));
 class DBI {
     namespace;
     config;
-    client;
     data;
     events;
     cluster;
@@ -33,6 +33,7 @@ class DBI {
     _hooked;
     constructor(namespace, config) {
         this.namespace = namespace;
+        const self = this;
         config.store = config.store || new MemoryStore_1.MemoryStore();
         config.defaults = {
             locale: "en",
@@ -59,17 +60,43 @@ class DBI {
             unloaders: new Set(),
             registers: new Set(),
             registerUnloaders: new Set(),
-            refs: config.data?.refs ?? new Map()
+            refs: config.data?.refs ?? new Map(),
+            clients: Object.assign([], {
+                next(key = "global") {
+                    this.indexes[key] = (((this.indexes[key] ?? -1) + 1) % this.length);
+                    return this[this.indexes[key]];
+                },
+                random() {
+                    return this[Math.floor(Math.random() * this.length)];
+                },
+                first() {
+                    return this[0];
+                },
+                get(namespace) {
+                    return this.find((i) => i.namespace === namespace);
+                },
+                indexes: {}
+            })
         };
         this.events = new Events_1.Events(this);
-        this.client = new discord_js_1.default.Client({
-            ...(config.discord?.options || {}),
-            ...(config.sharding == "hybrid" ? {
-                shards: Sharding.data.SHARD_LIST,
-                shardCount: Sharding.data.TOTAL_SHARDS
-            } : {})
-        });
-        this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.client) : undefined;
+        this.data.clients.push(...(Array.isArray(config.discord) ?
+            config.discord :
+            [{ token: config.discord.token, options: config.discord.options, namespace: "default" }]));
+        for (let clientContext of this.data.clients) {
+            let client = new discord_js_1.default.Client({
+                ...(clientContext.options || {}),
+                ...(config.sharding == "hybrid" ? {
+                    shards: Sharding.data.SHARD_LIST,
+                    shardCount: Sharding.data.TOTAL_SHARDS
+                } : {})
+            });
+            clientContext.client = client;
+        }
+        if (this.data.clients.length === 0)
+            throw new Error("No clients provided.");
+        if (this.data.clients.length !== 1 && !(config.sharding && config.sharding === "off"))
+            throw new Error("Sharding only supports 1 client.");
+        this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.data.clients[0].client) : undefined;
         this._loaded = false;
         this._hooked = false;
     }
@@ -245,13 +272,15 @@ class DBI {
         return this.data.interactions.get(name);
     }
     emit(name, args) {
-        this.client.emit(name, { ...args, _DIRECT_: true });
+        this.data.clients.forEach((d) => d.client.emit(name, { ...args, _DIRECT_: true }));
     }
     /**
-     *
-     * ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K] as const)
-     * typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])[keyof typeof ((NamespaceData[TNamespace]["customEvents"] & ClientEvents)[K])]
+     * @deprecated
      */
+    get client() {
+        console.log("[DEPRECTED] dbi.client is a deprected api. Please use dbi.data.clients.first().client instead.", Error().stack);
+        return this.data.clients[0]?.client;
+    }
     /**
      * this.data.events.get(name)
      */
@@ -293,7 +322,9 @@ class DBI {
         return lodash_1.default.unset(this.data.other, k);
     }
     async login() {
-        await this.client.login(this.config.sharding == "default" ? undefined : this.config.discord.token);
+        await async_and_quick_1.default.quickForEach(this.data.clients, async (clientContext) => {
+            await clientContext.client.login(this.config.sharding == "default" ? null : clientContext.token);
+        });
     }
     async register(cb) {
         this.data.registers.add(cb);
@@ -321,10 +352,10 @@ class DBI {
         let interactions = this.data.interactions.filter(i => i.type == "ChatInput" || i.type == "MessageContextMenu" || i.type == "UserContextMenu");
         switch (args[0]) {
             case "Global": {
-                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[1] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0]);
+                return await (0, publishInteractions_1.publishInteractions)(this.data.clients, args[1] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0]);
             }
             case "Guild": {
-                return await (0, publishInteractions_1.publishInteractions)(this.config.discord.token, args[2] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0], args[1]);
+                return await (0, publishInteractions_1.publishInteractions)(this.data.clients, args[2] ? new discord_js_1.default.Collection() : interactions, this.data.interactionLocales, args[0], args[1]);
             }
         }
     }

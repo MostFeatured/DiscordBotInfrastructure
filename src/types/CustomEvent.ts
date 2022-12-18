@@ -8,7 +8,7 @@ export class DBICustomEvent<TNamespace extends NamespaceEnums, CEventName extend
   map: {[key: string]: string};
   type: string;
   trigger(args: NamespaceData[TNamespace]["customEvents"][CEventName]) {
-    return this.dbi.client.emit(this.name as string, { ...args, _DIRECT_: true});
+    return this.dbi.data.clients.first().client.emit(this.name as string, { ...args, _DIRECT_: true});
   }
   constructor(dbi: DBI<TNamespace>, cfg: TDBICustomEventOmitted<TNamespace, CEventName>) {
     this.dbi = dbi;

@@ -7,7 +7,7 @@ class DBICustomEvent {
     map;
     type;
     trigger(args) {
-        return this.dbi.client.emit(this.name, { ...args, _DIRECT_: true });
+        return this.dbi.data.clients.first().client.emit(this.name, { ...args, _DIRECT_: true });
     }
     constructor(dbi, cfg) {
         this.dbi = dbi;

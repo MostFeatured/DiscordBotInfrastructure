@@ -5,9 +5,10 @@ const tslib_1 = require("tslib");
 const fs_1 = tslib_1.__importDefault(require("fs"));
 const path_1 = tslib_1.__importDefault(require("path"));
 /**
- * Usage: `await recursiveImport("./src", [".js", ".ts"])`
+ * @example
+ * await recursiveImport("./src", [".js"], [".d.ts"])
  */
-async function recursiveImport(folderPath, exts = [".js", ".ts"]) {
+async function recursiveImport(folderPath, exts = [".js"], ignore = [".d.ts", ".js.map", ".d.ts.map"]) {
     let files = await fs_1.default.promises.readdir(folderPath, { withFileTypes: true });
     let dirName = __dirname;
     for (const file of files) {
@@ -17,7 +18,7 @@ async function recursiveImport(folderPath, exts = [".js", ".ts"]) {
             if (file.isDirectory()) {
                 await recursiveImport(filePath, exts);
             }
-            else if (exts.some(i => file.name.endsWith(i))) {
+            else if (exts.some(i => file.name.endsWith(i)) && !ignore.some(i => file.name.endsWith(i))) {
                 await Promise.resolve().then(() => tslib_1.__importStar(require(filePath)));
             }
         }

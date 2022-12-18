@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import { NamespaceEnums } from "../../generated/namespaceData";
+import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { DBIButton } from "./Button";
 import { DBIChatInput } from "./ChatInput/ChatInput";
@@ -28,6 +28,7 @@ export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   dbiInteraction: TDBIInteractions<TNamespace>;
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
   other: Record<string, any>;
+  clientNamespace: NamespaceData[TNamespace]["clientNamespaces"];
 }
 
 export type TDBIReferencedData = ({ [key: string]: any, $ref: string, $unRef(): boolean } | string | number);
@@ -66,8 +67,10 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.type = cfg.type;
     this.options = cfg.options;
     this.other = cfg.other;
+    this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
   }
-
+    
+  publish?: NamespaceData[TNamespace]["clientNamespaces"];
   dbi: DBI<TNamespace>;
   name: string;
   description: string;
