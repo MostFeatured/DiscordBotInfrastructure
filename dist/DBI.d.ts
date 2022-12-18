@@ -123,6 +123,7 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
         clients: DBIClientData<TNamespace>[] & {
             next(key?: string): DBIClientData<TNamespace>;
             random(): DBIClientData<TNamespace>;
+            random(size: number): DBIClientData<TNamespace>[];
             first(): DBIClientData<TNamespace>;
             get(namespace: NamespaceData[TNamespace]["clientNamespaces"]): DBIClientData<TNamespace>;
             indexes: Record<string, number>;

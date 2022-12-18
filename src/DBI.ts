@@ -131,6 +131,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     & {
       next(key?: string): DBIClientData<TNamespace>,
       random(): DBIClientData<TNamespace>,
+      random(size: number): DBIClientData<TNamespace>[],
       first(): DBIClientData<TNamespace>,
       get(namespace: NamespaceData[TNamespace]["clientNamespaces"]): DBIClientData<TNamespace>,
       indexes: Record<string, number>
@@ -178,8 +179,12 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
           this.indexes[key] = (((this.indexes[key] ?? -1) + 1) % this.length);
           return this[this.indexes[key]];
         },
-        random() {
-          return this[Math.floor(Math.random() * this.length)];
+        random(size?: number) {
+          if (typeof size === "number") {
+            return this.sort(() => Math.random() - 0.5).slice(0, size);
+          } else {
+            return this[Math.floor(Math.random() * this.length)];
+          }
         },
         first() {
           return this[0];

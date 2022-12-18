@@ -66,8 +66,13 @@ class DBI {
                     this.indexes[key] = (((this.indexes[key] ?? -1) + 1) % this.length);
                     return this[this.indexes[key]];
                 },
-                random() {
-                    return this[Math.floor(Math.random() * this.length)];
+                random(size) {
+                    if (typeof size === "number") {
+                        return this.sort(() => Math.random() - 0.5).slice(0, size);
+                    }
+                    else {
+                        return this[Math.floor(Math.random() * this.length)];
+                    }
                 },
                 first() {
                     return this[0];
