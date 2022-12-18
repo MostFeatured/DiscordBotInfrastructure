@@ -10,5 +10,8 @@ export declare const Utils: {
     buildCustomId: typeof buildCustomId;
     recursiveImport: typeof _recursiveImport;
 };
+/**
+ * @deprecated
+ */
 export declare function recursiveImport(...args: any[]): Promise<any>;
 //# sourceMappingURL=index.d.ts.map

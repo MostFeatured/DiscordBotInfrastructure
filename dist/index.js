@@ -19,6 +19,9 @@ exports.Utils = {
     buildCustomId: customId_1.buildCustomId,
     recursiveImport: recursiveImport_1.recursiveImport
 };
+/**
+ * @deprecated
+ */
 async function recursiveImport(...args) {
     console.log("[DEPRECTED] recursiveImport is a deprected api. Please use Utils.recursiveImport instead.", Error().stack);
     return await recursiveImport_1.recursiveImport.call(this, ...args);

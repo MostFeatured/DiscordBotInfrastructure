@@ -18,6 +18,9 @@ export const Utils = {
   recursiveImport: _recursiveImport
 }
 
+/**
+ * @deprecated
+ */
 export async function recursiveImport(...args: any[]) {
   console.log("[DEPRECTED] recursiveImport is a deprected api. Please use Utils.recursiveImport instead.", Error().stack);
   return await _recursiveImport.call(this, ...args);
