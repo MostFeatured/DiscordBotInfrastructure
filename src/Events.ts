@@ -6,6 +6,10 @@ import { DBILocale } from "./types/Locale";
 
 export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError";
 
+export type TDBIEventHandlerCtx<TNamespace extends NamespaceEnums> = {
+  [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
+}[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])];
+
 export class Events<TNamespace extends NamespaceEnums> {
   DBI: DBI<TNamespace>;
   handlers: Record<string, Array<(data: any) => boolean | Promise<boolean>>>;
@@ -49,17 +53,13 @@ export class Events<TNamespace extends NamespaceEnums> {
 
   on(
     eventName: "beforeEvent" | "afterEvent",
-    handler: (data: {
-      [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
-    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean,
+    handler: (data: TDBIEventHandlerCtx<TNamespace>) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
   on(
     eventName: "eventError",
-    handler: (data: {
-      [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K, error: any } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
-    }[keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]) => Promise<boolean> | boolean,
+    handler: (data: TDBIEventHandlerCtx<TNamespace> & { error: any }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
