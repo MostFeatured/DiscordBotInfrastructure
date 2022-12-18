@@ -33,9 +33,10 @@ export type DBIClientData<TNamespace extends NamespaceEnums> = { namespace: Name
 
 export interface DBIConfig {
   discord: {
-    token: string;
-    options: Discord.ClientOptions
-  }
+    namespace: string,
+    token: string,
+    options: Discord.ClientOptions,
+  }[];
   defaults: {
     locale: TDBILocaleString,
     directMessages: boolean,
@@ -192,12 +193,12 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
     this.events = new Events(this as any);
 
+    config.discord = Array.isArray(config.discord) ?
+      config.discord :
+      [{ token: config.discord.token, options: config.discord.options, namespace: "default" }];
+      
     this.data.clients.push(...(
-      (
-        Array.isArray(config.discord) ?
-          config.discord :
-          [{ token: config.discord.token, options: config.discord.options, namespace: "default" }]
-      ) as any
+      config.discord as any
     ));
     for (let clientContext of this.data.clients) {
       let client = new Discord.Client({

@@ -44,10 +44,10 @@ We start the infrastructure with the `createDBI()` function. The first parameter
 
 As the second step, we open our `login.js` file and write the code group that we will use to open the bot.
 ```js
-const { recursiveImport } = require("@mostfeatured/dbi");
+const { Utils } = require("@mostfeatured/dbi");
 const dbi = require("./dbi");
 (async () => {
-  await recursiveImport("./src");
+  await Utils.recursiveImport("./src");
   await dbi.load();
   await dbi.login();
   await dbi.client.user.setActivity({
@@ -57,15 +57,15 @@ const dbi = require("./dbi");
 })();
 ```
 
-We import the `recursiveImport()` function into it. With this function we can `import`/`require` all files in `x` folder endlessly. In this way, the infrastructure is aware of these files.
+We import the `Utils.recursiveImport()` function into it. With this function we can `import`/`require` all files in `x` folder endlessly. In this way, the infrastructure is aware of these files.
 We access our infrastructure from our main `dbi.js` file and create an `async` environment and first define all project files to the infrastructure. After the definition, we load all the features we have defined to the infrastructure with the `load()` function. Right after, we log in to Discord with the `login()` function.
 
 As the 3rd step, we open our `publish.js` file and repeat all the operations we did in the second step.
 ```js
-const { recursiveImport } = require("@mostfeatured/dbi");
+const { Utils } = require("@mostfeatured/dbi");
 const dbi = require("./dbi");
 (async () => {
-  await recursiveImport("./src");
+  await Utils.recursiveImport("./src");
   await dbi.load();
   await dbi.publish("Guild", "<yourGuildId>");
   // await dbi.publish("Global");
@@ -317,11 +317,11 @@ module.exports = dbi;
 
 2. adım olarak `login.js` dosyamızı açıyoruz ve içerisine botu açmak için kullanacağımız kod gurubunu yazıyoruz.
 ```js
-const { recursiveImport } = require("@mostfeatured/dbi");
+const { Utils } = require("@mostfeatured/dbi");
 const dbi = require("./dbi");
 
 (async () => {
-  await recursiveImport("./src");
+  await Utils.recursiveImport("./src");
 
   await dbi.load();
   await dbi.login();
@@ -334,17 +334,17 @@ const dbi = require("./dbi");
 })();
 ```
 
-İçeriye `recursiveImport()` fonksiyonunu alıyoruz. Bu fonksiyon ile sonsuz bir şekilde `x` klasöründeki bütün dosyaları `import`/`require` edebiliyoruz. Bu sayede altyapı bu dosyalardan haberdar oluyor.
+İçeriye `Utils.recursiveImport()` fonksiyonunu alıyoruz. Bu fonksiyon ile sonsuz bir şekilde `x` klasöründeki bütün dosyaları `import`/`require` edebiliyoruz. Bu sayede altyapı bu dosyalardan haberdar oluyor.
 Ana `dbi.js` dosyamızdan altyapımıza ulaşıyoruz ve `async` bir ortam oluşturup ilk önce tüm proje dosylarını altyapıya tanımlıyoruz. Tanımlamanın ardından tanımladığımız tüm özellikleri altyapıya `load()` fonksiyonunu ile yüklüyoruz. Hemen ardından `login()` fonksiyonu ile Discord'a giriş sağlıyoruz.
 
 
 3. adım olarak `publish.js` dosyamızı açıyoruz ve ikinci aşamada yaptığımız tüm işlemleri tekrardan uyguluyoruz.
 ```js
-const { recursiveImport } = require("@mostfeatured/dbi");
+const { Utils } = require("@mostfeatured/dbi");
 const dbi = require("./dbi");
 
 (async () => {
-  await recursiveImport("./src");
+  await Utils.recursiveImport("./src");
 
   await dbi.load();
   await dbi.publish("Guild", "<yourGuildId>");

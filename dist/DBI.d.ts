@@ -28,9 +28,10 @@ export declare type DBIClientData<TNamespace extends NamespaceEnums> = {
 };
 export interface DBIConfig {
     discord: {
+        namespace: string;
         token: string;
         options: Discord.ClientOptions;
-    };
+    }[];
     defaults: {
         locale: TDBILocaleString;
         directMessages: boolean;

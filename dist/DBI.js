@@ -79,9 +79,10 @@ class DBI {
             })
         };
         this.events = new Events_1.Events(this);
-        this.data.clients.push(...(Array.isArray(config.discord) ?
+        config.discord = Array.isArray(config.discord) ?
             config.discord :
-            [{ token: config.discord.token, options: config.discord.options, namespace: "default" }]));
+            [{ token: config.discord.token, options: config.discord.options, namespace: "default" }];
+        this.data.clients.push(...config.discord);
         for (let clientContext of this.data.clients) {
             let client = new discord_js_1.default.Client({
                 ...(clientContext.options || {}),
