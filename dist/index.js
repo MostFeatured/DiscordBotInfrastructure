@@ -21,7 +21,7 @@ exports.Utils = {
 };
 async function recursiveImport(...args) {
     console.log("[DEPRECTED] recursiveImport is a deprected api. Please use Utils.recursiveImport instead.", Error().stack);
-    return await (0, recursiveImport_1.recursiveImport)(...args);
+    return await recursiveImport_1.recursiveImport.call(this, ...args);
 }
 exports.recursiveImport = recursiveImport;
 //# sourceMappingURL=index.js.map
