@@ -176,11 +176,11 @@ export async function publishInteractions(
   
     switch (publishType) {
       case "Guild": {
-        await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] });
+        await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] || [] });
         break;
       }
       case "Global": {
-        await rest.put(Routes.applicationCommands(me.id), { body: body[client.namespace] });
+        await rest.put(Routes.applicationCommands(me.id), { body: body[client.namespace] || [] });
         break;
       }
     }

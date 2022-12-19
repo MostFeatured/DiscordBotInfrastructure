@@ -162,11 +162,11 @@ async function publishInteractions(clients, interactions, interactionsLocales, p
         const me = await rest.get(v9_1.Routes.user());
         switch (publishType) {
             case "Guild": {
-                await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] });
+                await rest.put(v9_1.Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] || [] });
                 break;
             }
             case "Global": {
-                await rest.put(v9_1.Routes.applicationCommands(me.id), { body: body[client.namespace] });
+                await rest.put(v9_1.Routes.applicationCommands(me.id), { body: body[client.namespace] || [] });
                 break;
             }
         }
