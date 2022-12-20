@@ -55,7 +55,7 @@ class DBI {
             locales: new discord_js_1.default.Collection(),
             interactionLocales: new discord_js_1.default.Collection(),
             other: config.data?.other ?? {},
-            eventMap: eventMap_json_1.default,
+            eventMap: { ...eventMap_json_1.default },
             customEventNames: new Set(),
             unloaders: new Set(),
             registers: new Set(),
