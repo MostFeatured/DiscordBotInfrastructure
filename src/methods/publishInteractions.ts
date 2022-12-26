@@ -7,6 +7,7 @@ import snakecaseKeys from "snakecase-keys";
 import { DBI, DBIClientData } from "../DBI";
 import { DBIInteractionLocale } from "../types/InteractionLocale";
 import { NamespaceEnums } from "../../generated/namespaceData";
+import { ApplicationRoleConnectionMetadataType, ApplicationRoleConnectionMetadata } from "../types/ApplicationRoleConnectionMetadata";
 
 const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"];
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
