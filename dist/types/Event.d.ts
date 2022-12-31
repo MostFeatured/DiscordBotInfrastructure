@@ -6,16 +6,6 @@ export interface ClientEvents {
     applicationCommandPermissionsUpdate: {
         data: Discord.ApplicationCommandPermissionsUpdateData;
     };
-    autoModerationRuleCreate: {
-        autoModerationRule: Discord.AutoModerationRule;
-    };
-    autoModerationRuleDelete: {
-        autoModerationRule: Discord.AutoModerationRule;
-    };
-    autoModerationRuleUpdate: {
-        oldAutoModerationRule: Discord.AutoModerationRule | null;
-        newAutoModerationRule: Discord.AutoModerationRule;
-    };
     cacheSweep: {
         message: string;
     };
@@ -246,6 +236,16 @@ export interface ClientEvents {
     guildScheduledEventUserRemove: {
         guildScheduledEvent: Discord.GuildScheduledEvent;
         user: Discord.User;
+    };
+    autoModerationRuleCreate: {
+        autoModerationRule: Discord.AutoModerationRule;
+    };
+    autoModerationRuleDelete: {
+        autoModerationRule: Discord.AutoModerationRule;
+    };
+    autoModerationRuleUpdate: {
+        oldAutoModerationRule: Discord.AutoModerationRule | null;
+        newAutoModerationRule: Discord.AutoModerationRule;
     };
 }
 export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {

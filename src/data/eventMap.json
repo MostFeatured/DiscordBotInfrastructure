@@ -230,5 +230,15 @@
   "guildScheduledEventUserRemove": [
     "guildScheduledEvent",
     "user"
+  ],
+  "autoModerationRuleCreate": [
+    "autoModerationRule"
+  ],
+  "autoModerationRuleDelete": [
+    "autoModerationRule"
+  ],
+  "autoModerationRuleUpdate": [
+    "oldAutoModerationRule",
+    "newAutoModerationRule"
   ]
 }

@@ -88,6 +88,9 @@ export interface ClientEvents {
   guildScheduledEventDelete: { guildScheduledEvent: Discord.GuildScheduledEvent };
   guildScheduledEventUserAdd: { guildScheduledEvent: Discord.GuildScheduledEvent, user: Discord.User };
   guildScheduledEventUserRemove: { guildScheduledEvent: Discord.GuildScheduledEvent, user: Discord.User };
+  autoModerationRuleCreate: { autoModerationRule: Discord.AutoModerationRule; };
+  autoModerationRuleDelete: { autoModerationRule: Discord.AutoModerationRule; };
+  autoModerationRuleUpdate: { oldAutoModerationRule: Discord.AutoModerationRule | null; newAutoModerationRule: Discord.AutoModerationRule; };
 }
 
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
