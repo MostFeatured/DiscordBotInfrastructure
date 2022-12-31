@@ -6,6 +6,16 @@ export interface ClientEvents {
     applicationCommandPermissionsUpdate: {
         data: Discord.ApplicationCommandPermissionsUpdateData;
     };
+    autoModerationRuleCreate: {
+        autoModerationRule: Discord.AutoModerationRule;
+    };
+    autoModerationRuleDelete: {
+        autoModerationRule: Discord.AutoModerationRule;
+    };
+    autoModerationRuleUpdate: {
+        oldAutoModerationRule: Discord.AutoModerationRule | null;
+        newAutoModerationRule: Discord.AutoModerationRule;
+    };
     cacheSweep: {
         message: string;
     };
