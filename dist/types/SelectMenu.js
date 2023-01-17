@@ -20,7 +20,7 @@ class DBISelectMenu extends Interaction_1.DBIBaseInteraction {
         return {
             ...stuffs_1.default.defaultify((arg?.overrides || {}), this.options || {}, true),
             customId: (0, customId_1.buildCustomId)(this.dbi, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
-            type: discord_js_1.default.ComponentType.SelectMenu,
+            type: discord_js_1.default.ComponentType.StringSelect,
         };
     }
     ;

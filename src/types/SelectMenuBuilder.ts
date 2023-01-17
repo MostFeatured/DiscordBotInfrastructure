@@ -1,9 +1,9 @@
-import { BaseSelectMenuComponentData } from "discord.js";
+import { BaseSelectMenuComponentData, StringSelectMenuComponentData } from "discord.js";
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBISelectMenu } from "./SelectMenu";
 
-export type DBISelectMenuOverrides = Omit<BaseSelectMenuComponentData, "customId" | "type">
+export type DBISelectMenuOverrides =  Omit<StringSelectMenuComponentData, "customId" | "type">
 
 export class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBISelectMenu<TNamespace>

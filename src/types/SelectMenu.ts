@@ -7,13 +7,14 @@ import { NamespaceEnums } from "../../generated/namespaceData";
 import stuffs from "stuffs";
 import { DBISelectMenuBuilder, DBISelectMenuOverrides } from "./SelectMenuBuilder";
 
-
 export interface IDBISelectMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.ButtonInteraction<"cached">;
   data: TDBIReferencedData[];
 }
 
 export type TDBISelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBISelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
+
+export type SelectMenuDefaultOptions = Required<Pick<Discord.StringSelectMenuComponentData, "options">> & Omit<Discord.StringSelectMenuComponentData, "customId" | "type" | "options">;
 
 export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace>, args: TDBISelectMenuOmitted<TNamespace>) {
@@ -23,7 +24,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
     });
   }
 
-  declare options: Omit<Discord.BaseSelectMenuComponentData, "customId" | "type">;
+  declare options: SelectMenuDefaultOptions;
 
   override onExecute(ctx: IDBISelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
@@ -31,7 +32,7 @@ export class DBISelectMenu<TNamespace extends NamespaceEnums> extends DBIBaseInt
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),
-      type: Discord.ComponentType.SelectMenu,
+      type: Discord.ComponentType.StringSelect,
     } as any;
   };
 
