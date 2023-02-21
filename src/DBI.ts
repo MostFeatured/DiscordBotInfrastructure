@@ -138,7 +138,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     }
   };
   events: Events<TNamespace>;
-  cluster?: Sharding.Client;
+  cluster?: Sharding.ClusterClient<Discord.Client>;
   private _loaded: boolean;
   private _hooked: boolean;
   constructor(namespace: TNamespace, config: DBIConfigConstructor) {
@@ -209,8 +209,8 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       let client = new Discord.Client({
         ...(clientContext.options || {}) as any,
         ...(config.sharding == "hybrid" ? {
-          shards: (Sharding as any).data.SHARD_LIST,
-          shardCount: (Sharding as any).data.TOTAL_SHARDS
+          shards: Sharding.getInfo().SHARD_LIST,
+          shardCount: Sharding.getInfo().TOTAL_SHARDS
         } : {})
       });
       clientContext.client = client;
@@ -220,7 +220,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     if (this.data.clients.length !== 1 && !(config.sharding && config.sharding === "off"))
       throw new Error("Sharding only supports 1 client.");
 
-    this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.data.clients[0].client) : undefined;
+    this.cluster = config.sharding == "hybrid" ? new Sharding.ClusterClient(this.data.clients[0].client) : undefined;
     this._loaded = false;
     this._hooked = false;
   }

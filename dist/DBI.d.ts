@@ -130,7 +130,7 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
         };
     };
     events: Events<TNamespace>;
-    cluster?: Sharding.Client;
+    cluster?: Sharding.ClusterClient<Discord.Client>;
     private _loaded;
     private _hooked;
     constructor(namespace: TNamespace, config: DBIConfigConstructor);

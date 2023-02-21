@@ -92,8 +92,8 @@ class DBI {
             let client = new discord_js_1.default.Client({
                 ...(clientContext.options || {}),
                 ...(config.sharding == "hybrid" ? {
-                    shards: Sharding.data.SHARD_LIST,
-                    shardCount: Sharding.data.TOTAL_SHARDS
+                    shards: Sharding.getInfo().SHARD_LIST,
+                    shardCount: Sharding.getInfo().TOTAL_SHARDS
                 } : {})
             });
             clientContext.client = client;
@@ -102,7 +102,7 @@ class DBI {
             throw new Error("No clients provided.");
         if (this.data.clients.length !== 1 && !(config.sharding && config.sharding === "off"))
             throw new Error("Sharding only supports 1 client.");
-        this.cluster = config.sharding == "hybrid" ? new Sharding.Client(this.data.clients[0].client) : undefined;
+        this.cluster = config.sharding == "hybrid" ? new Sharding.ClusterClient(this.data.clients[0].client) : undefined;
         this._loaded = false;
         this._hooked = false;
     }

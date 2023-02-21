@@ -3,21 +3,23 @@
     "@discordjs/rest": "^1.0.1",
     "async-and-quick": "^1.0.2",
     "discord-api-types": "^0.37.0",
-    "discord-hybrid-sharding": "^1.7.4",
+    "discord-hybrid-sharding": "github:meister03/discord-hybrid-sharding",
     "discord.js": "^14.7.1",
     "lodash": "^4.17.21",
     "snakecase-keys": "^5.4.2",
     "stuffs": "^0.1.21"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.0.70",
+  "version": "0.0.71-dev.0",
   "main": "dist/index.js",
   "type": "commonjs",
   "private": false,
   "scripts": {
     "test": "npx tsc && node dist/test",
     "build": "npx tsc",
-    "prepublish": "npx tsc"
+    "prepublish": "npx tsc",
+    "publish:dev": "npx tsc && npm publish --tag dev",
+    "publish:release": "npx tsc && npm publish"
   },
   "repository": {
     "type": "git",
