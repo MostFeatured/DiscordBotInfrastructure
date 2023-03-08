@@ -11,6 +11,7 @@ class DBIBaseInteraction {
         this.options = cfg.options;
         this.other = cfg.other;
         this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
+        this.rateLimits = cfg.rateLimits ?? [];
     }
     publish;
     dbi;
