@@ -68,6 +68,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.options = cfg.options;
     this.other = cfg.other;
     this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
+    this.rateLimits = cfg.rateLimits ?? [];
   }
     
   publish?: NamespaceData[TNamespace]["clientNamespaces"];

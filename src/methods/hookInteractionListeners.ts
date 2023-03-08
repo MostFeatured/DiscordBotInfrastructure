@@ -105,6 +105,10 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
     }
 
+    for (const rateLimit of dbiInter.rateLimits) {
+      await setRateLimit(rateLimit.type, rateLimit.duration);
+    }
+
     let arg = {
       // @ts-ignore
       dbi,
