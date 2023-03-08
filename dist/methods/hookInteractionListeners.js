@@ -66,7 +66,7 @@ function hookInteractionListeners(dbi) {
                 val = null;
             }
             if (val) {
-                dbi.events.trigger("interactionRateLimit", {
+                if ((await dbi.events.trigger("interactionRateLimit", {
                     dbi,
                     interaction: inter,
                     dbiInteraction: dbiInter,
@@ -76,8 +76,8 @@ function hookInteractionListeners(dbi) {
                         type: key,
                         ...val
                     }
-                });
-                return;
+                })) === true)
+                    return;
             }
         }
         async function setRateLimit(type, duration) {

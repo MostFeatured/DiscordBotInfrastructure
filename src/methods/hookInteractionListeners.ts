@@ -85,7 +85,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
         val = null;
       }
       if (val) {
-        dbi.events.trigger("interactionRateLimit", {
+        if ((await dbi.events.trigger("interactionRateLimit", {
           dbi,
           interaction: inter,
           dbiInteraction: dbiInter,
@@ -95,8 +95,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
             type: key,
             ...val
           }
-        })
-        return;
+        })) === true) return;
       }
     }
 
