@@ -242,7 +242,7 @@
         "newAutoModerationRule"
     ],
     "guildAuditLogEntryCreate": [
-        "guildAuditLogEntry",
+        "auditLogEntry",
         "guild"
     ]
 }
