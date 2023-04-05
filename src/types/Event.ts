@@ -2,7 +2,6 @@ import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI, DBIClientData } from "../DBI";
 import { DBILocale } from "./Locale";
-
 export interface ClientEvents {
   applicationCommandPermissionsUpdate: { data: Discord.ApplicationCommandPermissionsUpdateData };
   cacheSweep: { message: string };
@@ -91,6 +90,7 @@ export interface ClientEvents {
   autoModerationRuleCreate: { autoModerationRule: Discord.AutoModerationRule; };
   autoModerationRuleDelete: { autoModerationRule: Discord.AutoModerationRule; };
   autoModerationRuleUpdate: { oldAutoModerationRule: Discord.AutoModerationRule | null; newAutoModerationRule: Discord.AutoModerationRule; };
+  guildAuditLogEntryCreate: { auditLogEntry: Discord.GuildAuditLogsEntry, guild: Discord.Guild };
 }
 
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {

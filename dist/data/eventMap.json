@@ -240,5 +240,9 @@
     "autoModerationRuleUpdate": [
         "oldAutoModerationRule",
         "newAutoModerationRule"
+    ],
+    "guildAuditLogEntryCreate": [
+        "guildAuditLogEntry",
+        "guild"
     ]
 }

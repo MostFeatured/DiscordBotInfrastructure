@@ -247,6 +247,10 @@ export interface ClientEvents {
         oldAutoModerationRule: Discord.AutoModerationRule | null;
         newAutoModerationRule: Discord.AutoModerationRule;
     };
+    guildAuditLogEntryCreate: {
+        auditLogEntry: Discord.GuildAuditLogsEntry;
+        guild: Discord.Guild;
+    };
 }
 export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
     [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
