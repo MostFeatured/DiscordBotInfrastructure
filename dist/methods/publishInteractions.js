@@ -180,7 +180,7 @@ function localeifyOptions(options, localeData) {
             name_localizations: optionData.nameLocales,
             description_localizations: optionData.descriptionLocales,
             choices: i.choices ? i.choices.map((j) => {
-                let choiceLocale = optionData.choiceLocales[j.name];
+                let choiceLocale = optionData.choiceLocales[j.value ?? j.name];
                 return choiceLocale ? Object.assign(j, {
                     name_localizations: choiceLocale
                 }) : j;
