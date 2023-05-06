@@ -7,7 +7,7 @@ export type DBISelectMenuOverrides =  Omit<StringSelectMenuComponentData, "custo
 
 export class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBISelectMenu<TNamespace>
-  overrides: DBISelectMenuOverrides;
+  overrides: Partial<DBISelectMenuOverrides>;
   reference: { data: (string | number | object)[], ttl?: number };
   constructor(arg: { component: DBISelectMenu<TNamespace>, overrides?: DBISelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
     this.component = arg.component;
@@ -46,7 +46,7 @@ export class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
   }
 
   toJSON(): BaseSelectMenuComponentData {
-    return this.component.toJSON({ overrides: this.overrides, reference: this.reference });
+    return this.component.toJSON({ overrides: this.overrides as any, reference: this.reference });
   }
 
 }

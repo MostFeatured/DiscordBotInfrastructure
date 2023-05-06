@@ -4,7 +4,7 @@ import { DBISelectMenu } from "./SelectMenu";
 export declare type DBISelectMenuOverrides = Omit<StringSelectMenuComponentData, "customId" | "type">;
 export declare class DBISelectMenuBuilder<TNamespace extends NamespaceEnums> {
     component: DBISelectMenu<TNamespace>;
-    overrides: DBISelectMenuOverrides;
+    overrides: Partial<DBISelectMenuOverrides>;
     reference: {
         data: (string | number | object)[];
         ttl?: number;
