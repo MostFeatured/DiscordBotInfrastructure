@@ -10,6 +10,7 @@ class DBIEvent {
     onExecute;
     ordered;
     dbi;
+    disabled = false;
     constructor(dbi, cfg) {
         this.dbi = dbi;
         this.type = "Event";
@@ -19,6 +20,15 @@ class DBIEvent {
         this.onExecute = cfg.onExecute;
         this.ordered = cfg.ordered ?? false;
         this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
+        this.disabled ??= cfg.disabled;
+    }
+    disable() {
+        this.disabled = true;
+        return this;
+    }
+    enable() {
+        this.disabled = false;
+        return this;
     }
 }
 exports.DBIEvent = DBIEvent;

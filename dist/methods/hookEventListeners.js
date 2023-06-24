@@ -52,6 +52,8 @@ function hookEventListeners(dbi) {
         let arg = { eventName, ...ctxArgs, other, locale };
         for (let i = 0; i < unOrdered.length; i++) {
             const value = unOrdered[i];
+            if (value?.disabled)
+                continue;
             if (dbi.config.strict) {
                 value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
             }
@@ -68,6 +70,8 @@ function hookEventListeners(dbi) {
         }
         for (let i = 0; i < ordered.length; i++) {
             const value = ordered[i];
+            if (value?.disabled)
+                continue;
             if (dbi.config.strict) {
                 await value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
             }

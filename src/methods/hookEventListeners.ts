@@ -59,6 +59,8 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
     for (let i = 0; i < unOrdered.length; i++) {
       const value = unOrdered[i];
       
+      if (value?.disabled) continue;
+
       if (dbi.config.strict) {
         value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
       } else {
@@ -74,6 +76,8 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
 
     for (let i = 0; i < ordered.length; i++) {
       const value = ordered[i];
+
+      if (value?.disabled) continue;
 
       if (dbi.config.strict) {
         await value.onExecute({ ...arg, nextClient: getClientByEvent(value) });

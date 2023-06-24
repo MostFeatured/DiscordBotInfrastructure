@@ -265,7 +265,7 @@ export declare type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
         }) => Promise<any> | any;
     };
 }[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
-export declare type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi"> & DBIEventCombinations<TNamespace>;
+export declare type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi" | "enable" | "disable"> & DBIEventCombinations<TNamespace>;
 export declare class DBIEvent<TNamespace extends NamespaceEnums> {
     readonly type: "Event";
     other?: Record<string, any>;
@@ -275,6 +275,9 @@ export declare class DBIEvent<TNamespace extends NamespaceEnums> {
     onExecute: (...args: any[]) => any;
     ordered?: boolean;
     dbi: DBI<TNamespace>;
+    disabled: boolean;
     constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>);
+    disable(): this;
+    enable(): this;
 }
 //# sourceMappingURL=Event.d.ts.map
