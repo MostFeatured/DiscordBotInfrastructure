@@ -1,6 +1,6 @@
-import { DBICustomEvent } from "../src/types/CustomEvent.js";
+import { DBICustomEvent } from "../src/types/other/CustomEvent.js";
 import { TDBIInteractions } from "../src/types/Interaction";
-import { DBILangObject, TDBILocaleString } from "../src/types/Locale";
+import { DBILangObject, TDBILocaleString } from "../src/types/other/Locale.js";
 export interface NamespaceData {
   [k: string]: {
     contentLocale: DBILangObject;

@@ -10,19 +10,23 @@ const Event_1 = require("./types/Event");
 const MemoryStore_1 = require("./utils/MemoryStore");
 const hookInteractionListeners_1 = require("./methods/hookInteractionListeners");
 const Events_1 = require("./Events");
-const Locale_1 = require("./types/Locale");
-const Button_1 = require("./types/Button");
-const SelectMenu_1 = require("./types/SelectMenu");
-const MessageContextMenu_1 = require("./types/MessageContextMenu");
-const UserContextMenu_1 = require("./types/UserContextMenu");
+const Locale_1 = require("./types/other/Locale");
+const Button_1 = require("./types/Components/Button");
+const StringSelectMenu_1 = require("./types/Components/StringSelectMenu");
+const MessageContextMenu_1 = require("./types/other/MessageContextMenu");
+const UserContextMenu_1 = require("./types/other/UserContextMenu");
 const hookEventListeners_1 = require("./methods/hookEventListeners");
 const eventMap_json_1 = tslib_1.__importDefault(require("./data/eventMap.json"));
-const Modal_1 = require("./types/Modal");
+const Modal_1 = require("./types/Components/Modal");
 const Sharding = tslib_1.__importStar(require("discord-hybrid-sharding"));
 const lodash_1 = tslib_1.__importDefault(require("lodash"));
-const InteractionLocale_1 = require("./types/InteractionLocale");
-const CustomEvent_1 = require("./types/CustomEvent");
+const InteractionLocale_1 = require("./types/other/InteractionLocale");
+const CustomEvent_1 = require("./types/other/CustomEvent");
 const async_and_quick_1 = tslib_1.__importDefault(require("async-and-quick"));
+const UserSelectMenu_1 = require("./types/Components/UserSelectMenu");
+const MentionableSelectMenu_1 = require("./types/Components/MentionableSelectMenu");
+const ChannelSelectMenu_1 = require("./types/Components/ChannelSelectMenu");
+const RoleSelectMenu_1 = require("./types/Components/RoleSelectMenu");
 class DBI {
     namespace;
     config;
@@ -180,15 +184,55 @@ class DBI {
             Button = Object.assign(Button, class {
                 constructor(...args) { return Button.apply(this, args); }
             });
-            let SelectMenu = function (cfg) {
-                let dbiSelectMenu = new SelectMenu_1.DBISelectMenu(self, cfg);
-                if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name))
-                    throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
-                self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu);
-                return dbiSelectMenu;
+            let StringSelectMenu = function (cfg) {
+                let dbiStringSelectMenu = new StringSelectMenu_1.DBIStringSelectMenu(self, cfg);
+                if (self.config.strict && self.data.interactions.has(dbiStringSelectMenu.name))
+                    throw new Error(`DBIStringSelectMenu "${dbiStringSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiStringSelectMenu.name)?.type}"!`);
+                self.data.interactions.set(dbiStringSelectMenu.name, dbiStringSelectMenu);
+                return dbiStringSelectMenu;
             };
-            SelectMenu = Object.assign(SelectMenu, class {
-                constructor(...args) { return SelectMenu.apply(this, args); }
+            StringSelectMenu = Object.assign(StringSelectMenu, class {
+                constructor(...args) { return StringSelectMenu.apply(this, args); }
+            });
+            let UserSelectMenu = function (cfg) {
+                let dbiUserSelectMenu = new UserSelectMenu_1.DBIUserSelectMenu(self, cfg);
+                if (self.config.strict && self.data.interactions.has(dbiUserSelectMenu.name))
+                    throw new Error(`DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiUserSelectMenu.name)?.type}"!`);
+                self.data.interactions.set(dbiUserSelectMenu.name, dbiUserSelectMenu);
+                return dbiUserSelectMenu;
+            };
+            UserSelectMenu = Object.assign(UserSelectMenu, class {
+                constructor(...args) { return UserSelectMenu.apply(this, args); }
+            });
+            let RoleSelectMenu = function (cfg) {
+                let dbiRoleSelectMenu = new RoleSelectMenu_1.DBIRoleSelectMenu(self, cfg);
+                if (self.config.strict && self.data.interactions.has(dbiRoleSelectMenu.name))
+                    throw new Error(`DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiRoleSelectMenu.name)?.type}"!`);
+                self.data.interactions.set(dbiRoleSelectMenu.name, dbiRoleSelectMenu);
+                return dbiRoleSelectMenu;
+            };
+            RoleSelectMenu = Object.assign(RoleSelectMenu, class {
+                constructor(...args) { return RoleSelectMenu.apply(this, args); }
+            });
+            let ChannelSelectMenu = function (cfg) {
+                let dbiChannelSelectMenu = new ChannelSelectMenu_1.DBIChannelSelectMenu(self, cfg);
+                if (self.config.strict && self.data.interactions.has(dbiChannelSelectMenu.name))
+                    throw new Error(`DBIChannelSelectMenu "${dbiChannelSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiChannelSelectMenu.name)?.type}"!`);
+                self.data.interactions.set(dbiChannelSelectMenu.name, dbiChannelSelectMenu);
+                return dbiChannelSelectMenu;
+            };
+            ChannelSelectMenu = Object.assign(ChannelSelectMenu, class {
+                constructor(...args) { return ChannelSelectMenu.apply(this, args); }
+            });
+            let MentionableSelectMenu = function (cfg) {
+                let dbiMentionableSelectMenu = new MentionableSelectMenu_1.DBIMentionableSelectMenu(self, cfg);
+                if (self.config.strict && self.data.interactions.has(dbiMentionableSelectMenu.name))
+                    throw new Error(`DBIMentionableSelectMenu "${dbiMentionableSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiMentionableSelectMenu.name)?.type}"!`);
+                self.data.interactions.set(dbiMentionableSelectMenu.name, dbiMentionableSelectMenu);
+                return dbiMentionableSelectMenu;
+            };
+            MentionableSelectMenu = Object.assign(MentionableSelectMenu, class {
+                constructor(...args) { return MentionableSelectMenu.apply(this, args); }
             });
             let MessageContextMenu = function (cfg) {
                 let dbiMessageContextMenu = new MessageContextMenu_1.DBIMessageContextMenu(self, cfg);
@@ -259,7 +303,11 @@ class DBI {
                 ChatInputOptions,
                 Locale,
                 Button,
-                SelectMenu,
+                StringSelectMenu,
+                UserSelectMenu,
+                RoleSelectMenu,
+                ChannelSelectMenu,
+                MentionableSelectMenu,
                 MessageContextMenu,
                 UserContextMenu,
                 CustomEvent,
@@ -271,21 +319,17 @@ class DBI {
             });
         }
     }
+    emit(name, args) {
+        this.data.clients.forEach((d) => d.client.emit(name, { ...args, _DIRECT_: true }));
+    }
     /**
      * this.data.interactions.get(name)
      */
     interaction(name) {
         return this.data.interactions.get(name);
     }
-    emit(name, args) {
-        this.data.clients.forEach((d) => d.client.emit(name, { ...args, _DIRECT_: true }));
-    }
-    /**
-     * @deprecated
-     */
-    get client() {
-        console.log("[DEPRECTED] dbi.client is a deprected api. Please use dbi.data.clients.first().client instead.", Error().stack);
-        return this.data.clients[0]?.client;
+    client(name) {
+        return name ? this.data.clients.get(name) : this.data.clients.first();
     }
     /**
      * this.data.events.get(name)

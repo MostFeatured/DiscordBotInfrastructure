@@ -3,17 +3,21 @@ import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput"
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { ClientEvents, DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { Events } from "./Events";
-import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
-import { DBIButton, TDBIButtonOmitted } from "./types/Button";
-import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
-import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
-import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
-import { DBIModal, TDBIModalOmitted } from "./types/Modal";
+import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/other/Locale";
+import { DBIButton, TDBIButtonOmitted } from "./types/Components/Button";
+import { DBIStringSelectMenu, TDBIStringSelectMenuOmitted } from "./types/Components/StringSelectMenu";
+import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/other/MessageContextMenu";
+import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/other/UserContextMenu";
+import { DBIModal, TDBIModalOmitted } from "./types/Components/Modal";
 import * as Sharding from "discord-hybrid-sharding";
-import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
+import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/other/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
-import { DBICustomEvent, TDBICustomEventOmitted } from "./types/CustomEvent";
+import { DBICustomEvent, TDBICustomEventOmitted } from "./types/other/CustomEvent";
+import { DBIUserSelectMenu, TDBIUserSelectMenuOmitted } from "./types/Components/UserSelectMenu";
+import { DBIMentionableSelectMenu, TDBIMentionableSelectMenuOmitted } from "./types/Components/MentionableSelectMenu";
+import { DBIChannelSelectMenu, TDBIChannelSelectMenuOmitted } from "./types/Components/ChannelSelectMenu";
+import { DBIRoleSelectMenu, TDBIRoleSelectMenuOmitted } from "./types/Components/RoleSelectMenu";
 export interface DBIStore {
     get(key: string, defaultValue?: any): Promise<any>;
     set(key: string, value: any): Promise<void>;
@@ -91,7 +95,11 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
     Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
     Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
     Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
-    SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
+    StringSelectMenu(cfg: TDBIStringSelectMenuOmitted<TNamespace>): DBIStringSelectMenu<TNamespace>;
+    UserSelectMenu(cfg: TDBIUserSelectMenuOmitted<TNamespace>): DBIUserSelectMenu<TNamespace>;
+    RoleSelectMenu(cfg: TDBIRoleSelectMenuOmitted<TNamespace>): DBIRoleSelectMenu<TNamespace>;
+    ChannelSelectMenu(cfg: TDBIChannelSelectMenuOmitted<TNamespace>): DBIChannelSelectMenu<TNamespace>;
+    MentionableSelectMenu(cfg: TDBIMentionableSelectMenuOmitted<TNamespace>): DBIMentionableSelectMenu<TNamespace>;
     MessageContextMenu(cfg: TDBIMessageContextMenuOmitted<TNamespace>): DBIMessageContextMenu<TNamespace>;
     UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
     InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
@@ -138,15 +146,12 @@ export declare class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<
     private _unhookListeners;
     private _unregisterAll;
     private _registerAll;
+    emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void;
     /**
      * this.data.interactions.get(name)
      */
     interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName];
-    emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void;
-    /**
-     * @deprecated
-     */
-    get client(): Discord.Client<true>;
+    client<TClientName extends NamespaceData[TNamespace]["clientNamespaces"]>(name?: TClientName): DBIClientData<TNamespace>;
     /**
      * this.data.events.get(name)
      */

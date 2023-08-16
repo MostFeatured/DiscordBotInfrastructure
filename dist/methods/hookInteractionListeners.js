@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hookInteractionListeners = void 0;
 const customId_1 = require("../utils/customId");
+const componentTypes = ["Button", "StringSelectMenu", "UserSelectMenu", "RoleSelectMenu", "ChannelSelectMenu", "MentionableSelectMenu", "Modal"];
 function hookInteractionListeners(dbi) {
     async function handle(inter) {
         const dbiInter = dbi.data.interactions.find(i => {
@@ -15,7 +16,7 @@ function hookInteractionListeners(dbi) {
                         && (inter.isMessageContextMenuCommand() || inter.isUserContextMenuCommand())
                         && inter.commandName == i.name)
                 ||
-                    ((i.type == "Button" || i.type == "SelectMenu" || i.type == "Modal")
+                    (componentTypes.includes(i.type)
                         && isUsesCustomId
                         && parsedId?.name == i.name));
         });
@@ -29,7 +30,7 @@ function hookInteractionListeners(dbi) {
             user: userLocale,
             guild: guildLocale
         };
-        let data = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
+        let data = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()) ? (0, customId_1.parseCustomId)(dbi, inter.customId).data : undefined;
         let other = {};
         if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other, dbiInteraction: dbiInter })))
             return;

@@ -1,16 +1,16 @@
 import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
-import { DBIButton } from "./Button";
+import { DBIButton } from "./Components/Button";
 import { DBIChatInput } from "./ChatInput/ChatInput";
-import { DBILocale } from "./Locale";
-import { DBIMessageContextMenu } from "./MessageContextMenu";
-import { DBIModal } from "./Modal";
-import { DBISelectMenu } from "./SelectMenu";
-import { DBIUserContextMenu } from "./UserContextMenu";
-export declare type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBISelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
+import { DBILocale } from "./other/Locale";
+import { DBIMessageContextMenu } from "./other/MessageContextMenu";
+import { DBIModal } from "./Components/Modal";
+import { DBIStringSelectMenu } from "./Components/StringSelectMenu";
+import { DBIUserContextMenu } from "./other/UserContextMenu";
+export declare type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBIStringSelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
 export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
-    interaction: Discord.ChatInputCommandInteraction | Discord.UserContextMenuCommandInteraction | Discord.MessageContextMenuCommandInteraction | Discord.ModalSubmitInteraction | Discord.AutocompleteInteraction | Discord.SelectMenuInteraction | Discord.ButtonInteraction;
+    interaction: Discord.ChatInputCommandInteraction | Discord.UserContextMenuCommandInteraction | Discord.MessageContextMenuCommandInteraction | Discord.ModalSubmitInteraction | Discord.AutocompleteInteraction | Discord.AnySelectMenuInteraction | Discord.ButtonInteraction;
     locale: {
         user: DBILocale<TNamespace>;
         guild?: DBILocale<TNamespace>;
@@ -26,7 +26,7 @@ export declare type TDBIReferencedData = ({
     $ref: string;
     $unRef(): boolean;
 } | string | number);
-export declare type TDBIInteractionTypes = "ChatInput" | "UserContextMenu" | "MessageContextMenu" | "Modal" | "Autocomplete" | "SelectMenu" | "Button";
+export declare type TDBIInteractionTypes = "ChatInput" | "UserContextMenu" | "MessageContextMenu" | "Modal" | "Autocomplete" | "StringSelectMenu" | "UserSelectMenu" | "ChannelSelectMenu" | "MentionableSelectMenu" | "RoleSelectMenu" | "Button";
 export declare type TDBIRateLimitTypes = "User" | "Channel" | "Guild" | "Member" | "Message";
 export declare type DBIRateLimit = {
     type: TDBIRateLimitTypes;

@@ -6,21 +6,25 @@ import { ClientEvents, DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
-import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/Locale";
-import { DBIButton, TDBIButtonOmitted } from "./types/Button";
-import { DBISelectMenu, TDBISelectMenuOmitted } from "./types/SelectMenu";
-import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/MessageContextMenu";
-import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/UserContextMenu";
+import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/other/Locale";
+import { DBIButton, TDBIButtonOmitted } from "./types/Components/Button";
+import { DBIStringSelectMenu, TDBIStringSelectMenuOmitted } from "./types/Components/StringSelectMenu";
+import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/other/MessageContextMenu";
+import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/other/UserContextMenu";
 import { hookEventListeners } from "./methods/hookEventListeners";
 import eventMap from "./data/eventMap.json";
-import { DBIModal, TDBIModalOmitted } from "./types/Modal";
+import { DBIModal, TDBIModalOmitted } from "./types/Components/Modal";
 import * as Sharding from "discord-hybrid-sharding";
 import _ from "lodash";
-import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/InteractionLocale";
+import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/other/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
-import { DBICustomEvent, TDBICustomEventOmitted } from "./types/CustomEvent";
+import { DBICustomEvent, TDBICustomEventOmitted } from "./types/other/CustomEvent";
 import aaq from "async-and-quick";
+import { DBIUserSelectMenu, TDBIUserSelectMenuOmitted } from "./types/Components/UserSelectMenu";
+import { DBIMentionableSelectMenu, TDBIMentionableSelectMenuOmitted } from "./types/Components/MentionableSelectMenu";
+import { DBIChannelSelectMenu, TDBIChannelSelectMenuOmitted } from "./types/Components/ChannelSelectMenu";
+import { DBIRoleSelectMenu, TDBIRoleSelectMenuOmitted } from "./types/Components/RoleSelectMenu";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -102,7 +106,11 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
   Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
-  SelectMenu(cfg: TDBISelectMenuOmitted<TNamespace>): DBISelectMenu<TNamespace>;
+  StringSelectMenu(cfg: TDBIStringSelectMenuOmitted<TNamespace>): DBIStringSelectMenu<TNamespace>;
+  UserSelectMenu(cfg: TDBIUserSelectMenuOmitted<TNamespace>): DBIUserSelectMenu<TNamespace>;
+  RoleSelectMenu(cfg: TDBIRoleSelectMenuOmitted<TNamespace>): DBIRoleSelectMenu<TNamespace>;
+  ChannelSelectMenu(cfg: TDBIChannelSelectMenuOmitted<TNamespace>): DBIChannelSelectMenu<TNamespace>;
+  MentionableSelectMenu(cfg: TDBIMentionableSelectMenuOmitted<TNamespace>): DBIMentionableSelectMenu<TNamespace>;
   MessageContextMenu(cfg: TDBIMessageContextMenuOmitted<TNamespace>): DBIMessageContextMenu<TNamespace>;
   UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
   InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
@@ -295,13 +303,45 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       };
       Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
 
-      let SelectMenu = function (cfg: TDBISelectMenuOmitted<TNamespace>) {
-        let dbiSelectMenu = new DBISelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiSelectMenu.name)) throw new Error(`DBISelectMenu "${dbiSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiSelectMenu.name, dbiSelectMenu as any);
-        return dbiSelectMenu;
+      let StringSelectMenu = function (cfg: TDBIStringSelectMenuOmitted<TNamespace>) {
+        let dbiStringSelectMenu = new DBIStringSelectMenu(self as any, cfg);
+        if (self.config.strict && self.data.interactions.has(dbiStringSelectMenu.name)) throw new Error(`DBIStringSelectMenu "${dbiStringSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiStringSelectMenu.name)?.type}"!`);
+        self.data.interactions.set(dbiStringSelectMenu.name, dbiStringSelectMenu as any);
+        return dbiStringSelectMenu;
       };
-      SelectMenu = Object.assign(SelectMenu, class { constructor(...args: any[]) { return SelectMenu.apply(this, args as any); } });
+      StringSelectMenu = Object.assign(StringSelectMenu, class { constructor(...args: any[]) { return StringSelectMenu.apply(this, args as any); } });
+
+      let UserSelectMenu = function (cfg: TDBIUserSelectMenuOmitted<TNamespace>) {
+        let dbiUserSelectMenu = new DBIUserSelectMenu(self as any, cfg);
+        if (self.config.strict && self.data.interactions.has(dbiUserSelectMenu.name)) throw new Error(`DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiUserSelectMenu.name)?.type}"!`);
+        self.data.interactions.set(dbiUserSelectMenu.name, dbiUserSelectMenu as any);
+        return dbiUserSelectMenu;
+      };
+      UserSelectMenu = Object.assign(UserSelectMenu, class { constructor(...args: any[]) { return UserSelectMenu.apply(this, args as any); } });
+
+      let RoleSelectMenu = function (cfg: TDBIRoleSelectMenuOmitted<TNamespace>) {
+        let dbiRoleSelectMenu = new DBIRoleSelectMenu(self as any, cfg);
+        if (self.config.strict && self.data.interactions.has(dbiRoleSelectMenu.name)) throw new Error(`DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiRoleSelectMenu.name)?.type}"!`);
+        self.data.interactions.set(dbiRoleSelectMenu.name, dbiRoleSelectMenu as any);
+        return dbiRoleSelectMenu;
+      };
+      RoleSelectMenu = Object.assign(RoleSelectMenu, class { constructor(...args: any[]) { return RoleSelectMenu.apply(this, args as any); } });
+
+      let ChannelSelectMenu = function (cfg: TDBIChannelSelectMenuOmitted<TNamespace>) {
+        let dbiChannelSelectMenu = new DBIChannelSelectMenu(self as any, cfg);
+        if (self.config.strict && self.data.interactions.has(dbiChannelSelectMenu.name)) throw new Error(`DBIChannelSelectMenu "${dbiChannelSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiChannelSelectMenu.name)?.type}"!`);
+        self.data.interactions.set(dbiChannelSelectMenu.name, dbiChannelSelectMenu as any);
+        return dbiChannelSelectMenu;
+      };
+      ChannelSelectMenu = Object.assign(ChannelSelectMenu, class { constructor(...args: any[]) { return ChannelSelectMenu.apply(this, args as any); } });
+
+      let MentionableSelectMenu = function (cfg: TDBIMentionableSelectMenuOmitted<TNamespace>) {
+        let dbiMentionableSelectMenu = new DBIMentionableSelectMenu(self as any, cfg);
+        if (self.config.strict && self.data.interactions.has(dbiMentionableSelectMenu.name)) throw new Error(`DBIMentionableSelectMenu "${dbiMentionableSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiMentionableSelectMenu.name)?.type}"!`);
+        self.data.interactions.set(dbiMentionableSelectMenu.name, dbiMentionableSelectMenu as any);
+        return dbiMentionableSelectMenu;
+      };
+      MentionableSelectMenu = Object.assign(MentionableSelectMenu, class { constructor(...args: any[]) { return MentionableSelectMenu.apply(this, args as any); } });
 
       let MessageContextMenu = function (cfg: TDBIMessageContextMenuOmitted<TNamespace>) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self as any, cfg);
@@ -359,7 +399,11 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         ChatInputOptions,
         Locale,
         Button,
-        SelectMenu,
+        StringSelectMenu,
+        UserSelectMenu,
+        RoleSelectMenu,
+        ChannelSelectMenu,
+        MentionableSelectMenu,
         MessageContextMenu,
         UserContextMenu,
         CustomEvent,
@@ -372,6 +416,10 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     }
   }
 
+  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
+    this.data.clients.forEach((d) => d.client.emit(name as any, { ...args, _DIRECT_: true } as any));
+  }
+
   /**
    * this.data.interactions.get(name)
    */
@@ -379,16 +427,8 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     return this.data.interactions.get(name as any) as any;
   }
 
-  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
-    this.data.clients.forEach((d) => d.client.emit(name as any, { ...args, _DIRECT_: true } as any));
-  }
-
-  /**
-   * @deprecated
-   */
-  get client() {
-    console.log("[DEPRECTED] dbi.client is a deprected api. Please use dbi.data.clients.first().client instead.", Error().stack);
-    return this.data.clients[0]?.client;
+  client<TClientName extends NamespaceData[TNamespace]["clientNamespaces"]>(name?: TClientName): DBIClientData<TNamespace> {
+    return name ? this.data.clients.get(name) : this.data.clients.first();
   }
   /**
    * this.data.events.get(name)

@@ -5,7 +5,7 @@ import { Routes, RESTGetAPIUserResult, RESTPutAPIApplicationCommandsJSONBody, Ap
 import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
 import { DBI, DBIClientData } from "../DBI";
-import { DBIInteractionLocale } from "../types/InteractionLocale";
+import { DBIInteractionLocale } from "../types/other/InteractionLocale";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { ApplicationRoleConnectionMetadataType, ApplicationRoleConnectionMetadata } from "../types/ApplicationRoleConnectionMetadata";
 

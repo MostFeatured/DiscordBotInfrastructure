@@ -1,15 +1,15 @@
 import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
-import { DBIButton } from "./Button";
+import { DBIButton } from "./Components/Button";
 import { DBIChatInput } from "./ChatInput/ChatInput";
-import { DBILocale } from "./Locale";
-import { DBIMessageContextMenu } from "./MessageContextMenu";
-import { DBIModal } from "./Modal";
-import { DBISelectMenu } from "./SelectMenu";
-import { DBIUserContextMenu } from "./UserContextMenu";
+import { DBILocale } from "./other/Locale";
+import { DBIMessageContextMenu } from "./other/MessageContextMenu";
+import { DBIModal } from "./Components/Modal";
+import { DBIStringSelectMenu } from "./Components/StringSelectMenu";
+import { DBIUserContextMenu } from "./other/UserContextMenu";
 
-export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBISelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
+export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBIStringSelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
 
 export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   interaction:
@@ -18,7 +18,7 @@ export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
     | Discord.MessageContextMenuCommandInteraction
     | Discord.ModalSubmitInteraction
     | Discord.AutocompleteInteraction
-    | Discord.SelectMenuInteraction
+    | Discord.AnySelectMenuInteraction
     | Discord.ButtonInteraction;
   locale: {
     user: DBILocale<TNamespace>,
@@ -39,7 +39,11 @@ export type TDBIInteractionTypes =
   | "MessageContextMenu"
   | "Modal"
   | "Autocomplete"
-  | "SelectMenu"
+  | "StringSelectMenu"
+  | "UserSelectMenu"
+  | "ChannelSelectMenu"
+  | "MentionableSelectMenu"
+  | "RoleSelectMenu"
   | "Button";
 
 export type TDBIRateLimitTypes =

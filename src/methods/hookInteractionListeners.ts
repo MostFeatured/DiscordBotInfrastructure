@@ -3,6 +3,8 @@ import Discord from "discord.js";
 import { parseCustomId } from "../utils/customId";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
+const componentTypes = ["Button", "StringSelectMenu", "UserSelectMenu", "RoleSelectMenu", "ChannelSelectMenu", "MentionableSelectMenu", "Modal"]
+
 export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(inter: Discord.Interaction<"cached">) {
 
@@ -24,7 +26,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
           )
           ||
           (
-            (i.type == "Button" || i.type == "SelectMenu" || i.type == "Modal")
+            componentTypes.includes(i.type)
             && isUsesCustomId
             && parsedId?.name == i.name
           )
@@ -44,7 +46,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       guild: guildLocale
     };
 
-    let data = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
+    let data = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
 
     let other = {};
 

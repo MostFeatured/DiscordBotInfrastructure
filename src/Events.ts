@@ -2,7 +2,7 @@ import { NamespaceEnums, NamespaceData } from "../generated/namespaceData";
 import { DBI } from "./DBI";
 import { ClientEvents } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
-import { DBILocale } from "./types/Locale";
+import { DBILocale } from "./types/other/Locale";
 
 export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError";
 
@@ -37,7 +37,7 @@ export class Events<TNamespace extends NamespaceEnums> {
     }
     return true;
   }
-
+  
 
   on(
     eventName: "beforeInteraction" | "afterInteraction",

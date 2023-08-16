@@ -1,7 +1,7 @@
 import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
 import { DBI, DBIClientData } from "../DBI";
-import { DBILocale } from "./Locale";
+import { DBILocale } from "./other/Locale";
 export interface ClientEvents {
     applicationCommandPermissionsUpdate: {
         data: Discord.ApplicationCommandPermissionsUpdateData;
