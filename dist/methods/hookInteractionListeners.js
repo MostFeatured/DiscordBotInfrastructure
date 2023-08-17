@@ -6,7 +6,7 @@ const componentTypes = ["Button", "StringSelectMenu", "UserSelectMenu", "RoleSel
 function hookInteractionListeners(dbi) {
     async function handle(inter) {
         const dbiInter = dbi.data.interactions.find(i => {
-            let isUsesCustomId = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit());
+            let isUsesCustomId = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit());
             let parsedId = isUsesCustomId ? (0, customId_1.parseCustomId)(dbi, inter.customId) : null;
             return ((i.type == "ChatInput"
                 && (inter.isChatInputCommand() || inter.isAutocomplete())

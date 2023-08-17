@@ -10,7 +10,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
 
     const dbiInter =
       dbi.data.interactions.find(i => {
-        let isUsesCustomId = (inter.isButton() || inter.isStringSelectMenu() || inter.isModalSubmit());
+        let isUsesCustomId = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit());
         let parsedId = isUsesCustomId ? parseCustomId(dbi, (inter as any).customId) : null;
         return (
           (
