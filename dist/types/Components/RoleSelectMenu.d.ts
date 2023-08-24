@@ -14,7 +14,7 @@ export declare class DBIRoleSelectMenu<TNamespace extends NamespaceEnums> extend
     constructor(dbi: DBI<TNamespace>, args: TDBIRoleSelectMenuOmitted<TNamespace>);
     options: SelectMenuDefaultOptions;
     onExecute(ctx: IDBIRoleSelectMenuExecuteCtx<TNamespace>): Promise<void> | void;
-    toJSON(arg?: IDBIToJSONArgs<DBIRoleSelectMenuOverrides>): Discord.BaseSelectMenuComponentData;
+    toJSON(arg?: IDBIToJSONArgs<DBIRoleSelectMenuOverrides>): Discord.RoleSelectMenuComponentData;
     createBuilder(arg?: IDBIToJSONArgs<DBIRoleSelectMenuOverrides>): DBIRoleSelectMenuBuilder<TNamespace>;
 }
 //# sourceMappingURL=RoleSelectMenu.d.ts.map

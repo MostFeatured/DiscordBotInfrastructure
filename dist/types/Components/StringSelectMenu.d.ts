@@ -14,7 +14,7 @@ export declare class DBIStringSelectMenu<TNamespace extends NamespaceEnums> exte
     constructor(dbi: DBI<TNamespace>, args: TDBIStringSelectMenuOmitted<TNamespace>);
     options: SelectMenuDefaultOptions;
     onExecute(ctx: IDBIStringSelectMenuExecuteCtx<TNamespace>): Promise<void> | void;
-    toJSON(arg?: IDBIToJSONArgs<DBIStringSelectMenuOverrides>): Discord.BaseSelectMenuComponentData;
+    toJSON(arg?: IDBIToJSONArgs<DBIStringSelectMenuOverrides>): Discord.StringSelectMenuComponentData;
     createBuilder(arg?: IDBIToJSONArgs<DBIStringSelectMenuOverrides>): DBIStringSelectMenuBuilder<TNamespace>;
 }
 //# sourceMappingURL=StringSelectMenu.d.ts.map
