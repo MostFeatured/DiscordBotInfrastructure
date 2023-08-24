@@ -3,7 +3,7 @@ import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "../Interaction";
 import Discord from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 
-export type TDBIUserContextMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIUserContextMenu<TNamespace>, "type" | "description" | "dbi" | "options">;
+export type TDBIUserContextMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIUserContextMenu<TNamespace>, "type" | "description" | "dbi" | "options" | "toJSON">;
 
 export interface IDBIUserContextMenuExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   interaction: Discord.UserContextMenuCommandInteraction<"cached">;
