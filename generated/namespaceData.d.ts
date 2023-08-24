@@ -1,10 +1,10 @@
 import { DBICustomEvent } from "../src/types/other/CustomEvent.js";
-import { TDBIInteractions } from "../src/types/Interaction";
+import { DBIBaseInteraction, TDBIInteractions } from "../src/types/Interaction";
 import { DBILangObject, TDBILocaleString } from "../src/types/other/Locale.js";
 export interface NamespaceData {
   [k: string]: {
     contentLocale: DBILangObject;
-    interactionMapping: { [k: string]: TDBIInteractions<NamespaceEnums> };
+    interactionMapping: { [k: string]: DBIBaseInteraction<NamespaceEnums> };
     eventNames: string;
     localeNames: TDBILocaleString;
     customEvents: { },

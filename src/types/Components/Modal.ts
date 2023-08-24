@@ -32,7 +32,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
 
   override onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): Discord.ModalComponentData {
+  override toJSON(arg: IDBIToJSONArgs<DBIModalOverrides> = {}): Discord.ModalComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl)

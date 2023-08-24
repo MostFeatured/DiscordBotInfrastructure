@@ -28,7 +28,7 @@ export class DBIRoleSelectMenu<TNamespace extends NamespaceEnums> extends DBIBas
 
   override onExecute(ctx: IDBIRoleSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<DBIRoleSelectMenuOverrides> = {}): Discord.RoleSelectMenuComponentData {
+  override toJSON(arg: IDBIToJSONArgs<DBIRoleSelectMenuOverrides> = {}): Discord.RoleSelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),

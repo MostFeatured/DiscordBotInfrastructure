@@ -28,7 +28,7 @@ export class DBIMentionableSelectMenu<TNamespace extends NamespaceEnums> extends
 
   override onExecute(ctx: IDBIMentionableSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 
-  toJSON(arg: IDBIToJSONArgs<DBIMentionableSelectMenuOverrides> = {}): Discord.MentionableSelectMenuComponentData {
+  override toJSON(arg: IDBIToJSONArgs<DBIMentionableSelectMenuOverrides> = {}): Discord.MentionableSelectMenuComponentData {
     return {
       ...stuffs.defaultify((arg?.overrides || {}), this.options || {}, true),
       customId: buildCustomId(this.dbi as any, this.name, arg?.reference?.data || [], arg?.reference?.ttl),

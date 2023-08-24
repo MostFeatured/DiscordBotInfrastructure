@@ -45,6 +45,7 @@ export declare class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     options?: any | any[];
     other?: Record<string, any>;
     rateLimits?: DBIRateLimit[];
+    toJSON(overrides: any): any;
     onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void;
 }
 //# sourceMappingURL=Interaction.d.ts.map

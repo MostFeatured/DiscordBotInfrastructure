@@ -21,6 +21,7 @@ class DBIBaseInteraction {
     options;
     other;
     rateLimits;
+    toJSON(overrides) { }
     onExecute(ctx) {
     }
 }
