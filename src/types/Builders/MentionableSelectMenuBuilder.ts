@@ -2,12 +2,13 @@ import { BaseSelectMenuComponentData, MentionableSelectMenuComponentData } from 
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIMentionableSelectMenu } from "../Components/MentionableSelectMenu";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIMentionableSelectMenuOverrides =  Omit<MentionableSelectMenuComponentData, "customId" | "type">
+export type DBIMentionableSelectMenuOverrides =  RecursivePartial<Omit<MentionableSelectMenuComponentData, "customId" | "type">>
 
 export class DBIMentionableSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIMentionableSelectMenu<TNamespace>
-  overrides: Partial<DBIMentionableSelectMenuOverrides>;
+  overrides: DBIMentionableSelectMenuOverrides;
   reference: { data: (string | number | object)[], ttl?: number };
   constructor(arg: { component: DBIMentionableSelectMenu<TNamespace>, overrides?: DBIMentionableSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
     this.component = arg.component;

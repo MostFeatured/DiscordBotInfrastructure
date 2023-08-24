@@ -2,8 +2,9 @@ import { ActionRowData, APIActionRowComponent, APITextInputComponent, JSONEncoda
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIModal } from "../Components/Modal";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIModalOverrides = { components?: (JSONEncodable<APIActionRowComponent<APITextInputComponent>> | ActionRowData<ModalActionRowComponentData>)[], title?: string } & Omit<ModalComponentData, "customId" | "type" | "title" | "components">
+export type DBIModalOverrides = RecursivePartial<{ components?: (JSONEncodable<APIActionRowComponent<APITextInputComponent>> | ActionRowData<ModalActionRowComponentData>)[], title?: string } & Omit<ModalComponentData, "customId" | "type" | "title" | "components">>
 
 export class DBIModalBuilder<TNamespace extends NamespaceEnums> {
   component: DBIModal<TNamespace>

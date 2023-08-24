@@ -1,10 +1,11 @@
 import { ActionRowData, APIActionRowComponent, APITextInputComponent, JSONEncodable, ModalActionRowComponentData, ModalComponentData } from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIModal } from "../Components/Modal";
-export declare type DBIModalOverrides = {
+import { RecursivePartial } from "../../utils/UtilTypes";
+export declare type DBIModalOverrides = RecursivePartial<{
     components?: (JSONEncodable<APIActionRowComponent<APITextInputComponent>> | ActionRowData<ModalActionRowComponentData>)[];
     title?: string;
-} & Omit<ModalComponentData, "customId" | "type" | "title" | "components">;
+} & Omit<ModalComponentData, "customId" | "type" | "title" | "components">>;
 export declare class DBIModalBuilder<TNamespace extends NamespaceEnums> {
     component: DBIModal<TNamespace>;
     overrides: DBIModalOverrides;

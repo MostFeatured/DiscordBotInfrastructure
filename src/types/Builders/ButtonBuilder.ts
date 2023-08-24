@@ -2,8 +2,9 @@ import { ButtonComponentData, ButtonStyle } from "discord.js";
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIButton } from "../Components/Button";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIButtonOverrides = { style?: ButtonStyle } & Omit<ButtonComponentData, "customId" | "type" | "style">
+export type DBIButtonOverrides = RecursivePartial<{ style?: ButtonStyle } & Omit<ButtonComponentData, "customId" | "type" | "style">>
 
 export class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
   component: DBIButton<TNamespace>

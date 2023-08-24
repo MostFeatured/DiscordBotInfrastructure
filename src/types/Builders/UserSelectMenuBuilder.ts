@@ -2,12 +2,13 @@ import { BaseSelectMenuComponentData, UserSelectMenuComponentData } from "discor
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIUserSelectMenu } from "../Components/UserSelectMenu";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIUserSelectMenuOverrides =  Omit<UserSelectMenuComponentData, "customId" | "type">
+export type DBIUserSelectMenuOverrides =  RecursivePartial<Omit<UserSelectMenuComponentData, "customId" | "type">>
 
 export class DBIUserSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIUserSelectMenu<TNamespace>
-  overrides: Partial<DBIUserSelectMenuOverrides>;
+  overrides: DBIUserSelectMenuOverrides;
   reference: { data: (string | number | object)[], ttl?: number };
   constructor(arg: { component: DBIUserSelectMenu<TNamespace>, overrides?: DBIUserSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
     this.component = arg.component;

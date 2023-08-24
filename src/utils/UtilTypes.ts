@@ -3,5 +3,9 @@ export interface IDBIToJSONArgs<T> {
     ttl?: number;
     data: (string | number | object)[];
   };
-  overrides?: T;
+  overrides?: RecursivePartial<T>;
+}
+
+export type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]>;
 }

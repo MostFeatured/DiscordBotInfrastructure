@@ -2,12 +2,13 @@ import { BaseSelectMenuComponentData, ChannelSelectMenuComponentData } from "dis
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIChannelSelectMenu } from "../Components/ChannelSelectMenu";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIChannelSelectMenuOverrides =  Omit<ChannelSelectMenuComponentData, "customId" | "type">
+export type DBIChannelSelectMenuOverrides =  RecursivePartial<Omit<ChannelSelectMenuComponentData, "customId" | "type">>
 
 export class DBIChannelSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIChannelSelectMenu<TNamespace>
-  overrides: Partial<DBIChannelSelectMenuOverrides>;
+  overrides: DBIChannelSelectMenuOverrides;
   reference: { data: (string | number | object)[], ttl?: number };
   constructor(arg: { component: DBIChannelSelectMenu<TNamespace>, overrides?: DBIChannelSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
     this.component = arg.component;

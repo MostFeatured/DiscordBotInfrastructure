@@ -1,7 +1,8 @@
 import { BaseSelectMenuComponentData, RoleSelectMenuComponentData } from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIRoleSelectMenu } from "../Components/RoleSelectMenu";
-export declare type DBIRoleSelectMenuOverrides = Omit<RoleSelectMenuComponentData, "customId" | "type">;
+import { RecursivePartial } from "../../utils/UtilTypes";
+export declare type DBIRoleSelectMenuOverrides = RecursivePartial<Omit<RoleSelectMenuComponentData, "customId" | "type">>;
 export declare class DBIRoleSelectMenuBuilder<TNamespace extends NamespaceEnums> {
     component: DBIRoleSelectMenu<TNamespace>;
     overrides: Partial<DBIRoleSelectMenuOverrides>;

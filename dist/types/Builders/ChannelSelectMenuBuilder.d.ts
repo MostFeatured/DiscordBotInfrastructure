@@ -1,10 +1,11 @@
 import { BaseSelectMenuComponentData, ChannelSelectMenuComponentData } from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIChannelSelectMenu } from "../Components/ChannelSelectMenu";
-export declare type DBIChannelSelectMenuOverrides = Omit<ChannelSelectMenuComponentData, "customId" | "type">;
+import { RecursivePartial } from "../../utils/UtilTypes";
+export declare type DBIChannelSelectMenuOverrides = RecursivePartial<Omit<ChannelSelectMenuComponentData, "customId" | "type">>;
 export declare class DBIChannelSelectMenuBuilder<TNamespace extends NamespaceEnums> {
     component: DBIChannelSelectMenu<TNamespace>;
-    overrides: Partial<DBIChannelSelectMenuOverrides>;
+    overrides: DBIChannelSelectMenuOverrides;
     reference: {
         data: (string | number | object)[];
         ttl?: number;

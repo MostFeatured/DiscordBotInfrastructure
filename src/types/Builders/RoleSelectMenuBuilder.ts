@@ -2,8 +2,9 @@ import { BaseSelectMenuComponentData, RoleSelectMenuComponentData } from "discor
 import { defaultify } from "stuffs";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIRoleSelectMenu } from "../Components/RoleSelectMenu";
+import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIRoleSelectMenuOverrides =  Omit<RoleSelectMenuComponentData, "customId" | "type">
+export type DBIRoleSelectMenuOverrides =  RecursivePartial<Omit<RoleSelectMenuComponentData, "customId" | "type">>
 
 export class DBIRoleSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIRoleSelectMenu<TNamespace>
