@@ -7,7 +7,7 @@ export interface IDBIChatInputExecuteCtx<TNamespace extends NamespaceEnums> exte
   interaction: Discord.ChatInputCommandInteraction<"cached">;
 }
 
-export type TDBIChatInputOmitted<TNamespace extends NamespaceEnums> = Omit<DBIChatInput<TNamespace>, "type" | "dbi">;
+export type TDBIChatInputOmitted<TNamespace extends NamespaceEnums> = Omit<DBIChatInput<TNamespace>, "type" | "dbi" | "toJSON">;
 
 export class DBIChatInput<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   constructor(dbi: DBI<TNamespace, {}>, cfg: TDBIChatInputOmitted<TNamespace>) {
