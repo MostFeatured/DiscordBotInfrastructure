@@ -27,7 +27,7 @@ export interface DBIStore {
 export declare type DBIClientData<TNamespace extends NamespaceEnums> = {
     namespace: NamespaceData[TNamespace]["clientNamespaces"];
     token: string;
-    options: Discord.Options;
+    options: Discord.ClientOptions;
     client: Discord.Client<true>;
 };
 export interface DBIConfig {

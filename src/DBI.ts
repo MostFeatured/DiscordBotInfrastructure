@@ -33,7 +33,7 @@ export interface DBIStore {
   has(key: string): Promise<boolean>;
 }
 
-export type DBIClientData<TNamespace extends NamespaceEnums> = { namespace: NamespaceData[TNamespace]["clientNamespaces"], token: string, options: Discord.Options, client: Discord.Client<true> };
+export type DBIClientData<TNamespace extends NamespaceEnums> = { namespace: NamespaceData[TNamespace]["clientNamespaces"], token: string, options: Discord.ClientOptions, client: Discord.Client<true> };
 
 export interface DBIConfig {
   discord: {
