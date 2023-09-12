@@ -221,7 +221,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
           shardCount: Sharding.getInfo().TOTAL_SHARDS
         } : {})
       });
-      clientContext.client = client;
+      clientContext.client = client as Discord.Client<true>;
     }
 
     if (this.data.clients.length === 0) throw new Error("No clients provided.");
