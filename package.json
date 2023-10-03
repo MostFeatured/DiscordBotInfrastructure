@@ -6,6 +6,7 @@
     "discord-hybrid-sharding": "github:meister03/discord-hybrid-sharding",
     "discord.js": "^14.13.0",
     "lodash": "^4.17.21",
+    "plsargs": "^0.1.6",
     "snakecase-keys": "^5.4.2",
     "stuffs": "^0.1.21"
   },

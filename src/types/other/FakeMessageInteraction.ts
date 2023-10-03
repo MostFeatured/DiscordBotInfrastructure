@@ -1,5 +1,6 @@
 import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType } from 'discord.js';
 import { TDBIInteractions } from '../Interaction';
+import { plsParseArgs } from "plsargs";
 
 export class FakeMessageInteraction /* implements ChatInputCommandInteraction */ {
   channelId: string;
@@ -27,8 +28,12 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   member: GuildMember | APIInteractionGuildMember;
   memberPermissions: Readonly<PermissionsBitField>;
   private parsedArgs = new Map<string, FakeMessageInteractionArgument>();
+  private usedCommandName: string;
+  options: any;
 
-  constructor(private message: Message, chatInput: TDBIInteractions<string | number>, public locale: Locale, commandName: string) {
+  constructor(private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string) {
+    const self = this;
+    
     this.channelId = message.channel.id;
     this.commandName = chatInput.name;
     this.appPermissions = message.guild?.members.me.permissionsIn(message.channel as any) ?? new PermissionsBitField(8n);
@@ -48,15 +53,17 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.member = message.member;
     this.memberPermissions = message.member?.permissions;
 
+    this.usedCommandName = commandName;
+
     {
       const argContent = message.content.slice(commandName.length).replace(/ +/, " ").trim();
-      const args = argContent.split(" ");
+      const args = plsParseArgs(argContent);
 
       const options = chatInput.options;
 
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
+      for (let i = 0; i < args._.length; i++) {
         const option = options[i];
+        const arg = args.get(i) ?? args.get(option.name);
         if (!option) break;
         this.parsedArgs.set(option.name, {
           type: option.type,
@@ -64,14 +71,25 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         });
       }
     }
-  }
 
-  options: any = {
-    get: (name: string, type?: CommandOptionDataTypeResolvable) => {
-      const option = this.getOption(name);
-      if (!option) return null;
-      if (type && option.type !== type) return null;
-      return option.value;
+    this.options = {
+      get: (name: string, type?: CommandOptionDataTypeResolvable) => {
+        const option = this.getOption(name);
+        if (!option) return null;
+        if (type && option.type !== type) return null;
+        return option.value;
+      },
+      getSubcommand() {
+        let splitted = self.usedCommandName.split(" ");
+        if (splitted.length === 2) return splitted[1];
+        if (splitted.length === 3) return splitted[2];
+        return null;
+      },
+      getSubcommandGroup() {
+        let splitted = self.usedCommandName.split(" ");
+        if (splitted.length === 2) return splitted[1];
+        return null;
+      },
     }
   }
 

@@ -81,7 +81,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
   description: string;
   readonly type: TDBIInteractionTypes;
   options?: any | any[];
-  other?: Record<string, any>;
+  other?: Record<string, any> & { messageCommand: { aliases: string[] } };
   rateLimits?: DBIRateLimit[];
   toJSON(overrides: any): any { }
 
