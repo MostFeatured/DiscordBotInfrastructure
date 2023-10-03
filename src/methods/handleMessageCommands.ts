@@ -42,7 +42,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
   if (!chatInput) return;
 
-  const interaction = new FakeMessageInteraction(message, chatInput, locale, commandName);
+  const interaction = new FakeMessageInteraction(message, chatInput, locale, commandName, usedPrefix);
 
   dbi.client().client.emit("interactionCreate", interaction as any);
 }

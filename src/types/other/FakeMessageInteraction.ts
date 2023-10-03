@@ -31,7 +31,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   private usedCommandName: string;
   options: any;
 
-  constructor(private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string) {
+  constructor(private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
     
     this.channelId = message.channel.id;
@@ -56,7 +56,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.usedCommandName = commandName;
 
     {
-      const argContent = message.content.slice(commandName.length).replace(/ +/, " ").trim();
+      const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
       const args = plsParseArgs(argContent);
 
       const options = chatInput.options;

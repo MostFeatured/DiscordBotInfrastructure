@@ -64,7 +64,6 @@ export interface DBIConfig {
   strict: boolean;
   messageCommands?: {
     prefixes: string[];
-    commandNames: string[] | "all";
   }
 }
 
@@ -106,7 +105,6 @@ export interface DBIConfigConstructor {
 
   messageCommands?: {
     prefixes: string[];
-    commandNames: string[] | "all";
   }
 }
 
