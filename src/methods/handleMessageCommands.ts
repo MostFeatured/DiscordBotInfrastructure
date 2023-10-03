@@ -1,4 +1,4 @@
-import { CommandInteraction, Message, MessagePayload } from "discord.js";
+import { Message, MessagePayload } from "discord.js";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 
