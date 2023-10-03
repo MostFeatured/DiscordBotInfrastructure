@@ -181,7 +181,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   async deferReply(options: any): Promise<any> {
     if (options.ephemeral) throw new Error("Ephemeral replies are not supported in message commands.");
     if (this.repliedMessage) throw new Error("Already deferred reply.");
-    this.repliedMessage = await this.message.reply("Loading...");
+    this.repliedMessage = await this.message.reply(options.content ?? "Loading...");
     this.deferred = true;
     return this.repliedMessage;
   }
