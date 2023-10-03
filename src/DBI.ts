@@ -25,6 +25,7 @@ import { DBIUserSelectMenu, TDBIUserSelectMenuOmitted } from "./types/Components
 import { DBIMentionableSelectMenu, TDBIMentionableSelectMenuOmitted } from "./types/Components/MentionableSelectMenu";
 import { DBIChannelSelectMenu, TDBIChannelSelectMenuOmitted } from "./types/Components/ChannelSelectMenu";
 import { DBIRoleSelectMenu, TDBIRoleSelectMenuOmitted } from "./types/Components/RoleSelectMenu";
+import { handleMessageCommands } from "./methods/handleMessageCommands";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -61,6 +62,10 @@ export interface DBIConfig {
   };
 
   strict: boolean;
+  messageCommands?: {
+    prefixes: string[];
+    commandNames: string[] | "all";
+  }
 }
 
 export interface DBIConfigConstructor {
@@ -98,6 +103,11 @@ export interface DBIConfigConstructor {
   }
 
   strict?: boolean;
+
+  messageCommands?: {
+    prefixes: string[];
+    commandNames: string[] | "all";
+  }
 }
 
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
@@ -166,6 +176,8 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       autoClear: undefined,
       ...(config.references || {})
     }
+
+    if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided."); 
 
     // @ts-ignore
     this.config = config;
@@ -238,7 +250,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     this._hooked = true;
     this.data.unloaders.add(hookInteractionListeners(this as any));
     this.data.unloaders.add(hookEventListeners(this as any));
-    if (typeof this.config.references.autoClear != "undefined") {
+    if (typeof this.config.references.autoClear !== "undefined") {
       this.data.unloaders.add((() => {
         let interval = setInterval(() => {
           this.data.refs.forEach(({ at, ttl }, key) => {
@@ -249,6 +261,20 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         }, this.config.references.autoClear.check);
         return () => {
           clearInterval(interval);
+        }
+      })());
+    }
+    if (typeof this.config.messageCommands !== "undefined") {
+      this.data.unloaders.add((() => {
+        const { client } = this.client();
+
+        function onMessage(message: Discord.Message) {
+          handleMessageCommands(this, message);
+        }
+
+        client.on("messageCreate", onMessage);
+        return () => {
+          client.off("messageCreate", onMessage);
         }
       })());
     }
