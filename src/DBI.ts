@@ -64,6 +64,9 @@ export interface DBIConfig {
   strict: boolean;
   messageCommands?: {
     prefixes: string[];
+    typeAliases: {
+      booleans: Record<string, boolean>;
+    }
   }
 }
 
@@ -105,6 +108,12 @@ export interface DBIConfigConstructor {
 
   messageCommands?: {
     prefixes: string[];
+    typeAliases: {
+      /**
+       * Example: {"yes": true, "no": false}
+       */
+      booleans?: Record<string, boolean>;
+    }
   }
 }
 
@@ -175,7 +184,20 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       ...(config.references || {})
     }
 
-    if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided."); 
+    if (config.messageCommands) {
+      if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided."); 
+
+      let { typeAliases } = config.messageCommands;
+
+      config.messageCommands.typeAliases = {
+        booleans: typeAliases.booleans ?? {
+          "yes": true,
+          "no": false,
+          "true": true,
+          "false": false
+        }
+      };
+    }
 
     // @ts-ignore
     this.config = config;

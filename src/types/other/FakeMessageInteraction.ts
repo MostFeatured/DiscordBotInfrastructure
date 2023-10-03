@@ -1,6 +1,9 @@
 import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType } from 'discord.js';
 import { TDBIInteractions } from '../Interaction';
 import { plsParseArgs } from "plsargs";
+import { DBI } from '../../DBI';
+import { NamespaceEnums } from "../../../generated/namespaceData";
+import { ChannelType } from "discord-api-types/v10";
 
 export class FakeMessageInteraction /* implements ChatInputCommandInteraction */ {
   channelId: string;
@@ -31,11 +34,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   private usedCommandName: string;
   options: any;
 
-  constructor(private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
+  constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
     
     this.channelId = message.channel.id;
-    this.commandName = chatInput.name;
+    this.commandName = commandName.split(" ")[0];
     this.appPermissions = message.guild?.members.me.permissionsIn(message.channel as any) ?? new PermissionsBitField(8n);
     this.applicationId = message.client.user.id;
     this.channel = message.channel as any;
@@ -73,8 +76,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     }
 
     this.options = {
-      get: (name: string, type?: CommandOptionDataTypeResolvable) => {
-        const option = this.getOption(name);
+      get(name: string, type?: CommandOptionDataTypeResolvable) {
+        const option = self.getOption(name);
         if (!option) return null;
         if (type && option.type !== type) return null;
         return option.value;
@@ -90,6 +93,80 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (splitted.length === 2) return splitted[1];
         return null;
       },
+      getBoolean(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        return !!self.dbi.config.messageCommands.typeAliases.booleans[option.value];
+      },
+      getChannel(name: string, _: any, channelType?: ChannelType) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        let value = option.value.replace(/<#|>/g, "");
+        let channel = self.message.client.channels.cache.get(value);
+        if (!channel) channel = self.message.client.channels.cache.find(c => {
+          if (self.guildId && (c as any).guildId && (c as any).guildId !== self.guildId) return false;
+          return (c as any).name === value;
+        });
+        if (channelType && channel?.type !== channelType) return null;
+        return channel;
+      },
+      getString(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        return `${option.value}`;
+      },
+      getInteger(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        return parseInt(option.value);
+      },
+      getNumber(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        return parseFloat(option.value);
+      },
+      getUser(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        let value = option.value.replace(/<@!?|>/g, "");
+        let user = self.message.client.users.cache.get(value);
+        if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
+        return user;
+      },
+      getMember(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        let value = option.value.replace(/<@!?|>/g, "");
+        let member = self.message.guild?.members.cache.get(value);
+        if (!member) member = self.message.guild?.members.cache.find(m => m.user.username === value || m.user.tag === value);
+        return member;
+      },
+      getRole(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        let value = option.value.replace(/<@&|>/g, "");
+        let role = self.message.guild?.roles.cache.get(value);
+        if (!role) role = self.message.guild?.roles.cache.find(r => r.name === value);
+        return role;
+      },
+      getMentionable(name: string) {
+        const option = self.getOption(name);
+        if (!option) return null;
+        let value = option.value.replace(/<@(!|&)?|>/g, "");
+        let user = self.message.client.users.cache.get(value);
+        if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
+        if (user) return user;
+        let member = self.message.guild?.members.cache.get(value);
+        if (!member) member = self.message.guild?.members.cache.find(m => m.user.username === value || m.user.tag === value);
+        if (member) return member;
+        let role = self.message.guild?.roles.cache.get(value);
+        if (!role) role = self.message.guild?.roles.cache.find(r => r.name === value);
+        if (role) return role;
+        return null;
+      },
+      getMessage() {
+        return self.message;
+      }
     }
   }
 
@@ -144,6 +221,10 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   async fetchReply() {
     return this.repliedMessage?.id && await this.message.channel.messages.fetch(this.repliedMessage.id);
   };
+
+  isChatInputCommand() {
+    return true;
+  }
 }
 
 interface FakeMessageInteractionArgument {
