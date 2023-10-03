@@ -80,7 +80,18 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         const option = self.getOption(name);
         if (!option) return null;
         if (type && option.type !== type) return null;
-        return option.value;
+        return {
+          ...option,
+          get boolean() { return self.options.getBoolean(name); },
+          get channel() { return self.options.getChannel(name); },
+          get string() { return self.options.getString(name); },
+          get integer() { return self.options.getInteger(name); },
+          get number() { return self.options.getNumber(name); },
+          get user() { return self.options.getUser(name); },
+          get member() { return self.options.getMember(name); },
+          get role() { return self.options.getRole(name); },
+          get mentionable() { return self.options.getMentionable(name); }
+        };
       },
       getSubcommand() {
         let splitted = self.usedCommandName.split(" ");
