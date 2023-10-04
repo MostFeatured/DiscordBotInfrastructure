@@ -56,7 +56,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.guild = message.guild;
     this.guildId = message.guild?.id;
     this.guildLocale = message.guild?.preferredLocale;
-    this.id = message.guild.commands.cache.find((cmd) => cmd.name === this.commandName)?.id ?? message.client.application.commands.cache.find((cmd) => cmd.name === this.commandName)?.id ?? "-1";
+    this.id = message.guild?.commands.cache.find((cmd) => cmd.name === this.commandName)?.id ?? message.client.application.commands.cache.find((cmd) => cmd.name === this.commandName)?.id ?? "-1";
     this.locale = message.guild?.preferredLocale;
     this.member = message.member;
     this.memberPermissions = message.member?.permissions;
