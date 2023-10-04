@@ -92,6 +92,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
             if (!option.choices.find(c => c.name === value || c.value === value || choicesLocaleData?.[c.value] === value)) {
               errorType = "InvalidChoice";
+              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
               break;
             }
             break;
@@ -131,8 +132,11 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            if (!option.choices.find(c => c.value === parsedInt || c.name === value)) {
+            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
+            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
+            if (!option.choices.find(c => c.value === parsedInt || c.name === value || choicesLocaleData?.[c.value] === value)) {
               errorType = "InvalidChoice";
+              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
               break;
             }
             break;
@@ -176,8 +180,11 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            if (!option.choices.find(c => c.value === parsedFloat || c.name === value)) {
+            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
+            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
+            if (!option.choices.find(c => c.value === parsedFloat || c.name === value || choicesLocaleData?.[c.value] === value)) {
               errorType = "InvalidChoice";
+              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
               break;
             }
             break;
