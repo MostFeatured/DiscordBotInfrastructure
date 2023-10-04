@@ -78,6 +78,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (!option) break;
         if (option.type === ApplicationCommandOptionType.Attachment) {
           this.parsedArgs.set(option.name, {
+            name: option.name,
             type: option.type,
             value: atchs.at(attachmentIndex)?.url,
             attachment: atchs.at(attachmentIndex++)
@@ -87,11 +88,14 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         const arg = args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize);
         if (args.get(option.name)) namedValueSize++;
         this.parsedArgs.set(option.name, {
+          name: option.name,
           type: option.type,
           value: arg
         });
       }
     }
+
+    let _hoistedOptions: any = [];
 
     this.options = {
       get(name: string) {
@@ -110,6 +114,9 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           get mentionable() { return self.options.getMentionable(name); },
           get attachment() { return self.options.getAttachment(name); }
         };
+      },
+      get _hoistedOptions() {
+        return _hoistedOptions;
       },
       getSubcommand() {
         let splitted = self.fullCommandName.split(" ");
@@ -208,6 +215,44 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         return d?.attachment ?? null;
       }
     }
+
+    _hoistedOptions = [...self.parsedArgs.values()].map(arg => {
+      switch (arg.type) {
+        case ApplicationCommandOptionType.String: {
+          return { ...this.options.get(arg.name), value: this.options.getString(arg.name) };
+        }
+        case ApplicationCommandOptionType.Integer: {
+          return { ...this.options.get(arg.name), value: this.options.getInteger(arg.name) };
+        }
+        case ApplicationCommandOptionType.Number: {
+          return { ...this.options.get(arg.name), value: this.options.getNumber(arg.name) };
+        }
+        case ApplicationCommandOptionType.Boolean: {
+          return { ...this.options.get(arg.name), value: this.options.getBoolean(arg.name) };
+        }
+        case ApplicationCommandOptionType.User: {
+          return { ...this.options.get(arg.name), value: this.options.getUser(arg.name).id };
+        }
+        case ApplicationCommandOptionType.Channel: {
+          return { ...this.options.get(arg.name), value: this.options.getChannel(arg.name).id };
+        }
+        case ApplicationCommandOptionType.Role: {
+          return { ...this.options.get(arg.name), value: this.options.getRole(arg.name).id };
+        }
+        case ApplicationCommandOptionType.Mentionable: {
+          return { ...this.options.get(arg.name), value: this.options.getMentionable(arg.name).id };
+        }
+        case ApplicationCommandOptionType.Attachment: {
+          return { ...this.options.get(arg.name), value: this.options.getAttachment(arg.name).url };
+        }
+        case ApplicationCommandOptionType.Subcommand: {
+          return { ...this.options.get(arg.name), value: this.options.getSubcommand() };
+        }
+        case ApplicationCommandOptionType.SubcommandGroup: {
+          return { ...this.options.get(arg.name), value: this.options.getSubcommandGroup() };
+        }
+      }
+    })
   }
 
   private getRawOptionValue(name: string): any {
@@ -225,7 +270,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   async deferReply(options: any): Promise<any> {
     // if (options.ephemeral) throw new Error("Ephemeral replies are not supported in message commands.");
     if (this.repliedMessage) throw new Error("Already deferred reply.");
-    this.repliedMessage = await this.message.reply(options.content ?? "Loading...");
+    this.repliedMessage = await this.message.reply(options?.content ?? "Loading...");
     this.deferred = true;
     return this.repliedMessage;
   }
@@ -288,5 +333,6 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 interface FakeMessageInteractionArgument {
   type: ApplicationCommandOptionType,
   value: any,
-  attachment?: Attachment
+  attachment?: Attachment,
+  name: string
 }
