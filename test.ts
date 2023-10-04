@@ -40,7 +40,7 @@ const dbi = createDBI("xd", {
 });
 
 dbi.events.on("messageCommandArgumentError", (data) => {
-  data.message.reply(`‼️ Invalid argument \`${data.error.option.name}\`. Error Kind: \`${data.error.type}\`. Expected: \`${ApplicationCommandOptionType[data.error.option.type]}\`${data.error.type === "InvalidCompleteChoice" ? ` with any of \`${data.error.extra.map(i => i.value).join(", ")}\`` : ""}.`);
+  data.message.reply(`‼️ Invalid argument \`${data.error.option.name}\` (Index: \`${data.error.index}\`). Error Kind: \`${data.error.type}\`. Expected: \`${ApplicationCommandOptionType[data.error.option.type]}\`${data.error.extra ? ` with any of \`${data.error.extra.map(i => i.name).join(", ")}\`` : ""}.`);
   return false;
 });
 
@@ -51,8 +51,9 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
     description: "test command description",
     onExecute(ctx) {
       let b = ctx.interaction.options.getBoolean("test_bool");
-      let c = ctx.interaction.options.getString("choices");
-      ctx.interaction.reply(`Boolean: ${b}, String: ${c}`);
+      let c = ctx.interaction.options.getString("choices_auto");
+      let d = ctx.interaction.options.getString("choices");
+      ctx.interaction.reply(`Boolean: ${b}, String auto: ${c}, String: ${d}`);
     },
     other: {
       messageCommand: {
@@ -66,7 +67,7 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
         required: true
       }),
       ChatInputOptions.stringAutocomplete({
-        name: "choices",
+        name: "choices_auto",
         description: "choices description",
         required: true,
         onComplete({ interaction, value }) {
@@ -86,6 +87,25 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
           ].filter(c => c.name.startsWith(value));
         },
       }),
+      ChatInputOptions.stringChoices({
+        name: "choices",
+        description: "choices description",
+        required: true,
+        choices: [
+          {
+            name: "choice1normal",
+            value: "choice1normal"
+          },
+          {
+            name: "choice2normal",
+            value: "choice2normal"
+          },
+          {
+            name: "test2normal",
+            value: "test2normal"
+          }
+        ]
+      }),
     ]
   });
 
@@ -100,8 +120,8 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
             name: "seçenekler",
             description: "seçenekler açıklaması",
             choices: {
-              "choicename1": "seçenek1",
-              "choicename2": "seçenek2"
+              "choice1normal": "seçenek1normal",
+              "choice2normal": "seçenek2normal"
             }
           }
         }

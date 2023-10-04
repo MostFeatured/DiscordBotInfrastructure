@@ -52,20 +52,17 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
   if (chatInput.options.length) {
     let errorType: TDBIMessageCommandArgumentErrorTypes;
-    let lastOption;
-    let lastValue;
-    let lastExtra;
+    let lastOption: any;
+    let lastValue: any;
+    let lastExtra: any;
+    let lastIndex: number;
     for (let i = 0; i < chatInput.options.length; i++) {
+      lastIndex = i;
       const option: any = interaction.dbiChatInputOptions[i];
       const value = interaction.parsedArgs.get(option.name)?.value;
 
       lastOption = option;
       lastValue = value;
-      
-      if (option.required && !value) {
-        errorType = "MissingRequiredOption";
-        break;
-      }
 
       switch (option.type) {
         case ApplicationCommandOptionType.String: {
@@ -81,8 +78,13 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.name === value || c.value === value)) {
-              errorType = "InvalidCompleteChoice";
-              break;
+              if (value) {
+                errorType = "InvalidCompleteChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             option._choices = choices;
           }
@@ -90,10 +92,15 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           if (option.choices) {
             const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
             const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.name === value || c.value === value || choicesLocaleData?.[c.value] === value)) {
-              errorType = "InvalidChoice";
+            if (!option.choices.find(c => c.name === value || c.value === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
               lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
-              break;
+              if (value) {
+                errorType = "InvalidChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             break;
           }
@@ -124,8 +131,13 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.value === parsedInt || c.name === value)) {
-              errorType = "InvalidCompleteChoice";
-              break;
+              if (value) {
+                errorType = "InvalidCompleteChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             option._choices = choices;
             break;
@@ -134,10 +146,15 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           if (option.choices) {
             const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
             const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.value === parsedInt || c.name === value || choicesLocaleData?.[c.value] === value)) {
-              errorType = "InvalidChoice";
+            if (!option.choices.find(c => c.value === parsedInt || c.name === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
               lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
-              break;
+              if (value) {
+                errorType = "InvalidChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             break;
           }
@@ -151,10 +168,12 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             errorType = "MinInteger";
             break;
           }
+
           if (option.maxValue && parsedInt > option.maxValue) {
             errorType = "MaxInteger";
             break;
           }
+
           break;
         }
         case ApplicationCommandOptionType.Number: {
@@ -172,8 +191,13 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.value === parsedFloat || c.name === value)) {
-              errorType = "InvalidCompleteChoice";
-              break;
+              if (value) {
+                errorType = "InvalidCompleteChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             option._choices = choices;
             break;
@@ -182,10 +206,15 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           if (option.choices) {
             const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
             const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.value === parsedFloat || c.name === value || choicesLocaleData?.[c.value] === value)) {
-              errorType = "InvalidChoice";
+            if (!option.choices.find(c => c.value === parsedFloat || c.name === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
               lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
-              break;
+              if (value) {
+                errorType = "InvalidChoice";
+                break;
+              } else if (option.required && !value) {
+                errorType = "MissingRequiredOption";
+                break;
+              }
             }
             break;
           }
@@ -194,10 +223,12 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             errorType = "InvalidNumber";
             break;
           }
+
           if (option.minValue && parsedFloat < option.minValue) {
             errorType = "MinNumber";
             break;
           }
+
           if (option.maxValue && parsedFloat > option.maxValue) {
             errorType = "MaxNumber";
             break;
@@ -243,7 +274,6 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
       }
 
       if (errorType) break;
-
     }
 
     if (errorType) {
@@ -253,7 +283,8 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         error: {
           type: errorType,
           option: lastOption,
-          extra: lastExtra
+          extra: lastExtra,
+          index: lastIndex
         },
         value: lastValue
       });
