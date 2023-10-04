@@ -195,7 +195,8 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Boolean: {
-          if (!Object.keys(dbi.config.messageCommands.typeAliases.booleans).includes(value.toLowerCase())) {
+          let boolKeys = Object.keys(dbi.config.messageCommands.typeAliases.booleans);
+          if (!boolKeys.includes(value.toLowerCase())) {
             errorType = "InvalidBoolean";
             break;
           }
@@ -231,9 +232,12 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         }
       }
 
+      if (errorType) break;
+
     }
 
     if (errorType) {
+      
       let res = await dbi.events.trigger("messageCommandArgumentError", {
         interaction,
         message,

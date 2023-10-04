@@ -103,8 +103,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       },
       getSubcommand() {
         let splitted = self.fullCommandName.split(" ");
-        if (splitted.length === 2 || splitted.length === 3) return splitted[1];
-        return null;
+        if (splitted.length === 1) return null;
+        return splitted.at(-1);
       },
       getSubcommandGroup() {
         let splitted = self.fullCommandName.split(" ");
@@ -132,7 +132,6 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         const dbiOption = self.getClonedDBIOption(name);
         let rawValue = `${self.getRawOptionValue(name)}`;
         let choices = dbiOption.choices ?? dbiOption._choices;
-        console.log(rawValue, choices, dbiOption);
         if (choices) return choices.find(c => c.value === rawValue || c.name === rawValue)?.value ?? rawValue;
         return rawValue;
       },

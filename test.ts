@@ -89,49 +89,6 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
     ]
   });
 
-  ChatInput({
-    name: "test command deeptest",
-    description: "test command deeptest description",
-    onExecute(ctx) {
-      let b = ctx.interaction.options.getBoolean("test_bool");
-      let c = ctx.interaction.options.getString("choices");
-      ctx.interaction.reply(`deeptest Boolean: ${b}, String: ${c}`);
-    },
-    other: {
-      messageCommand: {
-        aliases: ["test2 command2 deeptest2"]
-      }
-    },
-    options: [
-      ChatInputOptions.boolean({
-        name: "test_bool",
-        description: "test_bool description",
-        required: true
-      }),
-      ChatInputOptions.stringAutocomplete({
-        name: "choices",
-        description: "choices description",
-        required: true,
-        onComplete({ interaction, value }) {
-          return [
-            {
-              name: "choice1",
-              value: "choice1"
-            },
-            {
-              name: "choice2",
-              value: "choice2"
-            },
-            {
-              name: "test2",
-              value: "test2"
-            }
-          ].filter(c => c.name.startsWith(value));
-        },
-      }),
-    ]
-  });
-
   InteractionLocale({
     name: "test command",
     data: {

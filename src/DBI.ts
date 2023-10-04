@@ -465,6 +465,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         },
       });
     }
+    self.data.interactions.sort((a, b) => a.name.length - b.name.length);
   }
 
   emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
