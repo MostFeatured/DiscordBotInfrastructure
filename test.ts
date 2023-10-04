@@ -8,7 +8,8 @@ const dbi = createDBI("xd", {
         "GuildMembers",
         "GuildMessages",
         "MessageContent",
-        "Guilds"
+        "Guilds",
+        "DirectMessages"
       ]
     },
     token: ""
