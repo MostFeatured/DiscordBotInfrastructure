@@ -244,36 +244,49 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.User: {
-          if (!interaction.options.getUser(value)) {
+          if (!interaction.options.getUser(option.name)) {
             errorType = "InvalidUser";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Channel: {
-          if (!interaction.options.getChannel(value, null, option.channelTypes)) {
+          if (!interaction.options.getChannel(option.name, null, option.channelTypes)) {
             errorType = "InvalidChannel";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Role: {
-          if (!interaction.options.getRole(value)) {
+          if (!interaction.options.getRole(option.name)) {
             errorType = "InvalidRole";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Mentionable: {
-          if (!interaction.options.getMentionable(value)) {
+          if (!interaction.options.getMentionable(option.name)) {
             errorType = "InvalidMentionable";
             break;
           }
           break;
         }
+        case ApplicationCommandOptionType.Attachment: {
+          if (option.required && !value) {
+            errorType = "MissingRequiredOption";
+          }
+          break;
+        }
       }
 
-      if (errorType) break;
+      if (errorType) {
+        break;
+      } else {
+        lastExtra = null;
+        lastIndex = null;
+        lastOption = null;
+        lastValue = null;
+      }
     }
 
     if (errorType) {

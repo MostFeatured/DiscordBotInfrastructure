@@ -53,7 +53,10 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
       let b = ctx.interaction.options.getBoolean("test_bool");
       let c = ctx.interaction.options.getString("choices_auto");
       let d = ctx.interaction.options.getString("choices");
-      ctx.interaction.reply(`Boolean: ${b}, String auto: ${c}, String: ${d}`);
+      let u = ctx.interaction.options.getUser("user");
+      let a = ctx.interaction.options.getAttachment("attachment");
+      let atcName = ctx.interaction.options.getString("atc_name");
+      ctx.interaction.reply(`Boolean: ${b}, String auto: ${c}, String: ${d}, User: ${u}, Atc: ${a.url}, Atc name: ${atcName}`);
     },
     other: {
       messageCommand: {
@@ -105,6 +108,21 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
             value: "test2normal"
           }
         ]
+      }),
+      ChatInputOptions.user({
+        name: "user",
+        description: "user description",
+        required: true
+      }),
+      ChatInputOptions.attachment({
+        name: "attachment",
+        description: "attachment description",
+        required: true
+      }),
+      ChatInputOptions.string({
+        name: "atc_name",
+        description: "atc_name description",
+        required: true
       }),
     ]
   });

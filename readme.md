@@ -35,8 +35,26 @@ let dbi = createDBI("xd", {
       ttl: 60 * 1000 * 60,
       check: 60 * 1000
     }
+  },
+  // Message Commands are optional. Message Commands work trough emulating the slash commands..
+  messageCommands: {
+    prefixes: ["!", "."],
+    typeAliases: { 
+      booleans: {
+        "true": true,
+        "false": false,
+        "yes": true,
+        "no": false,
+      }
+    }
   }
 });
+
+dbi.events.on("messageCommandArgumentError", (data) => {
+  data.message.reply(`‼️ Invalid argument \`${data.error.option.name}\` (Index: \`${data.error.index}\`). Error Kind: \`${data.error.type}\`. Expected: \`${ApplicationCommandOptionType[data.error.option.type]}\`${data.error.extra ? ` with any of \`${data.error.extra.map(i => i.name).join(", ")}\`` : ""}.`);
+  return false;
+});
+
 module.exports = dbi;
 ```
 
@@ -307,7 +325,24 @@ let dbi = createDBI("xd", {
       ttl: 60 * 1000 * 60,
       check: 60 * 1000
     }
+  },
+  // Mesaj Komutları isteğe bağlıdır. Mesaj Komutları slash komutlarını taklit ederek çalışır. Yani siz sadece slash komut kodlasanız bile uyumlu olarak çalışacaktır.
+  messageCommands: {
+    prefixes: ["!", "."],
+    typeAliases: { 
+      booleans: {
+        "true": true,
+        "false": false,
+        "yes": true,
+        "no": false,
+      }
+    }
   }
+});
+
+dbi.events.on("messageCommandArgumentError", (data) => {
+  data.message.reply(`‼️ Hatalı argument \`${data.error.option.name}\` (Konum: \`${data.error.index}\`). Hata Tipi: \`${data.error.type}\`. Beklenen: \`${ApplicationCommandOptionType[data.error.option.type]}\`${data.error.extra ? ` şunlardan herhangi biri \`${data.error.extra.map(i => i.name).join(", ")}\`` : ""}.`);
+  return false;
 });
 
 module.exports = dbi;

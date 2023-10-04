@@ -1,4 +1,4 @@
-import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType, User } from 'discord.js';
+import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType, User, Attachment } from 'discord.js';
 import { TDBIInteractions } from '../Interaction';
 import { plsParseArgs } from "plsargs";
 import { DBI } from '../../DBI';
@@ -37,6 +37,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   options: any;
   dbiChatInput: TDBIInteractions<string | number>;
   dbiChatInputOptions: any[];
+  fake: boolean = true;
 
   constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
@@ -55,7 +56,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.guild = message.guild;
     this.guildId = message.guild?.id;
     this.guildLocale = message.guild?.preferredLocale;
-    this.id = message.id;
+    this.id = message.guild.commands.cache.find((cmd) => cmd.name === this.commandName)?.id ?? "-1";
     this.locale = message.guild?.preferredLocale;
     this.member = message.member;
     this.memberPermissions = message.member?.permissions;
@@ -70,26 +71,36 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
       const args = plsParseArgs(argContent);
 
-      const options = chatInput.options;
-
-      for (let i = 0; i < args._.length; i++) {
+      const options = chatInput.options ?? [];
+      const atchs = [...message.attachments.values()];
+      for (let i = 0, attachmentIndex = 0, namedValueSize = 0; i < options.length; i++) {
         const option = options[i];
-        const arg = args.get(i) ?? args.get(option.name);
         if (!option) break;
+        if (option.type === ApplicationCommandOptionType.Attachment) {
+          this.parsedArgs.set(option.name, {
+            type: option.type,
+            value: atchs.at(attachmentIndex)?.url,
+            attachment: atchs.at(attachmentIndex++)
+          })
+          continue;
+        }
+        const arg = args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize);
+        if (args.get(option.name)) namedValueSize++;
         this.parsedArgs.set(option.name, {
           type: option.type,
           value: arg
         });
       }
+
+      console.log(this.parsedArgs)
     }
 
     this.options = {
-      get(name: string, type?: CommandOptionDataTypeResolvable) {
-        const option = self.getRawOptionValue(name);
-        if (!option) return null;
-        if (type && option.type !== type) return null;
+      get(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
         return {
-          ...option,
+          value: rawValue,
           get boolean() { return self.options.getBoolean(name); },
           get channel() { return self.options.getChannel(name); },
           get string() { return self.options.getString(name); },
@@ -98,7 +109,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           get user() { return self.options.getUser(name); },
           get member() { return self.options.getMember(name); },
           get role() { return self.options.getRole(name); },
-          get mentionable() { return self.options.getMentionable(name); }
+          get mentionable() { return self.options.getMentionable(name); },
+          get attachment() { return self.options.getAttachment(name); }
         };
       },
       getSubcommand() {
@@ -192,6 +204,10 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       },
       getMessage() {
         return self.message;
+      },
+      getAttachment(name: string) {
+        let d = self.parsedArgs.get(name);
+        return d?.attachment ?? null;
       }
     }
   }
@@ -209,7 +225,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   }
 
   async deferReply(options: any): Promise<any> {
-    if (options.ephemeral) throw new Error("Ephemeral replies are not supported in message commands.");
+    // if (options.ephemeral) throw new Error("Ephemeral replies are not supported in message commands.");
     if (this.repliedMessage) throw new Error("Already deferred reply.");
     this.repliedMessage = await this.message.reply(options.content ?? "Loading...");
     this.deferred = true;
@@ -238,7 +254,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     return this.repliedMessage;
   }
 
-  async reply(content: any): Promise<any> {
+  async reply(content: string | MessagePayload): Promise<any> {
     if (this.repliedMessage) throw new Error("Already deferred reply.");
     this.repliedMessage = await this.message.reply(content);
     return this.repliedMessage;
@@ -273,5 +289,6 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 
 interface FakeMessageInteractionArgument {
   type: ApplicationCommandOptionType,
-  value: any
+  value: any,
+  attachment?: Attachment
 }
