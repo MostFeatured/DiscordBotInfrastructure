@@ -31,7 +31,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   private lastFollowUp: Message | undefined;
   member: GuildMember | APIInteractionGuildMember;
   memberPermissions: Readonly<PermissionsBitField>;
-  private parsedArgs = new Map<string, FakeMessageInteractionArgument>();
+  parsedArgs = new Map<string, FakeMessageInteractionArgument>();
   usedCommandName: string;
   fullCommandName: string;
   options: any;
@@ -41,7 +41,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     const self = this;
     
     this.channelId = message.channel.id;
-    this.commandName = chatInput.name.split(" ")[0];
+    this.commandName = chatInput.name.split(" ").at(0);
     this.appPermissions = message.guild?.members.me.permissionsIn(message.channel as any) ?? new PermissionsBitField(8n);
     this.applicationId = message.client.user.id;
     this.channel = message.channel as any;
@@ -112,7 +112,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       getBoolean(name: string) {
         const option = self.getOption(name);
         if (!option) return null;
-        return !!self.dbi.config.messageCommands.typeAliases.booleans[option];
+        return !!self.dbi.config.messageCommands.typeAliases.booleans[option.toLowerCase()];
       },
       getChannel(name: string, _: any, channelType?: ChannelType) {
         const option = self.getOption(name);

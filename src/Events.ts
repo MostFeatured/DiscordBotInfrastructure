@@ -1,10 +1,13 @@
 import { NamespaceEnums, NamespaceData } from "../generated/namespaceData";
 import { DBI } from "./DBI";
+import { TDBIMessageCommandArgumentErrorTypes } from "./methods/handleMessageCommands";
 import { ClientEvents } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
+import { FakeMessageInteraction } from "./types/other/FakeMessageInteraction";
 import { DBILocale } from "./types/other/Locale";
+import Discord from "discord.js";
 
-export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError";
+export type TDBIEventNames = "beforeInteraction" | "afterInteraction" | "interactionRateLimit" | "beforeEvent" | "afterEvent" | "interactionError" | "eventError" | "messageCommandArgumentError";
 
 export type TDBIEventHandlerCtx<TNamespace extends NamespaceEnums> = {
   [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: K } & (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K]
@@ -66,6 +69,12 @@ export class Events<TNamespace extends NamespaceEnums> {
   on(
     eventName: "interactionRateLimit",
     handler: (data: Omit<IDBIBaseExecuteCtx<TNamespace>, "other" | "setRateLimit"> & { rateLimit: { type: TDBIRateLimitTypes, duration: number, at: number } }) => Promise<boolean> | boolean,
+    options?: { once: boolean }
+  ): (() => any);
+
+  on(
+    eventName: "messageCommandArgumentError",
+    handler: (data: { message: Discord.Message, interaction: FakeMessageInteraction, error: { type: TDBIMessageCommandArgumentErrorTypes, option: any }, value: any }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
