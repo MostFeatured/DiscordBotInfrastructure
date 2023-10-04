@@ -91,8 +91,6 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           value: arg
         });
       }
-
-      console.log(this.parsedArgs)
     }
 
     this.options = {
