@@ -6,7 +6,7 @@ import { FakeMessageInteraction } from "../types/other/FakeMessageInteraction";
 const INTEGER_REGEX = /^-?\d+$/;
 const NUMBER_REGEX = /^-?\d+(?:\.\d+)?$/;
 
-export type TDBIMessageCommandArgumentErrorTypes = "MissingRequiredOption" | "MinLength" | "MaxLength" | "InvalidChoice" | "InvalidInteger" | "MinInteger" | "MaxInteger" | "InvalidNumber" | "MinNumber" | "MaxNumber" | "InvalidBoolean" | "InvalidUser" | "InvalidChannel" | "InvalidRole" | "InvalidMentionable";
+export type TDBIMessageCommandArgumentErrorTypes = "MissingRequiredOption" | "MinLength" | "MaxLength" | "InvalidChoice" | "InvalidInteger" | "MinInteger" | "MaxInteger" | "InvalidNumber" | "MinNumber" | "MaxNumber" | "InvalidBoolean" | "InvalidUser" | "InvalidChannel" | "InvalidRole" | "InvalidMentionable" | "InvalidCompleteChoice";
 
 export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: Message) {
   const chatInputs = dbi.data.interactions.filter(i => i.type === "ChatInput");
@@ -50,11 +50,17 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
   const interaction = new FakeMessageInteraction(dbi, message, chatInput, locale, commandName, usedPrefix);
 
   if (chatInput.options.length) {
+    let errorType: TDBIMessageCommandArgumentErrorTypes;
+    let lastOption;
+    let lastValue;
+    let lastExtra;
     for (let i = 0; i < chatInput.options.length; i++) {
       const option = chatInput.options[i];
       const value = interaction.parsedArgs.get(option.name)?.value;
+
+      lastOption = option;
+      lastValue = value;
       
-      let errorType: TDBIMessageCommandArgumentErrorTypes;
       if (option.required && !value) {
         errorType = "MissingRequiredOption";
         break;
@@ -62,6 +68,26 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
       switch (option.type) {
         case ApplicationCommandOptionType.String: {
+          if (option.autocomplete && option.onComplete) {
+            let choices = await option.onComplete({
+              interaction,
+              value
+            });
+            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            lastExtra = choices;
+            if (!choices.find(c => c.name === value || c.value === value)) {
+              errorType = "InvalidCompleteChoice";
+              break;
+            }
+          }
+
+          if (option.choices) {
+            if (!option.choices.find(c => c.name === value || c.value === value)) {
+              errorType = "InvalidChoice";
+            }
+            break;
+          }
+
           if (option.minLength && value.length < option.minLength) {
             errorType = "MinLength";
             break;
@@ -70,46 +96,83 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             errorType = "MaxLength";
             break;
           }
-          if (option.choices && !option.choices.find(c => c.name === value || c.value === value)) {
-            errorType = "InvalidChoice";
-            break;
-          }
+
           break;
         }
         case ApplicationCommandOptionType.Integer: {
+          let parsedInt = parseInt(value);
+
+          if (option.autocomplete && option.onComplete) {
+            let choices = await option.onComplete({
+              interaction,
+              value
+            });
+            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            lastExtra = choices;
+            if (!choices.find(c => c.value === parsedInt || c.name === value)) {
+              errorType = "InvalidCompleteChoice";
+              break;
+            }
+            break;
+          }
+
+          if (option.choices) {
+            if (!option.choices.find(c => c.value === parsedInt || c.name === value)) {
+              errorType = "InvalidChoice";
+              break;
+            }
+            break;
+          }
+
           if (!INTEGER_REGEX.test(value)) {
             errorType = "InvalidInteger";
             break;
           }
-          if (option.minValue && parseInt(value) < option.minValue) {
+          
+          if (option.minValue && parsedInt < option.minValue) {
             errorType = "MinInteger";
             break;
           }
-          if (option.maxValue && parseInt(value) > option.maxValue) {
+          if (option.maxValue && parsedInt > option.maxValue) {
             errorType = "MaxInteger";
-            break;
-          }
-          if (option.choices && !option.choices.find(c => c.value === parseInt(value))) {
-            errorType = "InvalidChoice";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Number: {
+          let parsedFloat = parseFloat(value);
+
+          if (option.autocomplete && option.onComplete) {
+            let choices = await option.onComplete({
+              interaction,
+              value
+            });
+            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            lastExtra = choices;
+            if (!choices.find(c => c.value === parsedFloat || c.name === value)) {
+              errorType = "InvalidCompleteChoice";
+              break;
+            }
+            break;
+          }
+
+          if (option.choices) {
+            if (!option.choices.find(c => c.value === parsedFloat || c.name === value)) {
+              errorType = "InvalidChoice";
+            }
+            break;
+          }
+
           if (!NUMBER_REGEX.test(value)) {
             errorType = "InvalidNumber";
             break;
           }
-          if (option.minValue && parseFloat(value) < option.minValue) {
+          if (option.minValue && parsedFloat < option.minValue) {
             errorType = "MinNumber";
             break;
           }
-          if (option.maxValue && parseFloat(value) > option.maxValue) {
+          if (option.maxValue && parsedFloat > option.maxValue) {
             errorType = "MaxNumber";
-            break;
-          }
-          if (option.choices && !option.choices.find(c => c.value === parseFloat(value))) {
-            errorType = "InvalidChoice";
             break;
           }
           break;
@@ -151,18 +214,20 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         }
       }
 
-      if (errorType) {
-        dbi.events.trigger("messageCommandArgumentError", {
-          interaction,
-          message,
-          error: {
-            type: errorType,
-            option
-          },
-          value
-        });
-        return;
-      }
+    }
+
+    if (errorType) {
+      let res = await dbi.events.trigger("messageCommandArgumentError", {
+        interaction,
+        message,
+        error: {
+          type: errorType,
+          option: lastOption,
+          extra: lastExtra
+        },
+        value: lastValue
+      });
+      if (!res) return;
     }
   }
 
