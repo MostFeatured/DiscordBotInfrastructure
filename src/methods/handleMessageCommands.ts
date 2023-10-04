@@ -247,7 +247,6 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
     }
 
     if (errorType) {
-      
       let res = await dbi.events.trigger("messageCommandArgumentError", {
         interaction,
         message,
