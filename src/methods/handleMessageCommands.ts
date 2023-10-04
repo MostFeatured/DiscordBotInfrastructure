@@ -2,6 +2,7 @@ import { ApplicationCommandType, ChatInputCommandInteraction, Message, MessagePa
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { FakeMessageInteraction } from "../types/other/FakeMessageInteraction";
+import { TDBILocaleString } from "../types/other/Locale";
 
 const INTEGER_REGEX = /^-?\d+$/;
 const NUMBER_REGEX = /^-?\d+(?:\.\d+)?$/;
@@ -55,7 +56,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
     let lastValue;
     let lastExtra;
     for (let i = 0; i < chatInput.options.length; i++) {
-      const option = interaction.dbiChatInputOptions[i];
+      const option: any = interaction.dbiChatInputOptions[i];
       const value = interaction.parsedArgs.get(option.name)?.value;
 
       lastOption = option;
@@ -87,7 +88,9 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            if (!option.choices.find(c => c.name === value || c.value === value)) {
+            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
+            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
+            if (!option.choices.find(c => c.name === value || c.value === value || choicesLocaleData?.[c.value] === value)) {
               errorType = "InvalidChoice";
               break;
             }
