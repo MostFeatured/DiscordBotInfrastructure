@@ -108,7 +108,7 @@ export interface DBIConfigConstructor {
 
   messageCommands?: {
     prefixes: string[];
-    typeAliases: {
+    typeAliases?: {
       /**
        * Example: {"yes": true, "no": false}
        */
@@ -191,10 +191,14 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
       config.messageCommands.typeAliases = {
         booleans: typeAliases.booleans ?? {
+          "true": true,
+          "false": false,
           "yes": true,
           "no": false,
-          "true": true,
-          "false": false
+          "y": true,
+          "n": false,
+          "1": true,
+          "0": false
         }
       };
     }
@@ -267,6 +271,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
   private async _hookListeners() {
     if (this._hooked) return;
+    const self = this;
     this._hooked = true;
     this.data.unloaders.add(hookInteractionListeners(this as any));
     this.data.unloaders.add(hookEventListeners(this as any));
@@ -289,7 +294,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         const { client } = this.client();
 
         function onMessage(message: Discord.Message) {
-          handleMessageCommands(this, message);
+          handleMessageCommands(self as any, message);
         }
 
         client.on("messageCreate", onMessage);

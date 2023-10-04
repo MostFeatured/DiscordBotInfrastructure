@@ -7,9 +7,8 @@ const componentTypes = ["Button", "StringSelectMenu", "UserSelectMenu", "RoleSel
 
 export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(inter: Discord.Interaction<"cached">) {
-
     const dbiInter =
-      dbi.data.interactions.find(i => {
+      (inter as any).dbiChatInput ?? dbi.data.interactions.find(i => {
         let isUsesCustomId = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit());
         let parsedId = isUsesCustomId ? parseCustomId(dbi, (inter as any).customId) : null;
         return (

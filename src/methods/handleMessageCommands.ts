@@ -18,14 +18,14 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
   let chatInput = chatInputs.find(i => {
     let found = contentLower.startsWith(i.name);
     if (found) return true;
-    let alias = i.other.messageCommand?.aliases?.find(a => contentLower.startsWith(a));
+    let alias = i.other?.messageCommand?.aliases?.find(a => contentLower.startsWith(a));
     if (alias) {
       usedAlias = alias;
       return true;
     }
     return false;
   });
-  let commandName = chatInput?.name ?? usedAlias;
+  let commandName = usedAlias ?? chatInput?.name;
 
   if (!chatInput) {
     fLoop: for (const [localeInterName, localeData] of dbi.data.interactionLocales) {
@@ -44,5 +44,5 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
   const interaction = new FakeMessageInteraction(dbi, message, chatInput, locale, commandName, usedPrefix);
 
-  dbi.client().client.emit("interactionCreate", interaction as any);
+  dbi.data.clients.first().client.emit("interactionCreate", interaction as any);
 }
