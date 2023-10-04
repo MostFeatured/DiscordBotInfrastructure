@@ -36,6 +36,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   fullCommandName: string;
   options: any;
   dbiChatInput: TDBIInteractions<string | number>;
+  dbiChatInputOptions: any[];
 
   constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
@@ -63,6 +64,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.usedCommandName = commandName;
     this.fullCommandName = chatInput.name;
     this.dbiChatInput = chatInput;
+    this.dbiChatInputOptions = chatInput.options ? chatInput.options.map(i => ({ ...i })) : []; 
 
     {
       const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
@@ -83,7 +85,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 
     this.options = {
       get(name: string, type?: CommandOptionDataTypeResolvable) {
-        const option = self.getOption(name);
+        const option = self.getRawOptionValue(name);
         if (!option) return null;
         if (type && option.type !== type) return null;
         return {
@@ -110,14 +112,14 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         return null;
       },
       getBoolean(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        return !!self.dbi.config.messageCommands.typeAliases.booleans[option.toLowerCase()];
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        return !!self.dbi.config.messageCommands.typeAliases.booleans[rawValue.toLowerCase()];
       },
       getChannel(name: string, _: any, channelType?: ChannelType) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        let value = option.replace(/<#|>/g, "");
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<#|>/g, "");
         let channel = self.message.client.channels.cache.get(value);
         if (!channel) channel = self.message.client.channels.cache.find(c => {
           if (self.guildId && (c as any).guildId && (c as any).guildId !== self.guildId) return false;
@@ -127,48 +129,57 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         return channel;
       },
       getString(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        return `${option}`;
+        const dbiOption = self.getClonedDBIOption(name);
+        let rawValue = `${self.getRawOptionValue(name)}`;
+        let choices = dbiOption.choices ?? dbiOption._choices;
+        console.log(rawValue, choices, dbiOption);
+        if (choices) return choices.find(c => c.value === rawValue || c.name === rawValue)?.value ?? rawValue;
+        return rawValue;
       },
       getInteger(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        return parseInt(option);
+        const dbiOption = self.getClonedDBIOption(name);
+        let rawValue = self.getRawOptionValue(name);
+        let parsedValue = parseInt(rawValue);
+        let choices = dbiOption.choices ?? dbiOption._choices;
+        if (choices) return choices.find(c => c.value === parsedValue || c.name === rawValue)?.value ?? rawValue;
+        return rawValue;
       },
       getNumber(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        return parseFloat(option);
+        const dbiOption = self.getClonedDBIOption(name);
+        let rawValue = self.getRawOptionValue(name);
+        let parsedValue = parseFloat(rawValue);
+        let choices = dbiOption.choices ?? dbiOption._choices;
+        if (choices) return choices.find(c => c.value === parsedValue || c.name === rawValue)?.value ?? rawValue;
+        return rawValue;
       },
       getUser(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        let value = option.replace(/<@!?|>/g, "");
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<@!?|>/g, "");
         let user = self.message.client.users.cache.get(value);
         if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
         return user;
       },
       getMember(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        let value = option.replace(/<@!?|>/g, "");
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<@!?|>/g, "");
         let member = self.message.guild?.members.cache.get(value);
         if (!member) member = self.message.guild?.members.cache.find(m => m.user.username === value || m.user.tag === value);
         return member;
       },
       getRole(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        let value = option.replace(/<@&|>/g, "");
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<@&|>/g, "");
         let role = self.message.guild?.roles.cache.get(value);
         if (!role) role = self.message.guild?.roles.cache.find(r => r.name === value);
         return role;
       },
       getMentionable(name: string) {
-        const option = self.getOption(name);
-        if (!option) return null;
-        let value = option.replace(/<@(!|&)?|>/g, "");
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<@(!|&)?|>/g, "");
         let user = self.message.client.users.cache.get(value);
         if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
         if (user) return user;
@@ -186,8 +197,12 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     }
   }
 
-  private getOption(name: string): any {
+  private getRawOptionValue(name: string): any {
     return this.parsedArgs.get(name)?.value;
+  }
+
+  private getClonedDBIOption(name: string): any {
+    return this.dbiChatInputOptions.find(o => o.name === name);
   }
 
   inGuild() {

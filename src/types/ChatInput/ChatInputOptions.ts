@@ -19,7 +19,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
   constructor(dbi: DBI<TNamespace>) {
     this.dbi = dbi;
   }
-  stringAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxLength & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<string>[]> }) {
+  stringAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxLength & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<string>[]> | TDBIValueName<string>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -60,7 +60,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
     };
   }
 
-  numberAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> }) {
+  numberAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> | TDBIValueName<number>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.Number,
       name: cfg.name,
@@ -102,7 +102,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
     };
   }
 
-  integerAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> }) {
+  integerAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxValue & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<number>[]> | TDBIValueName<number>[] }) {
     return {
       type: Discord.ApplicationCommandOptionType.Integer,
       name: cfg.name,

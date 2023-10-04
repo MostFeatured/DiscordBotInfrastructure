@@ -55,7 +55,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
     let lastValue;
     let lastExtra;
     for (let i = 0; i < chatInput.options.length; i++) {
-      const option = chatInput.options[i];
+      const option = interaction.dbiChatInputOptions[i];
       const value = interaction.parsedArgs.get(option.name)?.value;
 
       lastOption = option;
@@ -73,17 +73,23 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
               interaction,
               value
             });
+            if (!choices.length) choices = await option.onComplete({
+              interaction,
+              value: ""
+            });
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.name === value || c.value === value)) {
               errorType = "InvalidCompleteChoice";
               break;
             }
+            option._choices = choices;
           }
 
           if (option.choices) {
             if (!option.choices.find(c => c.name === value || c.value === value)) {
               errorType = "InvalidChoice";
+              break;
             }
             break;
           }
@@ -107,12 +113,17 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
               interaction,
               value
             });
+            if (!choices.length) choices = await option.onComplete({
+              interaction,
+              value: ""
+            });
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.value === parsedInt || c.name === value)) {
               errorType = "InvalidCompleteChoice";
               break;
             }
+            option._choices = choices;
             break;
           }
 
@@ -147,18 +158,24 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
               interaction,
               value
             });
+            if (!choices.length) choices = await option.onComplete({
+              interaction,
+              value: ""
+            });
             if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
             if (!choices.find(c => c.value === parsedFloat || c.name === value)) {
               errorType = "InvalidCompleteChoice";
               break;
             }
+            option._choices = choices;
             break;
           }
 
           if (option.choices) {
             if (!option.choices.find(c => c.value === parsedFloat || c.name === value)) {
               errorType = "InvalidChoice";
+              break;
             }
             break;
           }

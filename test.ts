@@ -40,7 +40,7 @@ const dbi = createDBI("xd", {
 });
 
 dbi.events.on("messageCommandArgumentError", (data) => {
-  data.message.reply(`‼️ Invalid argument \`${data.error.option.name}\`. Error Kind: \`${data.error.type}\`. Expected: \`${ApplicationCommandOptionType[data.error.option.type]}\`.`);
+  data.message.reply(`‼️ Invalid argument \`${data.error.option.name}\`. Error Kind: \`${data.error.type}\`. Expected: \`${ApplicationCommandOptionType[data.error.option.type]}\`${data.error.type === "InvalidCompleteChoice" ? ` with any of \`${data.error.extra.map(i => i.value).join(", ")}\`` : ""}.`);
   return false;
 });
 
@@ -50,8 +50,9 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
     name: "test command",
     description: "test command description",
     onExecute(ctx) {
-      let b = ctx.interaction.options.getBoolean("test");
-      ctx.interaction.reply("test command executed: "+b);
+      let b = ctx.interaction.options.getBoolean("test_bool");
+      let c = ctx.interaction.options.getString("choices");
+      ctx.interaction.reply(`Boolean: ${b}, String: ${c}`);
     },
     other: {
       messageCommand: {
@@ -64,20 +65,26 @@ dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
         description: "test_bool description",
         required: true
       }),
-      ChatInputOptions.stringChoices({
+      ChatInputOptions.stringAutocomplete({
         name: "choices",
         description: "choices description",
         required: true,
-        choices: [
-          {
-            name: "choicename1",
-            value: "choiceval1"
-          },
-          {
-            name: "choicename2",
-            value: "choiceval2"
-          }
-        ]
+        onComplete({ interaction, value }) {
+          return [
+            {
+              name: "choice1",
+              value: "choice1"
+            },
+            {
+              name: "choice2",
+              value: "choice2"
+            },
+            {
+              name: "test2",
+              value: "test2"
+            }
+          ].filter(c => c.name.startsWith(value));
+        },
       }),
     ]
   });

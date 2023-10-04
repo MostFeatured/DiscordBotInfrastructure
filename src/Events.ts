@@ -74,7 +74,7 @@ export class Events<TNamespace extends NamespaceEnums> {
 
   on(
     eventName: "messageCommandArgumentError",
-    handler: (data: { message: Discord.Message, interaction: FakeMessageInteraction, error: { type: TDBIMessageCommandArgumentErrorTypes, option: any }, value: any }) => Promise<boolean> | boolean,
+    handler: (data: { message: Discord.Message, interaction: FakeMessageInteraction, error: { type: TDBIMessageCommandArgumentErrorTypes, option: any, extra?: any }, value: any }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): (() => any);
 
