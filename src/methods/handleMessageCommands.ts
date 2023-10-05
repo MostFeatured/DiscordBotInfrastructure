@@ -66,6 +66,9 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
       switch (option.type) {
         case ApplicationCommandOptionType.String: {
+
+          if (!option.required && !value) break;
+
           if (option.autocomplete && option.onComplete) {
             let choices = await option.onComplete({
               interaction,
@@ -117,6 +120,8 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Integer: {
+          if (!option.required && !value) break;
+
           let parsedInt = parseInt(value);
 
           if (option.autocomplete && option.onComplete) {
@@ -163,7 +168,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             errorType = "InvalidInteger";
             break;
           }
-          
+
           if (option.minValue && parsedInt < option.minValue) {
             errorType = "MinInteger";
             break;
@@ -177,6 +182,8 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Number: {
+          if (!option.required && !value) break;
+
           let parsedFloat = parseFloat(value);
 
           if (option.autocomplete && option.onComplete) {
@@ -237,35 +244,35 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         }
         case ApplicationCommandOptionType.Boolean: {
           let boolKeys = Object.keys(dbi.config.messageCommands.typeAliases.booleans);
-          if (!boolKeys.includes(value.toLowerCase())) {
+          if (option.required && !boolKeys.includes(value.toLowerCase())) {
             errorType = "InvalidBoolean";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.User: {
-          if (!interaction.options.getUser(option.name)) {
+          if (option.required && !interaction.options.getUser(option.name)) {
             errorType = "InvalidUser";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Channel: {
-          if (!interaction.options.getChannel(option.name, null, option.channelTypes)) {
+          if (option.required && !interaction.options.getChannel(option.name, null, option.channelTypes)) {
             errorType = "InvalidChannel";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Role: {
-          if (!interaction.options.getRole(option.name)) {
+          if (option.required && !interaction.options.getRole(option.name)) {
             errorType = "InvalidRole";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Mentionable: {
-          if (!interaction.options.getMentionable(option.name)) {
+          if (option.required && !interaction.options.getMentionable(option.name)) {
             errorType = "InvalidMentionable";
             break;
           }

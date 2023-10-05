@@ -10,19 +10,19 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   commandName: string;
   appPermissions: any;
   applicationId: string;
-  channel: any; 
+  channel: any;
   command: any;
   commandGuildId: string;
-  commandId: any; 
+  commandId: any;
   commandType: ApplicationCommandType.ChatInput;
   // awaitModalSubmit: (...arr: any[]) => any;
   // fetchReply: () => Promise<any>;
   deferred: boolean = false;
-  client: any; 
+  client: any;
   createdAt: Date;
   ephemeral: boolean = false;
   createdTimestamp: number;
-  guild: any; 
+  guild: any;
   guildId: string;
   guildLocale: Locale;
   id: string;
@@ -41,7 +41,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 
   constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
-    
+
     this.channelId = message.channel.id;
     this.commandName = chatInput.name.split(" ").at(0);
     this.appPermissions = message.guild?.members.me.permissionsIn(message.channel as any) ?? new PermissionsBitField(8n);
@@ -49,7 +49,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.channel = message.channel as any;
     this.commandGuildId = message.guild.id;
     this.commandType = ApplicationCommandType.ChatInput;
-    
+
     this.client = message.client;
     this.createdAt = message.createdAt;
     this.createdTimestamp = message.createdTimestamp;
@@ -65,7 +65,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.usedCommandName = commandName;
     this.fullCommandName = chatInput.name;
     this.dbiChatInput = chatInput;
-    this.dbiChatInputOptions = chatInput.options ? chatInput.options.map(i => ({ ...i })) : []; 
+    this.dbiChatInputOptions = chatInput.options ? chatInput.options.map(i => ({ ...i })) : [];
 
     {
       const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
@@ -231,19 +231,19 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           return { ...this.options.get(arg.name), value: this.options.getBoolean(arg.name) };
         }
         case ApplicationCommandOptionType.User: {
-          return { ...this.options.get(arg.name), value: this.options.getUser(arg.name).id };
+          return { ...this.options.get(arg.name), value: this.options.getUser(arg.name)?.id };
         }
         case ApplicationCommandOptionType.Channel: {
-          return { ...this.options.get(arg.name), value: this.options.getChannel(arg.name).id };
+          return { ...this.options.get(arg.name), value: this.options.getChannel(arg.name)?.id };
         }
         case ApplicationCommandOptionType.Role: {
-          return { ...this.options.get(arg.name), value: this.options.getRole(arg.name).id };
+          return { ...this.options.get(arg.name), value: this.options.getRole(arg.name)?.id };
         }
         case ApplicationCommandOptionType.Mentionable: {
-          return { ...this.options.get(arg.name), value: this.options.getMentionable(arg.name).id };
+          return { ...this.options.get(arg.name), value: this.options.getMentionable(arg.name)?.id };
         }
         case ApplicationCommandOptionType.Attachment: {
-          return { ...this.options.get(arg.name), value: this.options.getAttachment(arg.name).url };
+          return { ...this.options.get(arg.name), value: this.options.getAttachment(arg.name)?.url };
         }
         case ApplicationCommandOptionType.Subcommand: {
           return { ...this.options.get(arg.name), value: this.options.getSubcommand() };
