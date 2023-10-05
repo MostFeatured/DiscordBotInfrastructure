@@ -38,6 +38,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   dbiChatInput: TDBIInteractions<string | number>;
   dbiChatInputOptions: any[];
   fake: boolean = true;
+  _hoistedOptions: any;
+  _initialized: boolean = false;
 
   constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
@@ -95,8 +97,6 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       }
     }
 
-    let _hoistedOptions: any = [];
-
     this.options = {
       get(name: string) {
         const rawValue = self.getRawOptionValue(name);
@@ -116,7 +116,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         };
       },
       get _hoistedOptions() {
-        return _hoistedOptions;
+        return this._hoistedOptions;
       },
       getSubcommand() {
         let splitted = self.fullCommandName.split(" ");
@@ -176,6 +176,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
         return user;
       },
+      getUserId(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        return rawValue.replace(/<@!?|>/g, "");
+      },
       getMember(name: string) {
         const rawValue = self.getRawOptionValue(name);
         if (!rawValue) return null;
@@ -184,6 +189,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (!member) member = self.message.guild?.members.cache.find(m => m.user.username === value || m.user.tag === value);
         return member;
       },
+      getMemberId(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        return rawValue.replace(/<@!?|>/g, "");
+      },
       getRole(name: string) {
         const rawValue = self.getRawOptionValue(name);
         if (!rawValue) return null;
@@ -191,6 +201,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         let role = self.message.guild?.roles.cache.get(value);
         if (!role) role = self.message.guild?.roles.cache.find(r => r.name === value);
         return role;
+      },
+      getRoleId(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        return rawValue.replace(/<@&|>/g, "");
       },
       getMentionable(name: string) {
         const rawValue = self.getRawOptionValue(name);
@@ -207,6 +222,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (role) return role;
         return null;
       },
+      getMentionableId(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        return rawValue.replace(/<@(!|&)?|>/g, "");
+      },
       getMessage() {
         return self.message;
       },
@@ -215,8 +235,16 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         return d?.attachment ?? null;
       }
     }
+  }
 
-    _hoistedOptions = [...self.parsedArgs.values()].map(arg => {
+  init() {
+    if (this._initialized) return;
+    this._initialized = true;
+    this._hoistedOptionsInit();
+  }
+
+  _hoistedOptionsInit() {
+    this._hoistedOptions = [...this.parsedArgs.values()].map(arg => {
       switch (arg.type) {
         case ApplicationCommandOptionType.String: {
           return { ...this.options.get(arg.name), value: this.options.getString(arg.name) };
@@ -252,7 +280,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           return { ...this.options.get(arg.name), value: this.options.getSubcommandGroup() };
         }
       }
-    })
+    });
   }
 
   private getRawOptionValue(name: string): any {

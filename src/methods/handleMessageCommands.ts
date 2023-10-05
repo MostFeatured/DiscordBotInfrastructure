@@ -251,6 +251,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.User: {
+          await message.client.users.fetch(interaction.options.getUserId(option.name)).catch(() => { });
           if (option.required && !interaction.options.getUser(option.name)) {
             errorType = "InvalidUser";
             break;
@@ -258,6 +259,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Channel: {
+          await message.client.channels.fetch(interaction.options.getChannelId(option.name)).catch(() => { });
           if (option.required && !interaction.options.getChannel(option.name, null, option.channelTypes)) {
             errorType = "InvalidChannel";
             break;
@@ -265,6 +267,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Role: {
+          await message.guild.roles.fetch(interaction.options.getRoleId(option.name)).catch(() => { });
           if (option.required && !interaction.options.getRole(option.name)) {
             errorType = "InvalidRole";
             break;
@@ -272,6 +275,10 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Mentionable: {
+          let mentionableId = interaction.options.getMentionableId(option.name);
+          await message.guild.roles.fetch(mentionableId).catch(() => { });
+          await message.client.channels.fetch(mentionableId).catch(() => { });
+          await message.client.users.fetch(mentionableId).catch(() => { });
           if (option.required && !interaction.options.getMentionable(option.name)) {
             errorType = "InvalidMentionable";
             break;
@@ -316,6 +323,6 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
     }
   }
 
-
+  interaction.init();
   dbi.data.clients.first().client.emit("interactionCreate", interaction as any);
 }
