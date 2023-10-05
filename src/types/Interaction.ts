@@ -13,13 +13,13 @@ export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<T
 
 export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   interaction:
-    | Discord.ChatInputCommandInteraction
-    | Discord.UserContextMenuCommandInteraction
-    | Discord.MessageContextMenuCommandInteraction
-    | Discord.ModalSubmitInteraction
-    | Discord.AutocompleteInteraction
-    | Discord.AnySelectMenuInteraction
-    | Discord.ButtonInteraction;
+  | Discord.ChatInputCommandInteraction
+  | Discord.UserContextMenuCommandInteraction
+  | Discord.MessageContextMenuCommandInteraction
+  | Discord.ModalSubmitInteraction
+  | Discord.AutocompleteInteraction
+  | Discord.AnySelectMenuInteraction
+  | Discord.ButtonInteraction;
   locale: {
     user: DBILocale<TNamespace>,
     guild?: DBILocale<TNamespace>
@@ -74,14 +74,14 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
     this.rateLimits = cfg.rateLimits ?? [];
   }
-    
+
   publish?: NamespaceData[TNamespace]["clientNamespaces"];
   dbi: DBI<TNamespace>;
   name: string;
   description: string;
   readonly type: TDBIInteractionTypes;
   options?: any | any[];
-  other?: Record<string, any> & { messageCommand: { aliases: string[] } };
+  other?: Record<string, any> & { messageCommand?: { aliases?: string[] } };
   rateLimits?: DBIRateLimit[];
   toJSON(overrides: any): any { }
 
