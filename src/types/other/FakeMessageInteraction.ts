@@ -87,7 +87,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           })
           continue;
         }
-        const arg = args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize);
+        const arg = option.messageCommands?.rest ? args._.slice(i).join(" ") : (args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize));
         if (args.get(option.name)) namedValueSize++;
         this.parsedArgs.set(option.name, {
           name: option.name,

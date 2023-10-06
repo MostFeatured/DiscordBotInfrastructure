@@ -19,7 +19,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
   constructor(dbi: DBI<TNamespace>) {
     this.dbi = dbi;
   }
-  stringAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxLength & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<string>[]> | TDBIValueName<string>[] }) {
+  stringAutocomplete(cfg: TDBIBaseOption & TDBIMinMaxLength & { onComplete(ctx: IDBICompleteCtx<TNamespace, string>): Promise<TDBIValueName<string>[]> | TDBIValueName<string>[], messageCommands?: { rest?: boolean } }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -33,7 +33,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       required: cfg.required
     };
   }
-  stringChoices(cfg: TDBIBaseOption & TDBIMinMaxLength & { choices: TDBIValueName<string>[] }) {
+  stringChoices(cfg: TDBIBaseOption & TDBIMinMaxLength & { choices: TDBIValueName<string>[], messageCommands?: { rest?: boolean } }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -47,7 +47,7 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
     };
   }
 
-  string(cfg: TDBIBaseOption & TDBIMinMaxLength) {
+  string(cfg: TDBIBaseOption & TDBIMinMaxLength & { messageCommands?: { rest?: boolean } }) {
     return {
       type: Discord.ApplicationCommandOptionType.String,
       name: cfg.name,
@@ -56,7 +56,8 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
       max_length: cfg.maxLength,
       minLength: cfg.minLength,
       min_length: cfg.minLength,
-      required: cfg.required
+      required: cfg.required,
+      messageCommands: cfg.messageCommands
     };
   }
 
