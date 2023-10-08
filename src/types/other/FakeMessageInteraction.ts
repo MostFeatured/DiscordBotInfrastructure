@@ -100,7 +100,10 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         this.parsedArgs.set(option.name, {
           name: option.name,
           type: option.type,
-          value: localizedChoices?.find(c => c.value === value || c.name === value)?.value ?? value
+          value: 
+            localizedChoices?.find(c => c.value === value || c.name === value)?.value ?? 
+            option.choices?.find(c => c.value === value || c.name === value)?.value ??
+            value
         });
       }
     }
