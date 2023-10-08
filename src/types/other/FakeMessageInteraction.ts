@@ -87,12 +87,20 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           })
           continue;
         }
-        const arg = option.messageCommands?.rest ? args._.slice(i).join(" ") : (args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize));
-        if (args.get(option.name)) namedValueSize++;
+        const value = option.messageCommands?.rest ? args._.slice(i).join(" ") : (args.get(option.name) ?? args.get(i - attachmentIndex - namedValueSize));
+        if (args.has(option.name)) namedValueSize++;
+
+        const interactionChoicesLocale = this.dbi.data.interactionLocales.get(self.dbiChatInput.name)?.data?.[locale]?.options[option.name]?.choices;
+
+        const localizedChoices = option.choices?.length ? option.choices.map(choice => ({
+          ...choice,
+          name: interactionChoicesLocale?.[choice.value] ?? choice.name
+        })) : option._choices;
+
         this.parsedArgs.set(option.name, {
           name: option.name,
           type: option.type,
-          value: arg
+          value: localizedChoices?.find(c => c.value === value || c.name === value)?.value ?? value
         });
       }
     }
