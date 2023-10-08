@@ -1,4 +1,4 @@
-import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType, User, Attachment } from 'discord.js';
+import { Message, MessagePayload, ApplicationCommandType, ChatInputCommandInteraction, Locale, APIInteractionGuildMember, GuildMember, PermissionsBitField, CacheType, CommandInteractionOptionResolver, CommandOptionDataTypeResolvable, ApplicationCommandOptionType, User, Attachment, InteractionEditReplyOptions, InteractionReplyOptions } from 'discord.js';
 import { TDBIInteractions } from '../Interaction';
 import { plsParseArgs } from "plsargs";
 import { DBI } from '../../DBI';
@@ -40,6 +40,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   fake: boolean = true;
   _hoistedOptions: any;
   _initialized: boolean = false;
+  _lastAction: string | undefined;
 
   constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
@@ -100,8 +101,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         this.parsedArgs.set(option.name, {
           name: option.name,
           type: option.type,
-          value: 
-            localizedChoices?.find(c => c.value === value || c.name === value)?.value ?? 
+          value:
+            localizedChoices?.find(c => c.value === value || c.name === value)?.value ??
             option.choices?.find(c => c.value === value || c.name === value)?.value ??
             value
         });
@@ -307,10 +308,10 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   }
 
   async deferReply(options: any): Promise<any> {
-    // if (options.ephemeral) throw new Error("Ephemeral replies are not supported in message commands.");
     if (this.repliedMessage) throw new Error("Already deferred reply.");
     this.repliedMessage = await this.message.reply(options?.content ?? "Loading...");
     this.deferred = true;
+    this._lastAction = "deferReply";
     return this.repliedMessage;
   }
 
@@ -318,6 +319,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     if (!this.repliedMessage) throw new Error("No deferred reply.");
     await this.repliedMessage.delete();
     this.repliedMessage = undefined;
+    this._lastAction = "deleteReply";
   }
 
   async followUp(content: string | MessagePayload) {
@@ -327,18 +329,24 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     } else {
       this.lastFollowUp = await this.lastFollowUp.reply(content);
     }
+    this._lastAction = "followUp";
     return this.lastFollowUp;
   }
 
-  async editReply(content: string | MessagePayload) {
+  async editReply(content: string | MessagePayload | InteractionEditReplyOptions) {
     if (!this.repliedMessage) throw new Error("No deferred reply.");
+    if (typeof content !== "string" && this._lastAction === "deferReply" && typeof (content as any).content === "undefined") {
+      (content as any).content = null;
+    }
     await this.repliedMessage.edit(content);
+    this._lastAction = "editReply";
     return this.repliedMessage;
   }
 
-  async reply(content: string | MessagePayload): Promise<any> {
+  async reply(content: string | MessagePayload | InteractionReplyOptions): Promise<any> {
     if (this.repliedMessage) throw new Error("Already deferred reply.");
-    this.repliedMessage = await this.message.reply(content);
+    this.repliedMessage = await this.message.reply(content as any);
+    this._lastAction = "reply";
     return this.repliedMessage;
   }
 

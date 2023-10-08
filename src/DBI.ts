@@ -185,7 +185,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     }
 
     if (config.messageCommands) {
-      if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided."); 
+      if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided.");
 
       let { typeAliases } = config.messageCommands;
 
@@ -245,7 +245,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     config.discord = Array.isArray(config.discord) ?
       config.discord :
       [{ token: config.discord.token, options: config.discord.options, namespace: "default" }];
-      
+
     this.data.clients.push(...(
       config.discord as any
     ));
@@ -465,7 +465,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         },
       });
     }
-    self.data.interactions.sort((a, b) => a.name.length - b.name.length);
+    self.data.interactions.sort((a, b) => b.name.length - a.name.length);
   }
 
   emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
