@@ -21,3 +21,7 @@ export const Utils = {
   unloadModule,
   recursiveUnload
 };
+
+if (require.main === module) {
+  console.log("Dbi's script is not ready to use.")
+}
