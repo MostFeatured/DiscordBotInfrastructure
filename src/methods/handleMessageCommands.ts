@@ -48,7 +48,7 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
   if (!chatInput) return;
 
-  const interaction = new FakeMessageInteraction(dbi, message, chatInput, locale, commandName, usedPrefix);
+  const interaction = new FakeMessageInteraction(dbi, message, chatInput as any, locale, commandName, usedPrefix);
 
   if (chatInput.options.length) {
     let errorType: TDBIMessageCommandArgumentErrorTypes;

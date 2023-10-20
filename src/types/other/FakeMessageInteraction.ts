@@ -35,14 +35,14 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   usedCommandName: string;
   fullCommandName: string;
   options: any;
-  dbiChatInput: TDBIInteractions<string | number>;
+  dbiChatInput: TDBIInteractions<NamespaceEnums>;
   dbiChatInputOptions: any[];
   fake: boolean = true;
   _hoistedOptions: any;
   _initialized: boolean = false;
   _lastAction: string | undefined;
 
-  constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<string | number>, public locale: string, commandName: string, private usedPrefix: string) {
+  constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<NamespaceEnums>, public locale: string, commandName: string, private usedPrefix: string) {
     const self = this;
 
     this.channelId = message.channel.id;
