@@ -222,7 +222,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       getMentionable(name: string) {
         const rawValue = self.getRawOptionValue(name);
         if (!rawValue) return null;
-        let value = rawValue.replace(/<@(!|&)?|>/g, "");
+        let value = rawValue.replace(/<(@|#)(!|&)?|>/g, "");
         let user = self.message.client.users.cache.get(value);
         if (!user) user = self.message.client.users.cache.find(u => u.username === value || u.tag === value);
         if (user) return user;
@@ -245,6 +245,12 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       getAttachment(name: string) {
         let d = self.parsedArgs.get(name);
         return d?.attachment ?? null;
+      },
+      getChannelId(name: string) {
+        const rawValue = self.getRawOptionValue(name);
+        if (!rawValue) return null;
+        let value = rawValue.replace(/<#|>/g, "");
+        return value;
       }
     }
   }
