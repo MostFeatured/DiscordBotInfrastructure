@@ -32,6 +32,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   member: GuildMember | APIInteractionGuildMember;
   memberPermissions: Readonly<PermissionsBitField>;
   parsedArgs = new Map<string, FakeMessageInteractionArgument>();
+  args: import("plsargs/src/Result").Result;
   usedCommandName: string;
   fullCommandName: string;
   options: any;
@@ -73,6 +74,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     {
       const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
       const args = plsParseArgs(argContent);
+
+      this.args = args;
 
       const options = chatInput.options ?? [];
       const atchs = [...message.attachments.values()];
