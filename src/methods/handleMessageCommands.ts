@@ -1,4 +1,10 @@
-import { ApplicationCommandType, ChatInputCommandInteraction, Message, MessagePayload, ApplicationCommandOptionType } from "discord.js";
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+  Message,
+  MessagePayload,
+  ApplicationCommandOptionType,
+} from "discord.js";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
 import { FakeMessageInteraction } from "../types/other/FakeMessageInteraction";
@@ -7,24 +13,49 @@ import { TDBILocaleString } from "../types/other/Locale";
 const INTEGER_REGEX = /^-?\d+$/;
 const NUMBER_REGEX = /^-?\d+(?:\.\d+)?$/;
 
-export type TDBIMessageCommandArgumentErrorTypes = "MissingRequiredOption" | "MinLength" | "MaxLength" | "InvalidChoice" | "InvalidInteger" | "MinInteger" | "MaxInteger" | "InvalidNumber" | "MinNumber" | "MaxNumber" | "InvalidBoolean" | "InvalidUser" | "InvalidChannel" | "InvalidRole" | "InvalidMentionable" | "InvalidCompleteChoice";
+export type TDBIMessageCommandArgumentErrorTypes =
+  | "MissingRequiredOption"
+  | "MinLength"
+  | "MaxLength"
+  | "InvalidChoice"
+  | "InvalidInteger"
+  | "MinInteger"
+  | "MaxInteger"
+  | "InvalidNumber"
+  | "MinNumber"
+  | "MaxNumber"
+  | "InvalidBoolean"
+  | "InvalidUser"
+  | "InvalidChannel"
+  | "InvalidRole"
+  | "InvalidMentionable"
+  | "InvalidCompleteChoice";
 
-export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: Message) {
-  const chatInputs = dbi.data.interactions.filter(i => i.type === "ChatInput");
+export async function handleMessageCommands(
+  dbi: DBI<NamespaceEnums>,
+  message: Message
+) {
+  const chatInputs = dbi.data.interactions.filter(
+    (i) => i.type === "ChatInput"
+  );
   const prefixes = dbi.config.messageCommands.prefixes ?? [];
   if (!prefixes.length) return;
   const content = message.content;
-  const usedPrefix = prefixes.find(p => content.startsWith(p));
+  const usedPrefix = prefixes.find((p) => content.startsWith(p));
   if (!usedPrefix) return;
   const contentWithoutPrefix = content.slice(usedPrefix?.length ?? 0);
   const contentLower = contentWithoutPrefix.toLowerCase();
 
-  let locale: string = message.guild.preferredLocale?.split("-")?.at(0) || dbi.config.defaults.locale as any;
+  let locale: string =
+    message.guild.preferredLocale?.split("-")?.at(0) ||
+    (dbi.config.defaults.locale as any);
   let usedAlias: string | undefined;
-  let chatInput = chatInputs.find(i => {
+  let chatInput = chatInputs.find((i) => {
     let found = contentLower.startsWith(i.name);
     if (found) return true;
-    let alias = i.other?.messageCommand?.aliases?.find(a => contentLower.startsWith(a));
+    let alias = i.other?.messageCommand?.aliases?.find((a) =>
+      contentLower.startsWith(a)
+    );
     if (alias) {
       usedAlias = alias;
       return true;
@@ -34,12 +65,15 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
   let commandName = usedAlias ?? chatInput?.name;
 
   if (!chatInput) {
-    fLoop: for (const [localeInterName, localeData] of dbi.data.interactionLocales) {
-      for (const [localeName, translation] of Object.entries(localeData.data || {})) {
+    fLoop: for (const [localeInterName, localeData] of dbi.data
+      .interactionLocales) {
+      for (const [localeName, translation] of Object.entries(
+        localeData.data || {}
+      )) {
         if (contentLower.startsWith(translation.name)) {
           commandName = translation.name;
           locale = localeName;
-          chatInput = chatInputs.find(i => i.name === localeData.name);
+          chatInput = chatInputs.find((i) => i.name === localeData.name);
           break fLoop;
         }
       }
@@ -48,7 +82,14 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
   if (!chatInput) return;
 
-  const interaction = new FakeMessageInteraction(dbi, message, chatInput as any, locale, commandName, usedPrefix);
+  const interaction = new FakeMessageInteraction(
+    dbi,
+    message,
+    chatInput as any,
+    locale,
+    commandName,
+    usedPrefix
+  );
 
   if (chatInput.options.length) {
     let errorType: TDBIMessageCommandArgumentErrorTypes;
@@ -66,21 +107,22 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
 
       switch (option.type) {
         case ApplicationCommandOptionType.String: {
-
           if (!option.required && !value) break;
 
           if (option.autocomplete && option.onComplete) {
             let choices = await option.onComplete({
               interaction,
-              value
+              value,
             });
-            if (!choices.length) choices = await option.onComplete({
-              interaction,
-              value: ""
-            });
-            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            if (!choices.length)
+              choices = await option.onComplete({
+                interaction,
+                value: "",
+              });
+            if (choices.length > 20)
+              throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
-            if (!choices.find(c => c.name === value || c.value === value)) {
+            if (!choices.find((c) => c.name === value || c.value === value)) {
               if (value) {
                 errorType = "InvalidCompleteChoice";
                 break;
@@ -93,10 +135,25 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
-            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.name === value || c.value === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
-              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
+            const localeData = dbi.data.interactionLocales.get(
+              chatInput.name
+            )?.data;
+            const choicesLocaleData =
+              localeData?.[locale as TDBILocaleString]?.options?.[option.name]
+                ?.choices;
+            if (
+              !option.choices.find(
+                (c) =>
+                  c.name === value ||
+                  c.value === value ||
+                  (choicesLocaleData?.[c.value] &&
+                    choicesLocaleData?.[c.value] === value)
+              )
+            ) {
+              lastExtra = option.choices.map((c) => ({
+                name: choicesLocaleData?.[c.value] ?? c.name,
+                value: c.value,
+              }));
               if (value) {
                 errorType = "InvalidChoice";
                 break;
@@ -108,11 +165,11 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
             break;
           }
 
-          if (option.minLength && value.length < option.minLength) {
+          if (option.minLength && value?.length < option.minLength) {
             errorType = "MinLength";
             break;
           }
-          if (option.maxLength && value.length > option.maxLength) {
+          if (option.maxLength && value?.length > option.maxLength) {
             errorType = "MaxLength";
             break;
           }
@@ -127,15 +184,19 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           if (option.autocomplete && option.onComplete) {
             let choices = await option.onComplete({
               interaction,
-              value
+              value,
             });
-            if (!choices.length) choices = await option.onComplete({
-              interaction,
-              value: ""
-            });
-            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            if (!choices.length)
+              choices = await option.onComplete({
+                interaction,
+                value: "",
+              });
+            if (choices.length > 20)
+              throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
-            if (!choices.find(c => c.value === parsedInt || c.name === value)) {
+            if (
+              !choices.find((c) => c.value === parsedInt || c.name === value)
+            ) {
               if (value) {
                 errorType = "InvalidCompleteChoice";
                 break;
@@ -149,10 +210,25 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
-            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.value === parsedInt || c.name === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
-              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
+            const localeData = dbi.data.interactionLocales.get(
+              chatInput.name
+            )?.data;
+            const choicesLocaleData =
+              localeData?.[locale as TDBILocaleString]?.options?.[option.name]
+                ?.choices;
+            if (
+              !option.choices.find(
+                (c) =>
+                  c.value === parsedInt ||
+                  c.name === value ||
+                  (choicesLocaleData?.[c.value] &&
+                    choicesLocaleData?.[c.value] === value)
+              )
+            ) {
+              lastExtra = option.choices.map((c) => ({
+                name: choicesLocaleData?.[c.value] ?? c.name,
+                value: c.value,
+              }));
               if (value) {
                 errorType = "InvalidChoice";
                 break;
@@ -189,15 +265,19 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           if (option.autocomplete && option.onComplete) {
             let choices = await option.onComplete({
               interaction,
-              value
+              value,
             });
-            if (!choices.length) choices = await option.onComplete({
-              interaction,
-              value: ""
-            });
-            if (choices.length > 20) throw new Error("Autocomplete returned more than 20 choices.");
+            if (!choices.length)
+              choices = await option.onComplete({
+                interaction,
+                value: "",
+              });
+            if (choices.length > 20)
+              throw new Error("Autocomplete returned more than 20 choices.");
             lastExtra = choices;
-            if (!choices.find(c => c.value === parsedFloat || c.name === value)) {
+            if (
+              !choices.find((c) => c.value === parsedFloat || c.name === value)
+            ) {
               if (value) {
                 errorType = "InvalidCompleteChoice";
                 break;
@@ -211,10 +291,25 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           }
 
           if (option.choices) {
-            const localeData = dbi.data.interactionLocales.get(chatInput.name)?.data;
-            const choicesLocaleData = localeData?.[locale as TDBILocaleString]?.options?.[option.name]?.choices;
-            if (!option.choices.find(c => c.value === parsedFloat || c.name === value || (choicesLocaleData?.[c.value] && choicesLocaleData?.[c.value] === value))) {
-              lastExtra = option.choices.map(c => ({ name: choicesLocaleData?.[c.value] ?? c.name, value: c.value }));
+            const localeData = dbi.data.interactionLocales.get(
+              chatInput.name
+            )?.data;
+            const choicesLocaleData =
+              localeData?.[locale as TDBILocaleString]?.options?.[option.name]
+                ?.choices;
+            if (
+              !option.choices.find(
+                (c) =>
+                  c.value === parsedFloat ||
+                  c.name === value ||
+                  (choicesLocaleData?.[c.value] &&
+                    choicesLocaleData?.[c.value] === value)
+              )
+            ) {
+              lastExtra = option.choices.map((c) => ({
+                name: choicesLocaleData?.[c.value] ?? c.name,
+                value: c.value,
+              }));
               if (value) {
                 errorType = "InvalidChoice";
                 break;
@@ -243,15 +338,19 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Boolean: {
-          let boolKeys = Object.keys(dbi.config.messageCommands.typeAliases.booleans);
-          if (option.required && !boolKeys.includes(value.toLowerCase())) {
+          let boolKeys = Object.keys(
+            dbi.config.messageCommands.typeAliases.booleans
+          );
+          if (option.required && !boolKeys.includes(value?.toLowerCase?.())) {
             errorType = "InvalidBoolean";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.User: {
-          await message.client.users.fetch(interaction.options.getUserId(option.name)).catch(() => { });
+          await message.client.users
+            .fetch(interaction.options.getUserId(option.name))
+            .catch(() => {});
           if (option.required && !interaction.options.getUser(option.name)) {
             errorType = "InvalidUser";
             break;
@@ -259,15 +358,26 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
           break;
         }
         case ApplicationCommandOptionType.Channel: {
-          await message.client.channels.fetch(interaction.options.getChannelId(option.name)).catch(() => { });
-          if (option.required && !interaction.options.getChannel(option.name, null, option.channelTypes)) {
+          await message.client.channels
+            .fetch(interaction.options.getChannelId(option.name))
+            .catch(() => {});
+          if (
+            option.required &&
+            !interaction.options.getChannel(
+              option.name,
+              null,
+              option.channelTypes
+            )
+          ) {
             errorType = "InvalidChannel";
             break;
           }
           break;
         }
         case ApplicationCommandOptionType.Role: {
-          await message.guild.roles.fetch(interaction.options.getRoleId(option.name)).catch(() => { });
+          await message.guild.roles
+            .fetch(interaction.options.getRoleId(option.name))
+            .catch(() => {});
           if (option.required && !interaction.options.getRole(option.name)) {
             errorType = "InvalidRole";
             break;
@@ -276,10 +386,13 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         }
         case ApplicationCommandOptionType.Mentionable: {
           let mentionableId = interaction.options.getMentionableId(option.name);
-          await message.guild.roles.fetch(mentionableId).catch(() => { });
-          await message.client.channels.fetch(mentionableId).catch(() => { });
-          await message.client.users.fetch(mentionableId).catch(() => { });
-          if (option.required && !interaction.options.getMentionable(option.name)) {
+          await message.guild.roles.fetch(mentionableId).catch(() => {});
+          await message.client.channels.fetch(mentionableId).catch(() => {});
+          await message.client.users.fetch(mentionableId).catch(() => {});
+          if (
+            option.required &&
+            !interaction.options.getMentionable(option.name)
+          ) {
             errorType = "InvalidMentionable";
             break;
           }
@@ -308,16 +421,22 @@ export async function handleMessageCommands(dbi: DBI<NamespaceEnums>, message: M
         interaction,
         message,
         locale: {
-          user: dbi.data.locales.get(interaction.locale) || dbi.data.locales.get(dbi.config.defaults.locale),
-          guild: message.guild?.preferredLocale ? (dbi.data.locales.get(message.guild?.preferredLocale?.split("-")?.at(0)) || dbi.data.locales.get(dbi.config.defaults.locale)) : null
+          user:
+            dbi.data.locales.get(interaction.locale) ||
+            dbi.data.locales.get(dbi.config.defaults.locale),
+          guild: message.guild?.preferredLocale
+            ? dbi.data.locales.get(
+                message.guild?.preferredLocale?.split("-")?.at(0)
+              ) || dbi.data.locales.get(dbi.config.defaults.locale)
+            : null,
         },
         error: {
           type: errorType,
           option: lastOption,
           extra: lastExtra,
-          index: lastIndex
+          index: lastIndex,
         },
-        value: lastValue
+        value: lastValue,
       });
       if (!res) return;
     }

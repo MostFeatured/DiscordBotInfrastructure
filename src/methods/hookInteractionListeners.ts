@@ -1,59 +1,115 @@
 import { DBI } from "../DBI";
-import Discord from "discord.js";
+import Discord, { CommandInteractionOption } from "discord.js";
 import { parseCustomId } from "../utils/customId";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
-const componentTypes = ["Button", "StringSelectMenu", "UserSelectMenu", "RoleSelectMenu", "ChannelSelectMenu", "MentionableSelectMenu", "Modal"]
+const componentTypes = [
+  "Button",
+  "StringSelectMenu",
+  "UserSelectMenu",
+  "RoleSelectMenu",
+  "ChannelSelectMenu",
+  "MentionableSelectMenu",
+  "Modal",
+];
 
 export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(inter: Discord.Interaction<"cached">) {
     const dbiInter =
-      (inter as any).dbiChatInput ?? dbi.data.interactions.find(i => {
-        let isUsesCustomId = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit());
-        let parsedId = isUsesCustomId ? parseCustomId(dbi, (inter as any).customId) : null;
+      (inter as any).dbiChatInput ??
+      dbi.data.interactions.find((i) => {
+        let isUsesCustomId =
+          inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit();
+        let parsedId = isUsesCustomId
+          ? parseCustomId(dbi, (inter as any).customId)
+          : null;
         return (
-          (
-            i.type == "ChatInput"
-            && (inter.isChatInputCommand() || inter.isAutocomplete())
-            && i.name == [inter.commandName, inter.options.getSubcommandGroup(false), inter.options.getSubcommand(false)].filter(i => !!i).join(" ")
-          )
-          ||
-          (
-            (i.type == "MessageContextMenu" || i.type == "UserContextMenu")
-            && (inter.isMessageContextMenuCommand() || inter.isUserContextMenuCommand())
-            && inter.commandName == i.name
-          )
-          ||
-          (
-            componentTypes.includes(i.type)
-            && isUsesCustomId
-            && parsedId?.name == i.name
-          )
-        )
+          (i.type == "ChatInput" &&
+            (inter.isChatInputCommand() || inter.isAutocomplete()) &&
+            i.name ==
+              [
+                inter.commandName,
+                inter.options.getSubcommandGroup(false),
+                inter.options.getSubcommand(false),
+              ]
+                .filter((i) => !!i)
+                .join(" ")) ||
+          ((i.type == "MessageContextMenu" || i.type == "UserContextMenu") &&
+            (inter.isMessageContextMenuCommand() ||
+              inter.isUserContextMenuCommand()) &&
+            inter.commandName == i.name) ||
+          (componentTypes.includes(i.type) &&
+            isUsesCustomId &&
+            parsedId?.name == i.name)
+        );
       });
-    
+
     if (!dbiInter) return;
 
     let userLocaleName = inter.locale.split("-")[0];
-    let userLocale = dbi.data.locales.has(userLocaleName) ? dbi.data.locales.get(userLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale);
+    let userLocale = dbi.data.locales.has(userLocaleName)
+      ? dbi.data.locales.get(userLocaleName)
+      : dbi.data.locales.get(dbi.config.defaults.locale);
 
-    let guildLocaleName = inter.guild ? inter.guild.preferredLocale.split("-")[0] : null;
-    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale)) : null;
+    let guildLocaleName = inter.guild
+      ? inter.guild.preferredLocale.split("-")[0]
+      : null;
+    let guildLocale = guildLocaleName
+      ? dbi.data.locales.has(guildLocaleName)
+        ? dbi.data.locales.get(guildLocaleName)
+        : dbi.data.locales.get(dbi.config.defaults.locale)
+      : null;
 
     let locale = {
       user: userLocale,
-      guild: guildLocale
+      guild: guildLocale,
     };
 
-    let data = (inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()) ? parseCustomId(dbi, inter.customId).data : undefined;
+    let data =
+      inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()
+        ? parseCustomId(dbi, inter.customId).data
+        : undefined;
 
     let other = {};
 
-    if (!(await dbi.events.trigger("beforeInteraction", { dbi, interaction: inter, locale, setRateLimit, data, other, dbiInteraction: dbiInter }))) return;
-    
+    if (
+      !(await dbi.events.trigger("beforeInteraction", {
+        dbi,
+        interaction: inter,
+        locale,
+        setRateLimit,
+        data,
+        other,
+        dbiInteraction: dbiInter,
+      }))
+    )
+      return;
+
     if (inter.isAutocomplete()) {
       let focussed = inter.options.getFocused(true);
-      let option = (dbiInter.options as any[]).find(i => i.name == focussed.name);
+      let option = (dbiInter.options as any[]).find(
+        (i) => i.name == focussed.name
+      );
+      if (option?.validate) {
+        const res = await option.validate({
+          value: focussed.value,
+          interaction: inter,
+          dbiInteraction: dbiInter,
+          dbi,
+          data,
+          other,
+          locale,
+          step: "Autocomplete",
+        });
+
+        if (Array.isArray(res) && res.length > 0) {
+          await inter.respond(res);
+          return;
+        }
+
+        if (res !== true) return;
+      }
+
       if (option?.onComplete) {
         let response = await option.onComplete({
           value: focussed.value,
@@ -62,7 +118,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
           dbi,
           data,
           other,
-          locale
+          locale,
         });
         await inter.respond(response);
       }
@@ -70,12 +126,12 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     }
 
     let rateLimitKeyMap = {
-      "User": `${dbiInter.name}_${inter.user.id}`,
-      "Channel": `${dbiInter.name}_${inter.channelId || "Channel"}`,
-      "Guild": `${dbiInter.name}_${inter.guildId || "Guild"}`,
-      "Member": `${dbiInter.name}_${inter.user.id}_${inter.guildId || "Guild"}`,
-      "Message": `${dbiInter.name}_${(inter as any)?.message?.id}`
-    }
+      User: `${dbiInter.name}_${inter.user.id}`,
+      Channel: `${dbiInter.name}_${inter.channelId || "Channel"}`,
+      Guild: `${dbiInter.name}_${inter.guildId || "Guild"}`,
+      Member: `${dbiInter.name}_${inter.user.id}_${inter.guildId || "Guild"}`,
+      Message: `${dbiInter.name}_${(inter as any)?.message?.id}`,
+    };
 
     for (const type in rateLimitKeyMap) {
       // @ts-ignore
@@ -86,27 +142,55 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
         val = null;
       }
       if (val) {
-        if ((await dbi.events.trigger("interactionRateLimit", {
-          dbi,
-          interaction: inter,
-          dbiInteraction: dbiInter,
-          locale,
-          data,
-          rateLimit: {
-            type: key,
-            ...val
-          }
-        })) === true) return;
+        if (
+          (await dbi.events.trigger("interactionRateLimit", {
+            dbi,
+            interaction: inter,
+            dbiInteraction: dbiInter,
+            locale,
+            data,
+            rateLimit: {
+              type: key,
+              ...val,
+            },
+          })) === true
+        )
+          return;
       }
     }
 
     async function setRateLimit(type: string, duration: number) {
       // @ts-ignore
-      await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, { at: Date.now(), duration });
+      await dbi.config.store.set(`RateLimit["${rateLimitKeyMap[type]}"]`, {
+        at: Date.now(),
+        duration,
+      });
     }
 
     for (const rateLimit of dbiInter.rateLimits) {
       await setRateLimit(rateLimit.type, rateLimit.duration);
+    }
+
+    if (inter.isChatInputCommand()) {
+      let dcOptions = (inter.options as any)
+        ._hoistedOptions as CommandInteractionOption[];
+      let dbiOptions = dbiInter.options as any[];
+      for (const dcOption of dcOptions) {
+        const dbiOption = dbiOptions.find((i) => i.name == dcOption.name);
+        if (dbiOption?.validate) {
+          const res = await dbiOption.validate({
+            value: dcOption.value,
+            interaction: inter,
+            dbiInteraction: dbiInter,
+            dbi,
+            data,
+            other,
+            locale,
+            step: "Result",
+          });
+          if (res !== true) return;
+        }
+      }
     }
 
     let arg = {
@@ -123,7 +207,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       // @ts-ignore
       data,
       // @ts-ignore
-      other
+      other,
     };
 
     if (dbi.config.strict) {
@@ -135,20 +219,31 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
         await dbiInter.onExecute(arg);
       } catch (error) {
         // @ts-ignore
-        await dbi.events.trigger("interactionError", Object.assign(arg, { error }));
+        await dbi.events.trigger(
+          "interactionError",
+          Object.assign(arg, { error })
+        );
       }
     }
-    
+
     // @ts-ignore
-    dbi.events.trigger("afterInteraction", { dbi, interaction: inter, dbiInteraction: dbiInter, locale, setRateLimit, data, other });
+    dbi.events.trigger("afterInteraction", {
+      dbi,
+      interaction: inter,
+      dbiInteraction: dbiInter,
+      locale,
+      setRateLimit,
+      data,
+      other,
+    });
   }
 
-  dbi.data.clients.forEach(d=>{
+  dbi.data.clients.forEach((d) => {
     d.client.on("interactionCreate", handle);
   });
 
-  return () => { 
-    dbi.data.clients.forEach(d=>{
+  return () => {
+    dbi.data.clients.forEach((d) => {
       d.client.off("interactionCreate", handle);
     });
   };

@@ -1,30 +1,64 @@
-import Discord from "discord.js";
-import { DBIChatInput, TDBIChatInputOmitted } from "./types/ChatInput/ChatInput";
+import Discord, { MessagePayload } from "discord.js";
+import {
+  DBIChatInput,
+  TDBIChatInputOmitted,
+} from "./types/ChatInput/ChatInput";
 import { DBIChatInputOptions } from "./types/ChatInput/ChatInputOptions";
 import { publishInteractions } from "./methods/publishInteractions";
 import { ClientEvents, DBIEvent, TDBIEventOmitted } from "./types/Event";
 import { MemoryStore } from "./utils/MemoryStore";
 import { hookInteractionListeners } from "./methods/hookInteractionListeners";
 import { Events } from "./Events";
-import { DBILocale, TDBILocaleConstructor, TDBILocaleString } from "./types/other/Locale";
+import {
+  DBILocale,
+  TDBILocaleConstructor,
+  TDBILocaleString,
+} from "./types/other/Locale";
 import { DBIButton, TDBIButtonOmitted } from "./types/Components/Button";
-import { DBIStringSelectMenu, TDBIStringSelectMenuOmitted } from "./types/Components/StringSelectMenu";
-import { DBIMessageContextMenu, TDBIMessageContextMenuOmitted } from "./types/other/MessageContextMenu";
-import { DBIUserContextMenu, TDBIUserContextMenuOmitted } from "./types/other/UserContextMenu";
+import {
+  DBIStringSelectMenu,
+  TDBIStringSelectMenuOmitted,
+} from "./types/Components/StringSelectMenu";
+import {
+  DBIMessageContextMenu,
+  TDBIMessageContextMenuOmitted,
+} from "./types/other/MessageContextMenu";
+import {
+  DBIUserContextMenu,
+  TDBIUserContextMenuOmitted,
+} from "./types/other/UserContextMenu";
 import { hookEventListeners } from "./methods/hookEventListeners";
 import eventMap from "./data/eventMap.json";
 import { DBIModal, TDBIModalOmitted } from "./types/Components/Modal";
 import * as Sharding from "discord-hybrid-sharding";
 import _ from "lodash";
-import { DBIInteractionLocale, TDBIInteractionLocaleOmitted } from "./types/other/InteractionLocale";
+import {
+  DBIInteractionLocale,
+  TDBIInteractionLocaleOmitted,
+} from "./types/other/InteractionLocale";
 import { TDBIInteractions } from "./types/Interaction";
 import { NamespaceData, NamespaceEnums } from "../generated/namespaceData";
-import { DBICustomEvent, TDBICustomEventOmitted } from "./types/other/CustomEvent";
+import {
+  DBICustomEvent,
+  TDBICustomEventOmitted,
+} from "./types/other/CustomEvent";
 import aaq from "async-and-quick";
-import { DBIUserSelectMenu, TDBIUserSelectMenuOmitted } from "./types/Components/UserSelectMenu";
-import { DBIMentionableSelectMenu, TDBIMentionableSelectMenuOmitted } from "./types/Components/MentionableSelectMenu";
-import { DBIChannelSelectMenu, TDBIChannelSelectMenuOmitted } from "./types/Components/ChannelSelectMenu";
-import { DBIRoleSelectMenu, TDBIRoleSelectMenuOmitted } from "./types/Components/RoleSelectMenu";
+import {
+  DBIUserSelectMenu,
+  TDBIUserSelectMenuOmitted,
+} from "./types/Components/UserSelectMenu";
+import {
+  DBIMentionableSelectMenu,
+  TDBIMentionableSelectMenuOmitted,
+} from "./types/Components/MentionableSelectMenu";
+import {
+  DBIChannelSelectMenu,
+  TDBIChannelSelectMenuOmitted,
+} from "./types/Components/ChannelSelectMenu";
+import {
+  DBIRoleSelectMenu,
+  TDBIRoleSelectMenuOmitted,
+} from "./types/Components/RoleSelectMenu";
 import { handleMessageCommands } from "./methods/handleMessageCommands";
 
 export interface DBIStore {
@@ -34,18 +68,23 @@ export interface DBIStore {
   has(key: string): Promise<boolean>;
 }
 
-export type DBIClientData<TNamespace extends NamespaceEnums> = { namespace: NamespaceData[TNamespace]["clientNamespaces"], token: string, options: Discord.ClientOptions, client: Discord.Client<true> };
+export type DBIClientData<TNamespace extends NamespaceEnums> = {
+  namespace: NamespaceData[TNamespace]["clientNamespaces"];
+  token: string;
+  options: Discord.ClientOptions;
+  client: Discord.Client<true>;
+};
 
 export interface DBIConfig {
   discord: {
-    namespace: string,
-    token: string,
-    options: Discord.ClientOptions,
+    namespace: string;
+    token: string;
+    options: Discord.ClientOptions;
   }[];
   defaults: {
-    locale: TDBILocaleString,
-    directMessages: boolean,
-    defaultMemberPermissions: Discord.PermissionsString[]
+    locale: TDBILocaleString;
+    directMessages: boolean;
+    defaultMemberPermissions: Discord.PermissionsString[];
   };
 
   sharding: "hybrid" | "default" | "off";
@@ -58,7 +97,7 @@ export interface DBIConfig {
     autoClear?: {
       check: number;
       ttl: number;
-    }
+    };
   };
 
   strict: boolean;
@@ -66,24 +105,29 @@ export interface DBIConfig {
     prefixes: string[];
     typeAliases: {
       booleans: Record<string, boolean>;
-    }
-  }
+    };
+  };
 }
 
 export interface DBIConfigConstructor {
-  discord: {
-    token: string;
-    options: Discord.ClientOptions
-  } | {
-    namespace: string,
-    token: string,
-    options: Discord.ClientOptions,
-  }[];
+  discord:
+    | {
+        token: string;
+        options: Discord.ClientOptions;
+      }
+    | {
+        namespace: string;
+        token: string;
+        options: Discord.ClientOptions;
+      }[];
 
   defaults?: {
-    locale?: TDBILocaleString,
-    directMessages?: boolean,
-    defaultMemberPermissions?: Discord.PermissionsString[]
+    locale?: TDBILocaleString;
+    directMessages?: boolean;
+    defaultMemberPermissions?: Discord.PermissionsString[];
+    messageCommands?: {
+      deferReplyContent?: MessagePayload | string;
+    };
   };
 
   sharding?: "hybrid" | "default" | "off";
@@ -96,13 +140,13 @@ export interface DBIConfigConstructor {
     autoClear?: {
       check: number;
       ttl: number;
-    }
+    };
   };
 
   data?: {
     other?: Record<string, any>;
-    refs?: Map<string, { at: number, value: any, ttl?: number }>;
-  }
+    refs?: Map<string, { at: number; value: any; ttl?: number }>;
+  };
 
   strict?: boolean;
 
@@ -113,8 +157,8 @@ export interface DBIConfigConstructor {
        * Example: {"yes": true, "no": false}
        */
       booleans?: Record<string, boolean>;
-    }
-  }
+    };
+  };
 }
 
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
@@ -123,20 +167,39 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
   Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
-  StringSelectMenu(cfg: TDBIStringSelectMenuOmitted<TNamespace>): DBIStringSelectMenu<TNamespace>;
-  UserSelectMenu(cfg: TDBIUserSelectMenuOmitted<TNamespace>): DBIUserSelectMenu<TNamespace>;
-  RoleSelectMenu(cfg: TDBIRoleSelectMenuOmitted<TNamespace>): DBIRoleSelectMenu<TNamespace>;
-  ChannelSelectMenu(cfg: TDBIChannelSelectMenuOmitted<TNamespace>): DBIChannelSelectMenu<TNamespace>;
-  MentionableSelectMenu(cfg: TDBIMentionableSelectMenuOmitted<TNamespace>): DBIMentionableSelectMenu<TNamespace>;
-  MessageContextMenu(cfg: TDBIMessageContextMenuOmitted<TNamespace>): DBIMessageContextMenu<TNamespace>;
-  UserContextMenu(cfg: TDBIUserContextMenuOmitted<TNamespace>): DBIUserContextMenu<TNamespace>;
+  StringSelectMenu(
+    cfg: TDBIStringSelectMenuOmitted<TNamespace>
+  ): DBIStringSelectMenu<TNamespace>;
+  UserSelectMenu(
+    cfg: TDBIUserSelectMenuOmitted<TNamespace>
+  ): DBIUserSelectMenu<TNamespace>;
+  RoleSelectMenu(
+    cfg: TDBIRoleSelectMenuOmitted<TNamespace>
+  ): DBIRoleSelectMenu<TNamespace>;
+  ChannelSelectMenu(
+    cfg: TDBIChannelSelectMenuOmitted<TNamespace>
+  ): DBIChannelSelectMenu<TNamespace>;
+  MentionableSelectMenu(
+    cfg: TDBIMentionableSelectMenuOmitted<TNamespace>
+  ): DBIMentionableSelectMenu<TNamespace>;
+  MessageContextMenu(
+    cfg: TDBIMessageContextMenuOmitted<TNamespace>
+  ): DBIMessageContextMenu<TNamespace>;
+  UserContextMenu(
+    cfg: TDBIUserContextMenuOmitted<TNamespace>
+  ): DBIUserContextMenu<TNamespace>;
   InteractionLocale(cfg: TDBIInteractionLocaleOmitted): DBIInteractionLocale;
   Modal(cfg: TDBIModalOmitted<TNamespace>): DBIModal<TNamespace>;
-  CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(cfg: TDBICustomEventOmitted<TNamespace, T>): DBICustomEvent<TNamespace, T>;
+  CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(
+    cfg: TDBICustomEventOmitted<TNamespace, T>
+  ): DBICustomEvent<TNamespace, T>;
   onUnload(cb: () => Promise<any> | any): any;
 }
 
-export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, any>> {
+export class DBI<
+  TNamespace extends NamespaceEnums,
+  TOtherData = Record<string, any>
+> {
   namespace: TNamespace;
   config: DBIConfig;
   data: {
@@ -150,17 +213,17 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     unloaders: Set<() => void>;
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
-    refs: Map<string, { at: number, value: any, ttl?: number }>;
-    clients:
-    & DBIClientData<TNamespace>[]
-    & {
-      next(key?: string): DBIClientData<TNamespace>,
-      random(): DBIClientData<TNamespace>,
-      random(size: number): DBIClientData<TNamespace>[],
-      first(): DBIClientData<TNamespace>,
-      get(namespace: NamespaceData[TNamespace]["clientNamespaces"]): DBIClientData<TNamespace>,
-      indexes: Record<string, number>
-    }
+    refs: Map<string, { at: number; value: any; ttl?: number }>;
+    clients: DBIClientData<TNamespace>[] & {
+      next(key?: string): DBIClientData<TNamespace>;
+      random(): DBIClientData<TNamespace>;
+      random(size: number): DBIClientData<TNamespace>[];
+      first(): DBIClientData<TNamespace>;
+      get(
+        namespace: NamespaceData[TNamespace]["clientNamespaces"]
+      ): DBIClientData<TNamespace>;
+      indexes: Record<string, number>;
+    };
   };
   events: Events<TNamespace>;
   cluster?: Sharding.ClusterClient<Discord.Client>;
@@ -170,36 +233,41 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     this.namespace = namespace as any;
     const self = this;
 
-    config.store = config.store as any || new MemoryStore();
+    config.store = (config.store as any) || new MemoryStore();
     config.defaults = {
       locale: "en",
       defaultMemberPermissions: [],
       directMessages: false,
-      ...(config.defaults || {})
+      ...(config.defaults || {}),
+      messageCommands: {
+        deferReplyContent: "Loading...",
+        ...(config.defaults?.messageCommands || {}),
+      },
     };
     config.sharding = config.sharding ?? "off";
     config.strict = config.strict ?? true;
     config.references = {
       autoClear: undefined,
-      ...(config.references || {})
-    }
+      ...(config.references || {}),
+    };
 
     if (config.messageCommands) {
-      if (config.strict && !config.messageCommands?.prefixes?.length) throw new Error("No message command prefixes provided.");
+      if (config.strict && !config.messageCommands?.prefixes?.length)
+        throw new Error("No message command prefixes provided.");
 
       let { typeAliases } = config.messageCommands;
 
       config.messageCommands.typeAliases = {
         booleans: typeAliases.booleans ?? {
-          "true": true,
-          "false": false,
-          "yes": true,
-          "no": false,
-          "y": true,
-          "n": false,
+          true: true,
+          false: false,
+          yes: true,
+          no: false,
+          y: true,
+          n: false,
           "1": true,
-          "0": false
-        }
+          "0": false,
+        },
       };
     }
 
@@ -220,7 +288,7 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       refs: config.data?.refs ?? new Map(),
       clients: Object.assign([], {
         next(key = "global") {
-          this.indexes[key] = (((this.indexes[key] ?? -1) + 1) % this.length);
+          this.indexes[key] = ((this.indexes[key] ?? -1) + 1) % this.length;
           return this[this.indexes[key]];
         },
         random(size?: number) {
@@ -236,35 +304,47 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
         get(namespace: string) {
           return this.find((i: any) => i.namespace === namespace);
         },
-        indexes: {}
-      }) as any
-    }
+        indexes: {},
+      }) as any,
+    };
 
     this.events = new Events(this as any);
 
-    config.discord = Array.isArray(config.discord) ?
-      config.discord :
-      [{ token: config.discord.token, options: config.discord.options, namespace: "default" }];
+    config.discord = Array.isArray(config.discord)
+      ? config.discord
+      : [
+          {
+            token: config.discord.token,
+            options: config.discord.options,
+            namespace: "default",
+          },
+        ];
 
-    this.data.clients.push(...(
-      config.discord as any
-    ));
+    this.data.clients.push(...(config.discord as any));
     for (let clientContext of this.data.clients) {
       let client = new Discord.Client({
-        ...(clientContext.options || {}) as any,
-        ...(config.sharding == "hybrid" ? {
-          shards: Sharding.getInfo().SHARD_LIST,
-          shardCount: Sharding.getInfo().TOTAL_SHARDS
-        } : {})
+        ...((clientContext.options || {}) as any),
+        ...(config.sharding == "hybrid"
+          ? {
+              shards: Sharding.getInfo().SHARD_LIST,
+              shardCount: Sharding.getInfo().TOTAL_SHARDS,
+            }
+          : {}),
       });
       clientContext.client = client as Discord.Client<true>;
     }
 
     if (this.data.clients.length === 0) throw new Error("No clients provided.");
-    if (this.data.clients.length !== 1 && !(config.sharding && config.sharding === "off"))
+    if (
+      this.data.clients.length !== 1 &&
+      !(config.sharding && config.sharding === "off")
+    )
       throw new Error("Sharding only supports 1 client.");
 
-    this.cluster = config.sharding == "hybrid" ? new Sharding.ClusterClient(this.data.clients[0].client) : undefined;
+    this.cluster =
+      config.sharding == "hybrid"
+        ? new Sharding.ClusterClient(this.data.clients[0].client)
+        : undefined;
     this._loaded = false;
     this._hooked = false;
   }
@@ -276,39 +356,46 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     this.data.unloaders.add(hookInteractionListeners(this as any));
     this.data.unloaders.add(hookEventListeners(this as any));
     if (typeof this.config.references.autoClear !== "undefined") {
-      this.data.unloaders.add((() => {
-        let interval = setInterval(() => {
-          this.data.refs.forEach(({ at, ttl }, key) => {
-            if (Date.now() > (at + (ttl || this.config.references.autoClear.ttl))) {
-              this.data.refs.delete(key);
-            }
-          });
-        }, this.config.references.autoClear.check);
-        return () => {
-          clearInterval(interval);
-        }
-      })());
+      this.data.unloaders.add(
+        (() => {
+          let interval = setInterval(() => {
+            this.data.refs.forEach(({ at, ttl }, key) => {
+              if (
+                Date.now() >
+                at + (ttl || this.config.references.autoClear.ttl)
+              ) {
+                this.data.refs.delete(key);
+              }
+            });
+          }, this.config.references.autoClear.check);
+          return () => {
+            clearInterval(interval);
+          };
+        })()
+      );
     }
     if (typeof this.config.messageCommands !== "undefined") {
-      this.data.unloaders.add((() => {
-        const { client } = this.client();
+      this.data.unloaders.add(
+        (() => {
+          const { client } = this.client();
 
-        function onMessage(message: Discord.Message) {
-          handleMessageCommands(self as any, message);
-        }
+          function onMessage(message: Discord.Message) {
+            handleMessageCommands(self as any, message);
+          }
 
-        client.on("messageCreate", onMessage);
-        return () => {
-          client.off("messageCreate", onMessage);
-        }
-      })());
+          client.on("messageCreate", onMessage);
+          return () => {
+            client.off("messageCreate", onMessage);
+          };
+        })()
+      );
     }
   }
 
   private async _unhookListeners() {
     if (!this._hooked) return;
     this._hooked = false;
-    this.data.unloaders.forEach(f => {
+    this.data.unloaders.forEach((f) => {
       f();
     });
   }
@@ -332,117 +419,357 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     for await (const cb of this.data.registers) {
       let ChatInput = function (cfg: DBIChatInput<TNamespace>) {
         let dbiChatInput = new DBIChatInput(self, cfg);
-        if (self.data.interactions.has(dbiChatInput.name)) throw new Error(`DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type}"!`);
+        if (self.data.interactions.has(dbiChatInput.name))
+          throw new Error(
+            `DBIChatInput "${dbiChatInput.name}" already loaded as "${
+              self.data.interactions.get(dbiChatInput.name)?.type
+            }"!`
+          );
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
       };
-      ChatInput = Object.assign(ChatInput, class { constructor(...args: any[]) { return ChatInput.apply(this, args as any); } });
+      ChatInput = Object.assign(
+        ChatInput,
+        class {
+          constructor(...args: any[]) {
+            return ChatInput.apply(this, args as any);
+          }
+        }
+      );
 
       let Event = function (cfg: TDBIEventOmitted<TNamespace>) {
         let dbiEvent = new DBIEvent(self as any, cfg);
-        if (self.config.strict && self.data.events.has(dbiEvent.id || dbiEvent.name)) throw new Error(`DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`);
+        if (
+          self.config.strict &&
+          self.data.events.has(dbiEvent.id || dbiEvent.name)
+        )
+          throw new Error(
+            `DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`
+          );
         self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
-      Event = Object.assign(Event, class { constructor(...args: any[]) { return Event.apply(this, args as any); } });
+      Event = Object.assign(
+        Event,
+        class {
+          constructor(...args: any[]) {
+            return Event.apply(this, args as any);
+          }
+        }
+      );
 
       let Button = function (cfg: TDBIButtonOmitted<TNamespace>) {
         let dbiButton = new DBIButton(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiButton.name)) throw new Error(`DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiButton.name))
+          throw new Error(
+            `DBIButton "${dbiButton.name}" already loaded as "${
+              self.data.interactions.get(dbiButton.name)?.type
+            }"!`
+          );
         self.data.interactions.set(dbiButton.name, dbiButton as any);
         return dbiButton;
       };
-      Button = Object.assign(Button, class { constructor(...args: any[]) { return Button.apply(this, args as any); } });
+      Button = Object.assign(
+        Button,
+        class {
+          constructor(...args: any[]) {
+            return Button.apply(this, args as any);
+          }
+        }
+      );
 
-      let StringSelectMenu = function (cfg: TDBIStringSelectMenuOmitted<TNamespace>) {
+      let StringSelectMenu = function (
+        cfg: TDBIStringSelectMenuOmitted<TNamespace>
+      ) {
         let dbiStringSelectMenu = new DBIStringSelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiStringSelectMenu.name)) throw new Error(`DBIStringSelectMenu "${dbiStringSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiStringSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiStringSelectMenu.name, dbiStringSelectMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiStringSelectMenu.name)
+        )
+          throw new Error(
+            `DBIStringSelectMenu "${
+              dbiStringSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiStringSelectMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiStringSelectMenu.name,
+          dbiStringSelectMenu as any
+        );
         return dbiStringSelectMenu;
       };
-      StringSelectMenu = Object.assign(StringSelectMenu, class { constructor(...args: any[]) { return StringSelectMenu.apply(this, args as any); } });
+      StringSelectMenu = Object.assign(
+        StringSelectMenu,
+        class {
+          constructor(...args: any[]) {
+            return StringSelectMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let UserSelectMenu = function (cfg: TDBIUserSelectMenuOmitted<TNamespace>) {
+      let UserSelectMenu = function (
+        cfg: TDBIUserSelectMenuOmitted<TNamespace>
+      ) {
         let dbiUserSelectMenu = new DBIUserSelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiUserSelectMenu.name)) throw new Error(`DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiUserSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiUserSelectMenu.name, dbiUserSelectMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiUserSelectMenu.name)
+        )
+          throw new Error(
+            `DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${
+              self.data.interactions.get(dbiUserSelectMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiUserSelectMenu.name,
+          dbiUserSelectMenu as any
+        );
         return dbiUserSelectMenu;
       };
-      UserSelectMenu = Object.assign(UserSelectMenu, class { constructor(...args: any[]) { return UserSelectMenu.apply(this, args as any); } });
+      UserSelectMenu = Object.assign(
+        UserSelectMenu,
+        class {
+          constructor(...args: any[]) {
+            return UserSelectMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let RoleSelectMenu = function (cfg: TDBIRoleSelectMenuOmitted<TNamespace>) {
+      let RoleSelectMenu = function (
+        cfg: TDBIRoleSelectMenuOmitted<TNamespace>
+      ) {
         let dbiRoleSelectMenu = new DBIRoleSelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiRoleSelectMenu.name)) throw new Error(`DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiRoleSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiRoleSelectMenu.name, dbiRoleSelectMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiRoleSelectMenu.name)
+        )
+          throw new Error(
+            `DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${
+              self.data.interactions.get(dbiRoleSelectMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiRoleSelectMenu.name,
+          dbiRoleSelectMenu as any
+        );
         return dbiRoleSelectMenu;
       };
-      RoleSelectMenu = Object.assign(RoleSelectMenu, class { constructor(...args: any[]) { return RoleSelectMenu.apply(this, args as any); } });
+      RoleSelectMenu = Object.assign(
+        RoleSelectMenu,
+        class {
+          constructor(...args: any[]) {
+            return RoleSelectMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let ChannelSelectMenu = function (cfg: TDBIChannelSelectMenuOmitted<TNamespace>) {
+      let ChannelSelectMenu = function (
+        cfg: TDBIChannelSelectMenuOmitted<TNamespace>
+      ) {
         let dbiChannelSelectMenu = new DBIChannelSelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiChannelSelectMenu.name)) throw new Error(`DBIChannelSelectMenu "${dbiChannelSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiChannelSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiChannelSelectMenu.name, dbiChannelSelectMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiChannelSelectMenu.name)
+        )
+          throw new Error(
+            `DBIChannelSelectMenu "${
+              dbiChannelSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiChannelSelectMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiChannelSelectMenu.name,
+          dbiChannelSelectMenu as any
+        );
         return dbiChannelSelectMenu;
       };
-      ChannelSelectMenu = Object.assign(ChannelSelectMenu, class { constructor(...args: any[]) { return ChannelSelectMenu.apply(this, args as any); } });
+      ChannelSelectMenu = Object.assign(
+        ChannelSelectMenu,
+        class {
+          constructor(...args: any[]) {
+            return ChannelSelectMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let MentionableSelectMenu = function (cfg: TDBIMentionableSelectMenuOmitted<TNamespace>) {
-        let dbiMentionableSelectMenu = new DBIMentionableSelectMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiMentionableSelectMenu.name)) throw new Error(`DBIMentionableSelectMenu "${dbiMentionableSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiMentionableSelectMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiMentionableSelectMenu.name, dbiMentionableSelectMenu as any);
+      let MentionableSelectMenu = function (
+        cfg: TDBIMentionableSelectMenuOmitted<TNamespace>
+      ) {
+        let dbiMentionableSelectMenu = new DBIMentionableSelectMenu(
+          self as any,
+          cfg
+        );
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiMentionableSelectMenu.name)
+        )
+          throw new Error(
+            `DBIMentionableSelectMenu "${
+              dbiMentionableSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiMentionableSelectMenu.name,
+          dbiMentionableSelectMenu as any
+        );
         return dbiMentionableSelectMenu;
       };
-      MentionableSelectMenu = Object.assign(MentionableSelectMenu, class { constructor(...args: any[]) { return MentionableSelectMenu.apply(this, args as any); } });
+      MentionableSelectMenu = Object.assign(
+        MentionableSelectMenu,
+        class {
+          constructor(...args: any[]) {
+            return MentionableSelectMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let MessageContextMenu = function (cfg: TDBIMessageContextMenuOmitted<TNamespace>) {
+      let MessageContextMenu = function (
+        cfg: TDBIMessageContextMenuOmitted<TNamespace>
+      ) {
         let dbiMessageContextMenu = new DBIMessageContextMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiMessageContextMenu.name)) throw new Error(`DBIMessageContextMenu "${dbiMessageContextMenu.name}" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiMessageContextMenu.name, dbiMessageContextMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiMessageContextMenu.name)
+        )
+          throw new Error(
+            `DBIMessageContextMenu "${
+              dbiMessageContextMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiMessageContextMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiMessageContextMenu.name,
+          dbiMessageContextMenu as any
+        );
         return dbiMessageContextMenu;
       };
-      MessageContextMenu = Object.assign(MessageContextMenu, class { constructor(...args: any[]) { return MessageContextMenu.apply(this, args as any); } });
+      MessageContextMenu = Object.assign(
+        MessageContextMenu,
+        class {
+          constructor(...args: any[]) {
+            return MessageContextMenu.apply(this, args as any);
+          }
+        }
+      );
 
-      let UserContextMenu = function (cfg: TDBIUserContextMenuOmitted<TNamespace>) {
+      let UserContextMenu = function (
+        cfg: TDBIUserContextMenuOmitted<TNamespace>
+      ) {
         let dbiUserContextMenu = new DBIUserContextMenu(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiUserContextMenu.name)) throw new Error(`DBIUserContextMenu "${dbiUserContextMenu.name}" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type}"!`);
-        self.data.interactions.set(dbiUserContextMenu.name, dbiUserContextMenu as any);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiUserContextMenu.name)
+        )
+          throw new Error(
+            `DBIUserContextMenu "${
+              dbiUserContextMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiUserContextMenu.name)?.type
+            }"!`
+          );
+        self.data.interactions.set(
+          dbiUserContextMenu.name,
+          dbiUserContextMenu as any
+        );
         return dbiUserContextMenu;
       };
-      UserContextMenu = Object.assign(UserContextMenu, class { constructor(...args: any[]) { return UserContextMenu.apply(this, args as any); } });
+      UserContextMenu = Object.assign(
+        UserContextMenu,
+        class {
+          constructor(...args: any[]) {
+            return UserContextMenu.apply(this, args as any);
+          }
+        }
+      );
 
       let Modal = function (cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
-        if (self.config.strict && self.data.interactions.has(dbiModal.name)) throw new Error(`DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type}"!`);
+        if (self.config.strict && self.data.interactions.has(dbiModal.name))
+          throw new Error(
+            `DBIModal "${dbiModal.name}" already loaded as "${
+              self.data.interactions.get(dbiModal.name)?.type
+            }"!`
+          );
         self.data.interactions.set(dbiModal.name, dbiModal as any);
         return dbiModal;
       };
-      Modal = Object.assign(Modal, class { constructor(...args: any[]) { return Modal.apply(this, args as any); } });
+      Modal = Object.assign(
+        Modal,
+        class {
+          constructor(...args: any[]) {
+            return Modal.apply(this, args as any);
+          }
+        }
+      );
 
       let Locale = function (cfg: TDBILocaleConstructor<TNamespace>) {
         let dbiLocale = new DBILocale(self as any, cfg);
-        if (self.config.strict && self.data.interactionLocales.has(dbiLocale.name)) throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
-        if (self.data.locales.has(dbiLocale.name)) dbiLocale.mergeLocale(self.data.locales.get(dbiLocale.name));
+        if (
+          self.config.strict &&
+          self.data.interactionLocales.has(dbiLocale.name)
+        )
+          throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
+        if (self.data.locales.has(dbiLocale.name))
+          dbiLocale.mergeLocale(self.data.locales.get(dbiLocale.name));
         self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };
-      Locale = Object.assign(Locale, class { constructor(...args: any[]) { return Locale.apply(this, args as any); } });
+      Locale = Object.assign(
+        Locale,
+        class {
+          constructor(...args: any[]) {
+            return Locale.apply(this, args as any);
+          }
+        }
+      );
 
       let CustomEvent = function (cfg: TDBICustomEventOmitted<TNamespace>) {
         let dbiCustomEvent = new DBICustomEvent(self, cfg) as any;
-        if (self.config.strict && self.data.eventMap[dbiCustomEvent.name]) throw new Error(`DBICustomEvent "${dbiCustomEvent.name}" already loaded!`);
+        if (self.config.strict && self.data.eventMap[dbiCustomEvent.name])
+          throw new Error(
+            `DBICustomEvent "${dbiCustomEvent.name}" already loaded!`
+          );
         self.data.eventMap[dbiCustomEvent.name] = dbiCustomEvent.map;
         self.data.customEventNames.add(dbiCustomEvent.name);
         return dbiCustomEvent;
       };
-      CustomEvent = Object.assign(CustomEvent, class { constructor(...args: any[]) { return CustomEvent.apply(this, args as any); } });
+      CustomEvent = Object.assign(
+        CustomEvent,
+        class {
+          constructor(...args: any[]) {
+            return CustomEvent.apply(this, args as any);
+          }
+        }
+      );
 
       let InteractionLocale = function (cfg: TDBIInteractionLocaleOmitted) {
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
-        if (self.config.strict && self.data.interactionLocales.has(dbiInteractionLocale.name)) throw new Error(`DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`);
-        self.data.interactionLocales.set(dbiInteractionLocale.name, dbiInteractionLocale);
+        if (
+          self.config.strict &&
+          self.data.interactionLocales.has(dbiInteractionLocale.name)
+        )
+          throw new Error(
+            `DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`
+          );
+        self.data.interactionLocales.set(
+          dbiInteractionLocale.name,
+          dbiInteractionLocale
+        );
         return dbiInteractionLocale;
       };
-      InteractionLocale = Object.assign(InteractionLocale, class { constructor(...args: any[]) { return InteractionLocale.apply(this, args as any); } });
+      InteractionLocale = Object.assign(
+        InteractionLocale,
+        class {
+          constructor(...args: any[]) {
+            return InteractionLocale.apply(this, args as any);
+          }
+        }
+      );
 
       await cb({
         ChatInput,
@@ -468,38 +795,59 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
     self.data.interactions.sort((a, b) => b.name.length - a.name.length);
   }
 
-  emit<TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] & ClientEvents)>(name: TEventName, args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]): void {
-    this.data.clients.forEach((d) => d.client.emit(name as any, { ...args, _DIRECT_: true } as any));
+  emit<
+    TEventName extends keyof (NamespaceData[TNamespace]["customEvents"] &
+      ClientEvents)
+  >(
+    name: TEventName,
+    args: (NamespaceData[TNamespace]["customEvents"] & ClientEvents)[TEventName]
+  ): void {
+    this.data.clients.forEach((d) =>
+      d.client.emit(name as any, { ...args, _DIRECT_: true } as any)
+    );
   }
 
   /**
    * this.data.interactions.get(name)
    */
-  interaction<TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]>(name: TInteractionName): NamespaceData[TNamespace]["interactionMapping"][TInteractionName] {
+  interaction<
+    TInteractionName extends keyof NamespaceData[TNamespace]["interactionMapping"]
+  >(
+    name: TInteractionName
+  ): NamespaceData[TNamespace]["interactionMapping"][TInteractionName] {
     return this.data.interactions.get(name as any) as any;
   }
 
-  client<TClientName extends NamespaceData[TNamespace]["clientNamespaces"]>(name?: TClientName): DBIClientData<TNamespace> {
+  client<TClientName extends NamespaceData[TNamespace]["clientNamespaces"]>(
+    name?: TClientName
+  ): DBIClientData<TNamespace> {
     return name ? this.data.clients.get(name) : this.data.clients.first();
   }
   /**
    * this.data.events.get(name)
    */
-  event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(name: TEventName): DBIEvent<TNamespace> {
+  event<TEventName extends NamespaceData[TNamespace]["eventNames"]>(
+    name: TEventName
+  ): DBIEvent<TNamespace> {
     return this.data.events.get(name);
   }
 
   /**
    * this.data.locales.get(name)
    */
-  locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(name: TLocaleName): DBILocale<TNamespace> {
+  locale<TLocaleName extends NamespaceData[TNamespace]["localeNames"]>(
+    name: TLocaleName
+  ): DBILocale<TNamespace> {
     return this.data.locales.get(name) as any;
   }
 
   /**
    * Shorthands for modifying `dbi.data.other`
    */
-  get<K extends keyof TOtherData>(k: K, defaultValue?: TOtherData[K]): TOtherData[K] {
+  get<K extends keyof TOtherData>(
+    k: K,
+    defaultValue?: TOtherData[K]
+  ): TOtherData[K] {
     if (defaultValue && !this.has(k as any)) {
       this.set(k, defaultValue);
       return defaultValue;
@@ -530,7 +878,9 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
 
   async login(): Promise<any> {
     await aaq.quickForEach(this.data.clients, async (clientContext) => {
-      await clientContext.client.login(this.config.sharding == "default" ? null : clientContext.token);
+      await clientContext.client.login(
+        this.config.sharding == "default" ? null : clientContext.token
+      );
     });
   }
 
@@ -562,7 +912,12 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
   async publish(type: "Guild", guildId: string, clear?: boolean): Promise<any>;
 
   async publish(...args: any[]) {
-    let interactions = this.data.interactions.filter(i => i.type == "ChatInput" || i.type == "MessageContextMenu" || i.type == "UserContextMenu") as any;
+    let interactions = this.data.interactions.filter(
+      (i) =>
+        i.type == "ChatInput" ||
+        i.type == "MessageContextMenu" ||
+        i.type == "UserContextMenu"
+    ) as any;
     switch (args[0]) {
       case "Global": {
         return await publishInteractions(
@@ -583,6 +938,4 @@ export class DBI<TNamespace extends NamespaceEnums, TOtherData = Record<string, 
       }
     }
   }
-
-
 }
