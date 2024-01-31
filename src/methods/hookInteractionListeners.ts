@@ -179,7 +179,17 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
         const dbiOption = dbiOptions.find((i) => i.name == dcOption.name);
         if (dbiOption?.validate) {
           const res = await dbiOption.validate({
-            value: dcOption.value,
+            value:
+              dbiOption.type === Discord.ApplicationCommandOptionType.Attachment
+                ? dcOption.attachment
+                : dbiOption.type ===
+                  Discord.ApplicationCommandOptionType.Channel
+                ? dcOption.channel
+                : dbiOption.type === Discord.ApplicationCommandOptionType.Role
+                ? dcOption.role
+                : dbiOption.type === Discord.ApplicationCommandOptionType.User
+                ? dcOption.user
+                : dcOption.value,
             interaction: inter,
             dbiInteraction: dbiInter,
             dbi,

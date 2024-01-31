@@ -291,7 +291,15 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
     };
   }
 
-  attachment(cfg: TDBIBaseOption) {
+  attachment(
+    cfg: TDBIBaseOption &
+      TDBIValidator<
+        TDBIValidateCtx<TNamespace, Discord.Attachment>,
+        Discord.Attachment,
+        "Result",
+        boolean
+      >
+  ) {
     return {
       type: Discord.ApplicationCommandOptionType.Attachment,
       name: cfg.name,
