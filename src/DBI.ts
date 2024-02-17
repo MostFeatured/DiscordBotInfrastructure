@@ -914,6 +914,8 @@ export class DBI<
   async publish(...args: any[]) {
     let interactions = this.data.interactions.filter(
       (i) =>
+        i.publishType != "None" &&
+        (i.publishType == args[0] || i.publishType == null) &&
         i.type == "ChatInput" ||
         i.type == "MessageContextMenu" ||
         i.type == "UserContextMenu"

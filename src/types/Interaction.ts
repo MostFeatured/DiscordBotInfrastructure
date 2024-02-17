@@ -69,6 +69,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.description = cfg.description;
     this.onExecute = cfg.onExecute;
     this.type = cfg.type;
+    this.publishType = cfg.publishType;
     this.options = cfg.options;
     this.other = cfg.other;
     this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
@@ -76,6 +77,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
   }
 
   publish?: NamespaceData[TNamespace]["clientNamespaces"];
+  publishType?: "Global" | "Guild" | "None"
   dbi: DBI<TNamespace>;
   name: string;
   description: string;
