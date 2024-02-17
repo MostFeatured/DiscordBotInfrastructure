@@ -24,14 +24,14 @@ export async function publishInteractions(
 
   let body: {[k: string]: RESTPutAPIApplicationCommandsJSONBody} =
     interactions.reduce((all, current) => {
-      if (current.publish && !all[current.publish]) all[current.publish] = [];
+      if (current.publish && !all[current.publish.to]) all[current.publish.to] = [];
       switch (current.type) {
         case "ChatInput": {
           let nameSplitted = current.name.split(" ");
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
           switch (nameSplitted.length) {
             case 1: {
-              all[current.publish].push({
+              all[current.publish.to].push({
                 type: ApplicationCommandType.ChatInput,
                 description: current.description,
                 name: nameSplitted[0],
@@ -44,7 +44,7 @@ export async function publishInteractions(
               break;
             }
             case 2: {
-              let baseItem = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
+              let baseItem = all[current.publish.to].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               let option = {
                 type: ApplicationCommandOptionType.Subcommand,
@@ -56,7 +56,7 @@ export async function publishInteractions(
                 description_localizations: localeData.descriptionLocales,
               };
               if (!baseItem) {
-                all[current.publish].push({
+                all[current.publish.to].push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
                   default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
@@ -72,10 +72,10 @@ export async function publishInteractions(
               break;
             }
             case 3: {
-              let level1Item = all[current.publish].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
+              let level1Item = all[current.publish.to].find(i => i.name == current.name.split(" ")[0] && i.type == ApplicationCommandType.ChatInput);
               let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
               if (!level1Item) {
-                all[current.publish].push({
+                all[current.publish.to].push({
                   type: ApplicationCommandType.ChatInput,
                   name: nameSplitted[0],
                   name_localizations: localeData.nameLocales(0),
@@ -140,7 +140,7 @@ export async function publishInteractions(
         }
         case "MessageContextMenu": {
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
-          all[current.publish].push({
+          all[current.publish.to].push({
             type: ApplicationCommandType.Message,
             name: current.name,
             default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
@@ -152,7 +152,7 @@ export async function publishInteractions(
         }
         case "UserContextMenu": {
           let localeData = formatLocale(interactionsLocales.get(current.name) ?? {} as any);
-          all[current.publish].push({
+          all[current.publish.to].push({
             type: ApplicationCommandType.User,
             name: current.name,
             default_member_permissions: reducePermissions(current.defaultMemberPermissions).toString(),
