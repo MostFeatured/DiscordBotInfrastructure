@@ -54,24 +54,12 @@ export type TDBIRateLimitTypes =
   | "Message";
 
 
-export type TDBIRateLimit = {
+export type DBIRateLimit = {
   type: TDBIRateLimitTypes;
   /**
    * Duration in milliseconds.
    */
   duration: number;
-}
-
-export type TDBIPublishTypes =
-  | "Guild"
-  | "Global"
-  | "None"
-  | "All";
-
-
-export type TDBIPublish = {
-  type: TDBIPublishTypes;
-  to: NamespaceData[NamespaceEnums]["clientNamespaces"];
 }
 
 export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
@@ -81,25 +69,22 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.description = cfg.description;
     this.onExecute = cfg.onExecute;
     this.type = cfg.type;
+    this.publishType = cfg.publishType;
     this.options = cfg.options;
     this.other = cfg.other;
-    this.publish = cfg.publish ?? {
-      to: dbi.data.clients.first()?.namespace,
-      type: "All"
-    };
-    if (!this.publish.to) this.publish.to = dbi.data.clients.first()?.namespace;
-    if (!this.publish.type) this.publish.type = "All";
+    this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
     this.rateLimits = cfg.rateLimits ?? [];
   }
 
-  publish?: TDBIPublish;
+  publish?: NamespaceData[TNamespace]["clientNamespaces"];
+  publishType?: "Global" | "Guild" | "None"
   dbi: DBI<TNamespace>;
   name: string;
   description: string;
   readonly type: TDBIInteractionTypes;
   options?: any | any[];
   other?: Record<string, any> & { messageCommand?: { aliases?: string[] } };
-  rateLimits?: TDBIRateLimit[];
+  rateLimits?: DBIRateLimit[];
   toJSON(overrides: any): any { }
 
   onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void {

@@ -111,15 +111,15 @@ export interface DBIConfig {
 
 export interface DBIConfigConstructor {
   discord:
-  | {
-    token: string;
-    options: Discord.ClientOptions;
-  }
-  | {
-    namespace: string;
-    token: string;
-    options: Discord.ClientOptions;
-  }[];
+    | {
+        token: string;
+        options: Discord.ClientOptions;
+      }
+    | {
+        namespace: string;
+        token: string;
+        options: Discord.ClientOptions;
+      }[];
 
   defaults?: {
     locale?: TDBILocaleString;
@@ -313,12 +313,12 @@ export class DBI<
     config.discord = Array.isArray(config.discord)
       ? config.discord
       : [
-        {
-          token: config.discord.token,
-          options: config.discord.options,
-          namespace: "default",
-        },
-      ];
+          {
+            token: config.discord.token,
+            options: config.discord.options,
+            namespace: "default",
+          },
+        ];
 
     this.data.clients.push(...(config.discord as any));
     for (let clientContext of this.data.clients) {
@@ -326,9 +326,9 @@ export class DBI<
         ...((clientContext.options || {}) as any),
         ...(config.sharding == "hybrid"
           ? {
-            shards: Sharding.getInfo().SHARD_LIST,
-            shardCount: Sharding.getInfo().TOTAL_SHARDS,
-          }
+              shards: Sharding.getInfo().SHARD_LIST,
+              shardCount: Sharding.getInfo().TOTAL_SHARDS,
+            }
           : {}),
       });
       clientContext.client = client as Discord.Client<true>;
@@ -421,7 +421,8 @@ export class DBI<
         let dbiChatInput = new DBIChatInput(self, cfg);
         if (self.data.interactions.has(dbiChatInput.name))
           throw new Error(
-            `DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type
+            `DBIChatInput "${dbiChatInput.name}" already loaded as "${
+              self.data.interactions.get(dbiChatInput.name)?.type
             }"!`
           );
         self.data.interactions.set(dbiChatInput.name, dbiChatInput);
@@ -461,7 +462,8 @@ export class DBI<
         let dbiButton = new DBIButton(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiButton.name))
           throw new Error(
-            `DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type
+            `DBIButton "${dbiButton.name}" already loaded as "${
+              self.data.interactions.get(dbiButton.name)?.type
             }"!`
           );
         self.data.interactions.set(dbiButton.name, dbiButton as any);
@@ -485,8 +487,10 @@ export class DBI<
           self.data.interactions.has(dbiStringSelectMenu.name)
         )
           throw new Error(
-            `DBIStringSelectMenu "${dbiStringSelectMenu.name
-            }" already loaded as "${self.data.interactions.get(dbiStringSelectMenu.name)?.type
+            `DBIStringSelectMenu "${
+              dbiStringSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiStringSelectMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -513,7 +517,8 @@ export class DBI<
           self.data.interactions.has(dbiUserSelectMenu.name)
         )
           throw new Error(
-            `DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiUserSelectMenu.name)?.type
+            `DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${
+              self.data.interactions.get(dbiUserSelectMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -540,7 +545,8 @@ export class DBI<
           self.data.interactions.has(dbiRoleSelectMenu.name)
         )
           throw new Error(
-            `DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiRoleSelectMenu.name)?.type
+            `DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${
+              self.data.interactions.get(dbiRoleSelectMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -567,8 +573,10 @@ export class DBI<
           self.data.interactions.has(dbiChannelSelectMenu.name)
         )
           throw new Error(
-            `DBIChannelSelectMenu "${dbiChannelSelectMenu.name
-            }" already loaded as "${self.data.interactions.get(dbiChannelSelectMenu.name)?.type
+            `DBIChannelSelectMenu "${
+              dbiChannelSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiChannelSelectMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -598,8 +606,10 @@ export class DBI<
           self.data.interactions.has(dbiMentionableSelectMenu.name)
         )
           throw new Error(
-            `DBIMentionableSelectMenu "${dbiMentionableSelectMenu.name
-            }" already loaded as "${self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
+            `DBIMentionableSelectMenu "${
+              dbiMentionableSelectMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -626,8 +636,10 @@ export class DBI<
           self.data.interactions.has(dbiMessageContextMenu.name)
         )
           throw new Error(
-            `DBIMessageContextMenu "${dbiMessageContextMenu.name
-            }" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type
+            `DBIMessageContextMenu "${
+              dbiMessageContextMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiMessageContextMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -654,8 +666,10 @@ export class DBI<
           self.data.interactions.has(dbiUserContextMenu.name)
         )
           throw new Error(
-            `DBIUserContextMenu "${dbiUserContextMenu.name
-            }" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type
+            `DBIUserContextMenu "${
+              dbiUserContextMenu.name
+            }" already loaded as "${
+              self.data.interactions.get(dbiUserContextMenu.name)?.type
             }"!`
           );
         self.data.interactions.set(
@@ -677,7 +691,8 @@ export class DBI<
         let dbiModal = new DBIModal(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiModal.name))
           throw new Error(
-            `DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type
+            `DBIModal "${dbiModal.name}" already loaded as "${
+              self.data.interactions.get(dbiModal.name)?.type
             }"!`
           );
         self.data.interactions.set(dbiModal.name, dbiModal as any);
@@ -899,13 +914,11 @@ export class DBI<
   async publish(...args: any[]) {
     let interactions = this.data.interactions.filter(
       (i) =>
-        i.publish.type != "None" &&
-        (i.publish.type == args[0] || i.publish.type == "All") &&
-        (
-          i.type == "ChatInput" ||
-          i.type == "MessageContextMenu" ||
-          i.type == "UserContextMenu"
-        )
+        i.publishType != "None" &&
+        (i.publishType == args[0] || i.publishType == null) &&
+        i.type == "ChatInput" ||
+        i.type == "MessageContextMenu" ||
+        i.type == "UserContextMenu"
     ) as any;
     switch (args[0]) {
       case "Global": {

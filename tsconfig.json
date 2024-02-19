@@ -33,9 +33,7 @@
     "lib": [
       "ESNext"
     ],
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true
+    "target": "ESNext",    
+    "useDefineForClassFields": true
   }
 }
