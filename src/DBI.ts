@@ -888,7 +888,7 @@ export class DBI<
     this.data.registers.add(cb);
   }
 
-  async load(flags?: string[]): Promise<boolean> {
+  async load(...flags: string[]): Promise<boolean> {
     if (this._loaded) return false;
     await this._registerAll(flags);
     await this._hookListeners();

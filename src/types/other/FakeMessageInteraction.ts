@@ -131,7 +131,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         };
       },
       get _hoistedOptions() {
-        return this._hoistedOptions;
+        return self._hoistedOptions;
       },
       getSubcommand() {
         let splitted = self.fullCommandName.split(" ");
