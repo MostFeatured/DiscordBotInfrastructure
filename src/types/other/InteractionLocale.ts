@@ -24,9 +24,11 @@ export class DBIInteractionLocale {
   name: string;
   data: TDBIInteractionLocaleData;
   dbi: DBI<NamespaceEnums>;
+  flag: string | undefined;
   constructor(dbi, cfg: TDBIInteractionLocaleOmitted) {
     this.dbi = dbi;
     this.name = cfg.name;
     this.data = cfg.data;
+    this.flag = cfg.flag;
   }
 }

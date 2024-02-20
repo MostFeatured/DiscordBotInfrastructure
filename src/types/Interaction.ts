@@ -73,6 +73,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.other = cfg.other;
     this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
     this.rateLimits = cfg.rateLimits ?? [];
+    this.flag = cfg.flag;
   }
 
   publish?: NamespaceData[TNamespace]["clientNamespaces"];
@@ -83,6 +84,7 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
   options?: any | any[];
   other?: Record<string, any> & { messageCommand?: { aliases?: string[] } };
   rateLimits?: DBIRateLimit[];
+  flag: string | undefined;
   toJSON(overrides: any): any { }
 
   onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void {

@@ -412,7 +412,7 @@ export class DBI<
     this.data.customEventNames.clear();
   }
 
-  private async _registerAll() {
+  private async _registerAll(flags: string[] = []) {
     const self = this;
     const ChatInputOptions = new DBIChatInputOptions(self);
 
@@ -425,7 +425,7 @@ export class DBI<
               self.data.interactions.get(dbiChatInput.name)?.type
             }"!`
           );
-        self.data.interactions.set(dbiChatInput.name, dbiChatInput);
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
       };
       ChatInput = Object.assign(
@@ -446,7 +446,7 @@ export class DBI<
           throw new Error(
             `DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`
           );
-        self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
+          if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
       Event = Object.assign(
@@ -466,7 +466,7 @@ export class DBI<
               self.data.interactions.get(dbiButton.name)?.type
             }"!`
           );
-        self.data.interactions.set(dbiButton.name, dbiButton as any);
+          if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiButton.name, dbiButton as any);
         return dbiButton;
       };
       Button = Object.assign(
@@ -493,7 +493,7 @@ export class DBI<
               self.data.interactions.get(dbiStringSelectMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiStringSelectMenu.name,
           dbiStringSelectMenu as any
         );
@@ -521,7 +521,7 @@ export class DBI<
               self.data.interactions.get(dbiUserSelectMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiUserSelectMenu.name,
           dbiUserSelectMenu as any
         );
@@ -549,7 +549,7 @@ export class DBI<
               self.data.interactions.get(dbiRoleSelectMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiRoleSelectMenu.name,
           dbiRoleSelectMenu as any
         );
@@ -579,7 +579,7 @@ export class DBI<
               self.data.interactions.get(dbiChannelSelectMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiChannelSelectMenu.name,
           dbiChannelSelectMenu as any
         );
@@ -612,7 +612,7 @@ export class DBI<
               self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiMentionableSelectMenu.name,
           dbiMentionableSelectMenu as any
         );
@@ -642,7 +642,7 @@ export class DBI<
               self.data.interactions.get(dbiMessageContextMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiMessageContextMenu.name,
           dbiMessageContextMenu as any
         );
@@ -672,7 +672,7 @@ export class DBI<
               self.data.interactions.get(dbiUserContextMenu.name)?.type
             }"!`
           );
-        self.data.interactions.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
           dbiUserContextMenu.name,
           dbiUserContextMenu as any
         );
@@ -695,7 +695,7 @@ export class DBI<
               self.data.interactions.get(dbiModal.name)?.type
             }"!`
           );
-        self.data.interactions.set(dbiModal.name, dbiModal as any);
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiModal.name, dbiModal as any);
         return dbiModal;
       };
       Modal = Object.assign(
@@ -716,7 +716,7 @@ export class DBI<
           throw new Error(`DBILocale "${dbiLocale.name}" already loaded!`);
         if (self.data.locales.has(dbiLocale.name))
           dbiLocale.mergeLocale(self.data.locales.get(dbiLocale.name));
-        self.data.locales.set(dbiLocale.name, dbiLocale);
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };
       Locale = Object.assign(
@@ -756,7 +756,7 @@ export class DBI<
           throw new Error(
             `DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`
           );
-        self.data.interactionLocales.set(
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactionLocales.set(
           dbiInteractionLocale.name,
           dbiInteractionLocale
         );
@@ -888,9 +888,9 @@ export class DBI<
     this.data.registers.add(cb);
   }
 
-  async load(): Promise<boolean> {
+  async load(flags?: string[]): Promise<boolean> {
     if (this._loaded) return false;
-    await this._registerAll();
+    await this._registerAll(flags);
     await this._hookListeners();
     this._loaded = true;
     return true;

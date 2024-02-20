@@ -112,6 +112,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
   ordered?: boolean;
   dbi: DBI<TNamespace>;
   disabled: boolean = false;
+  flag: string | undefined;
   constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>) {
     this.dbi = dbi;
     this.type = "Event";
@@ -122,6 +123,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
     this.ordered = cfg.ordered ?? false;
     this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
     this.disabled ??= cfg.disabled;
+    this.flag = cfg.flag;
   }
 
   toggle(disabled?: boolean) {
