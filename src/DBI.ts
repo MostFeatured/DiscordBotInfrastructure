@@ -398,6 +398,7 @@ export class DBI<
     this.data.unloaders.forEach((f) => {
       f();
     });
+    this.data.unloaders.clear();
   }
 
   private async _unregisterAll() {
@@ -406,6 +407,11 @@ export class DBI<
     }
     this.data.events.clear();
     this.data.interactions.clear();
+    this.data.interactionLocales.clear();
+    this.data.locales.clear();
+    this.data.registerUnloaders.clear();
+    this.data.refs.clear();
+
     this.data.customEventNames.forEach((value) => {
       delete this.data.eventMap[value];
     });
