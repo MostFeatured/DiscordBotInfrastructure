@@ -157,7 +157,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           if (self.guildId && (c as any).guildId && (c as any).guildId !== self.guildId) return false;
           return (c as any).name === value;
         });
-        if (channelType && channel?.type !== channelType) return null;
+        if (channelType && channel?.type !== channelType && !channelType.includes(channel?.type)) return null;
         return channel;
       },
       getString(name: string) {
