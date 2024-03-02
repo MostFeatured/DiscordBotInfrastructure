@@ -148,7 +148,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
         if (!rawValue) return null;
         return !!self.dbi.config.messageCommands.typeAliases.booleans[rawValue.toLowerCase()];
       },
-      getChannel(name: string, _: any, channelType?: ChannelType) {
+      getChannel(name: string, _: any, channelType?: ChannelType | ChannelType[]) {
         const rawValue = self.getRawOptionValue(name);
         if (!rawValue) return null;
         let value = rawValue.replace(/<#|>/g, "");
@@ -157,7 +157,8 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           if (self.guildId && (c as any).guildId && (c as any).guildId !== self.guildId) return false;
           return (c as any).name === value;
         });
-        if (channelType && channel?.type !== channelType && !channelType.includes(channel?.type)) return null;
+        // @ts-ignore
+        if (channelType && channel?.type !== channelType && !channelType?.includes?.(channel?.type)) return null;
         return channel;
       },
       getString(name: string) {
