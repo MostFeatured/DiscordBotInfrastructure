@@ -112,7 +112,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
   ordered?: boolean;
   dbi: DBI<TNamespace>;
   disabled: boolean = false;
-  flag: string | undefined;
+  flag?: string;
   constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>) {
     this.dbi = dbi;
     this.type = "Event";
