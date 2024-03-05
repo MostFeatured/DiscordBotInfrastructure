@@ -20,7 +20,7 @@ export class DBILocale<TNamespace extends NamespaceEnums> {
   data: NamespaceData[TNamespace]["contentLocale"];
   private _data: DBILangConstructorObject;
   dbi: DBI<TNamespace, {}>;
-  flag: string | undefined
+  flag?: string
   constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>) {
     this.dbi = dbi;
     this.name = cfg.name;
