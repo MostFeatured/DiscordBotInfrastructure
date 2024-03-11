@@ -6,7 +6,7 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
 
   function getClientByEvent(value) {
     return value.triggerType == "OneByOne"
-      ? dbi.data.clients.next(`Event:${value.id}`)
+      ? dbi.data.clients.next(`Event:${value.name}`)
       : value.triggerType == "OneByOneGlobal"
         ? dbi.data.clients.next("Event")
         : value.triggerType == "Random"
