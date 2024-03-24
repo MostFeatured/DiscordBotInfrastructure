@@ -165,6 +165,10 @@ export async function handleMessageCommands(
             break;
           }
 
+          if (option.required && !value) {
+            errorType = "MissingRequiredOption";
+            break;
+          }
           if (option.minLength && value?.length < option.minLength) {
             errorType = "MinLength";
             break;
