@@ -63,7 +63,7 @@ export type DBIRateLimit = {
 }
 
 export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
-  constructor(dbi: DBI<TNamespace>, cfg: Omit<DBIBaseInteraction<TNamespace>, "dbi">) {
+  constructor(dbi: DBI<TNamespace>, cfg: Omit<DBIBaseInteraction<TNamespace>, "dbi" | "at">) {
     this.dbi = dbi;
     this.name = cfg.name;
     this.description = cfg.description;
@@ -74,6 +74,8 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
     this.publish = cfg.publish ?? dbi.data.clients.first()?.namespace;
     this.rateLimits = cfg.rateLimits ?? [];
     this.flag = cfg.flag;
+    this.at = Date.now();
+    this.ttl = cfg.ttl;
   }
 
   publish?: NamespaceData[TNamespace]["clientNamespaces"];
@@ -85,6 +87,8 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
   other?: Record<string, any> & { messageCommand?: { aliases?: string[] } };
   rateLimits?: DBIRateLimit[];
   flag?: string;
+  ttl?: number;
+  at?: number;
   toJSON(overrides: any): any { }
 
   onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void {

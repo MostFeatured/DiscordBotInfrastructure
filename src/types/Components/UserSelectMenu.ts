@@ -12,7 +12,7 @@ export interface IDBIUserSelectMenuExecuteCtx<TNamespace extends NamespaceEnums>
   data: TDBIReferencedData[];
 }
 
-export type TDBIUserSelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIUserSelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
+export type TDBIUserSelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIUserSelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder" | "at">;
 
 export type SelectMenuDefaultOptions = Omit<Discord.UserSelectMenuComponentData, "customId" | "type" | "options">;
 

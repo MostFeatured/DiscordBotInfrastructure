@@ -100,7 +100,7 @@ export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
   }
 }[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
 
-export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi" | "toggle" | "disabled"> & { disabled?: boolean } &  DBIEventCombinations<TNamespace>;
+export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi" | "toggle" | "disabled" | "at"> & { disabled?: boolean } & DBIEventCombinations<TNamespace>;
 
 export class DBIEvent<TNamespace extends NamespaceEnums> {
   readonly type: "Event";
@@ -113,6 +113,8 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
   dbi: DBI<TNamespace>;
   disabled: boolean = false;
   flag?: string;
+  at?: number;
+  ttl?: number;
   constructor(dbi: DBI<TNamespace>, cfg: TDBIEventOmitted<TNamespace>) {
     this.dbi = dbi;
     this.type = "Event";
@@ -124,6 +126,8 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
     this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
     this.disabled ??= cfg.disabled;
     this.flag = cfg.flag;
+    this.at = Date.now();
+    this.ttl = cfg.ttl;
   }
 
   toggle(disabled?: boolean) {

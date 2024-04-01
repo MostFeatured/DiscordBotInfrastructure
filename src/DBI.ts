@@ -60,6 +60,7 @@ import {
   TDBIRoleSelectMenuOmitted,
 } from "./types/Components/RoleSelectMenu";
 import { handleMessageCommands } from "./methods/handleMessageCommands";
+import { FakeMessageInteraction } from "./types/other/FakeMessageInteraction";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -85,6 +86,9 @@ export interface DBIConfig {
     locale: TDBILocaleString;
     directMessages: boolean;
     defaultMemberPermissions: Discord.PermissionsString[];
+    messageCommands: {
+      deferReplyContent(interaction: FakeMessageInteraction): MessagePayload | string | Promise<MessagePayload | string>;
+    };
   };
 
   sharding: "hybrid" | "default" | "off";
@@ -100,6 +104,13 @@ export interface DBIConfig {
     };
   };
 
+  inlineListeners: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    };
+  }
+
   strict: boolean;
   messageCommands?: {
     prefixes: string[];
@@ -111,22 +122,22 @@ export interface DBIConfig {
 
 export interface DBIConfigConstructor {
   discord:
-    | {
-        token: string;
-        options: Discord.ClientOptions;
-      }
-    | {
-        namespace: string;
-        token: string;
-        options: Discord.ClientOptions;
-      }[];
+  | {
+    token: string;
+    options: Discord.ClientOptions;
+  }
+  | {
+    namespace: string;
+    token: string;
+    options: Discord.ClientOptions;
+  }[];
 
   defaults?: {
     locale?: TDBILocaleString;
     directMessages?: boolean;
     defaultMemberPermissions?: Discord.PermissionsString[];
     messageCommands?: {
-      deferReplyContent?: MessagePayload | string;
+      deferReplyContent?: MessagePayload | string | ((interaction: FakeMessageInteraction) => MessagePayload | string | Promise<MessagePayload | string>);
     };
   };
 
@@ -137,6 +148,13 @@ export interface DBIConfigConstructor {
   store?: DBIStore;
 
   references?: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    };
+  };
+
+  inlineListeners?: {
     autoClear?: {
       check: number;
       ttl: number;
@@ -193,6 +211,32 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(
     cfg: TDBICustomEventOmitted<TNamespace, T>
   ): DBICustomEvent<TNamespace, T>;
+
+  createInlineEvent(cfg: Omit<TDBIEventOmitted<TNamespace>, "id">): DBIEvent<TNamespace>;
+  createInlineButton(cfg: Omit<TDBIButtonOmitted<TNamespace>, "id" | "name">): DBIButton<TNamespace>;
+  createInlineStringSelectMenu(
+    cfg: Omit<TDBIStringSelectMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIStringSelectMenu<TNamespace>;
+  createInlineUserSelectMenu(
+    cfg: Omit<TDBIUserSelectMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIUserSelectMenu<TNamespace>;
+  createInlineRoleSelectMenu(
+    cfg: Omit<TDBIRoleSelectMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIRoleSelectMenu<TNamespace>;
+  createInlineChannelSelectMenu(
+    cfg: Omit<TDBIChannelSelectMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIChannelSelectMenu<TNamespace>;
+  createInlineMentionableSelectMenu(
+    cfg: Omit<TDBIMentionableSelectMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIMentionableSelectMenu<TNamespace>;
+  createInlineMessageContextMenu(
+    cfg: Omit<TDBIMessageContextMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIMessageContextMenu<TNamespace>;
+  createInlineUserContextMenu(
+    cfg: Omit<TDBIUserContextMenuOmitted<TNamespace>, "id" | "name">
+  ): DBIUserContextMenu<TNamespace>;
+  createInlineModal(cfg: Omit<TDBIModalOmitted<TNamespace>, "id" | "name">): DBIModal<TNamespace>;
+
   onUnload(cb: () => Promise<any> | any): any;
 }
 
@@ -239,16 +283,26 @@ export class DBI<
       defaultMemberPermissions: [],
       directMessages: false,
       ...(config.defaults || {}),
-      messageCommands: {
-        deferReplyContent: "Loading...",
-        ...(config.defaults?.messageCommands || {}),
-      },
+      messageCommands: (() => {
+        let deferReplyContent = config.defaults?.messageCommands?.deferReplyContent
+        return {
+          ...(config.defaults?.messageCommands || {}),
+          deferReplyContent: (typeof deferReplyContent === "function" ? deferReplyContent : () => deferReplyContent || "Loading...") as any
+        }
+      })(),
     };
     config.sharding = config.sharding ?? "off";
     config.strict = config.strict ?? true;
     config.references = {
       autoClear: undefined,
       ...(config.references || {}),
+    };
+    config.inlineListeners = {
+      autoClear: {
+        check: 60000,
+        ttl: 900000,
+      },
+      ...(config.inlineListeners || {}),
     };
 
     if (config.messageCommands) {
@@ -313,12 +367,12 @@ export class DBI<
     config.discord = Array.isArray(config.discord)
       ? config.discord
       : [
-          {
-            token: config.discord.token,
-            options: config.discord.options,
-            namespace: "default",
-          },
-        ];
+        {
+          token: config.discord.token,
+          options: config.discord.options,
+          namespace: "default",
+        },
+      ];
 
     this.data.clients.push(...(config.discord as any));
     for (let clientContext of this.data.clients) {
@@ -326,9 +380,9 @@ export class DBI<
         ...((clientContext.options || {}) as any),
         ...(config.sharding == "hybrid"
           ? {
-              shards: Sharding.getInfo().SHARD_LIST,
-              shardCount: Sharding.getInfo().TOTAL_SHARDS,
-            }
+            shards: Sharding.getInfo().SHARD_LIST,
+            shardCount: Sharding.getInfo().TOTAL_SHARDS,
+          }
           : {}),
       });
       clientContext.client = client as Discord.Client<true>;
@@ -368,6 +422,35 @@ export class DBI<
               }
             });
           }, this.config.references.autoClear.check);
+          return () => {
+            clearInterval(interval);
+          };
+        })()
+      );
+    }
+    if (typeof this.config.inlineListeners.autoClear !== "undefined") {
+      this.data.unloaders.add(
+        (() => {
+          let interval = setInterval(() => {
+            this.data.interactions.forEach((i, key) => {
+              if (
+                i.ttl &&
+                (Date.now() >
+                  i.at + (i.ttl || this.config.inlineListeners.autoClear.ttl))
+              ) {
+                this.data.interactions.delete(key);
+              }
+            });
+            this.data.events.forEach((i, key) => {
+              if (
+                i.ttl &&
+                (Date.now() >
+                  i.at + (i.ttl || this.config.inlineListeners.autoClear.ttl))
+              ) {
+                this.data.events.delete(key);
+              }
+            });
+          }, this.config.inlineListeners.autoClear.check);
           return () => {
             clearInterval(interval);
           };
@@ -422,13 +505,14 @@ export class DBI<
     const self = this;
     const ChatInputOptions = new DBIChatInputOptions(self);
 
+    const randomInlineId = () => `inline:${Math.random().toString(36).slice(2)}`;
+
     for await (const cb of this.data.registers) {
       let ChatInput = function (cfg: DBIChatInput<TNamespace>) {
         let dbiChatInput = new DBIChatInput(self, cfg);
         if (self.data.interactions.has(dbiChatInput.name))
           throw new Error(
-            `DBIChatInput "${dbiChatInput.name}" already loaded as "${
-              self.data.interactions.get(dbiChatInput.name)?.type
+            `DBIChatInput "${dbiChatInput.name}" already loaded as "${self.data.interactions.get(dbiChatInput.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiChatInput.name, dbiChatInput);
@@ -452,7 +536,7 @@ export class DBI<
           throw new Error(
             `DBIEvent "${dbiEvent.id || dbiEvent.name}" already loaded!`
           );
-          if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
       Event = Object.assign(
@@ -464,15 +548,18 @@ export class DBI<
         }
       );
 
+      let createInlineEvent = function (cfg: Omit<TDBIEventOmitted<TNamespace>, "id">) {
+        return Event({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id: randomInlineId() } as any);
+      }
+
       let Button = function (cfg: TDBIButtonOmitted<TNamespace>) {
         let dbiButton = new DBIButton(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiButton.name))
           throw new Error(
-            `DBIButton "${dbiButton.name}" already loaded as "${
-              self.data.interactions.get(dbiButton.name)?.type
+            `DBIButton "${dbiButton.name}" already loaded as "${self.data.interactions.get(dbiButton.name)?.type
             }"!`
           );
-          if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiButton.name, dbiButton as any);
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiButton.name, dbiButton as any);
         return dbiButton;
       };
       Button = Object.assign(
@@ -484,6 +571,11 @@ export class DBI<
         }
       );
 
+      let createInlineButton = function (cfg: Omit<TDBIButtonOmitted<TNamespace>, "name" | "id">) {
+        let id = randomInlineId();
+        return Button({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let StringSelectMenu = function (
         cfg: TDBIStringSelectMenuOmitted<TNamespace>
       ) {
@@ -493,10 +585,8 @@ export class DBI<
           self.data.interactions.has(dbiStringSelectMenu.name)
         )
           throw new Error(
-            `DBIStringSelectMenu "${
-              dbiStringSelectMenu.name
-            }" already loaded as "${
-              self.data.interactions.get(dbiStringSelectMenu.name)?.type
+            `DBIStringSelectMenu "${dbiStringSelectMenu.name
+            }" already loaded as "${self.data.interactions.get(dbiStringSelectMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -514,6 +604,11 @@ export class DBI<
         }
       );
 
+      let createInlineStringSelectMenu = function (cfg: Omit<TDBIStringSelectMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return StringSelectMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let UserSelectMenu = function (
         cfg: TDBIUserSelectMenuOmitted<TNamespace>
       ) {
@@ -523,8 +618,7 @@ export class DBI<
           self.data.interactions.has(dbiUserSelectMenu.name)
         )
           throw new Error(
-            `DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${
-              self.data.interactions.get(dbiUserSelectMenu.name)?.type
+            `DBIUserSelectMenu "${dbiUserSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiUserSelectMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -542,6 +636,11 @@ export class DBI<
         }
       );
 
+      let createInlineUserSelectMenu = function (cfg: Omit<TDBIUserSelectMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return UserSelectMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let RoleSelectMenu = function (
         cfg: TDBIRoleSelectMenuOmitted<TNamespace>
       ) {
@@ -551,8 +650,7 @@ export class DBI<
           self.data.interactions.has(dbiRoleSelectMenu.name)
         )
           throw new Error(
-            `DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${
-              self.data.interactions.get(dbiRoleSelectMenu.name)?.type
+            `DBIRoleSelectMenu "${dbiRoleSelectMenu.name}" already loaded as "${self.data.interactions.get(dbiRoleSelectMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -570,6 +668,11 @@ export class DBI<
         }
       );
 
+      let createInlineRoleSelectMenu = function (cfg: Omit<TDBIRoleSelectMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return RoleSelectMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let ChannelSelectMenu = function (
         cfg: TDBIChannelSelectMenuOmitted<TNamespace>
       ) {
@@ -579,10 +682,8 @@ export class DBI<
           self.data.interactions.has(dbiChannelSelectMenu.name)
         )
           throw new Error(
-            `DBIChannelSelectMenu "${
-              dbiChannelSelectMenu.name
-            }" already loaded as "${
-              self.data.interactions.get(dbiChannelSelectMenu.name)?.type
+            `DBIChannelSelectMenu "${dbiChannelSelectMenu.name
+            }" already loaded as "${self.data.interactions.get(dbiChannelSelectMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -600,6 +701,11 @@ export class DBI<
         }
       );
 
+      let createInlineChannelSelectMenu = function (cfg: Omit<TDBIChannelSelectMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return ChannelSelectMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let MentionableSelectMenu = function (
         cfg: TDBIMentionableSelectMenuOmitted<TNamespace>
       ) {
@@ -612,10 +718,8 @@ export class DBI<
           self.data.interactions.has(dbiMentionableSelectMenu.name)
         )
           throw new Error(
-            `DBIMentionableSelectMenu "${
-              dbiMentionableSelectMenu.name
-            }" already loaded as "${
-              self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
+            `DBIMentionableSelectMenu "${dbiMentionableSelectMenu.name
+            }" already loaded as "${self.data.interactions.get(dbiMentionableSelectMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -633,6 +737,11 @@ export class DBI<
         }
       );
 
+      let createInlineMentionableSelectMenu = function (cfg: Omit<TDBIMentionableSelectMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return MentionableSelectMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let MessageContextMenu = function (
         cfg: TDBIMessageContextMenuOmitted<TNamespace>
       ) {
@@ -642,10 +751,8 @@ export class DBI<
           self.data.interactions.has(dbiMessageContextMenu.name)
         )
           throw new Error(
-            `DBIMessageContextMenu "${
-              dbiMessageContextMenu.name
-            }" already loaded as "${
-              self.data.interactions.get(dbiMessageContextMenu.name)?.type
+            `DBIMessageContextMenu "${dbiMessageContextMenu.name
+            }" already loaded as "${self.data.interactions.get(dbiMessageContextMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -663,6 +770,11 @@ export class DBI<
         }
       );
 
+      let createInlineMessageContextMenu = function (cfg: Omit<TDBIMessageContextMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return MessageContextMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let UserContextMenu = function (
         cfg: TDBIUserContextMenuOmitted<TNamespace>
       ) {
@@ -672,10 +784,8 @@ export class DBI<
           self.data.interactions.has(dbiUserContextMenu.name)
         )
           throw new Error(
-            `DBIUserContextMenu "${
-              dbiUserContextMenu.name
-            }" already loaded as "${
-              self.data.interactions.get(dbiUserContextMenu.name)?.type
+            `DBIUserContextMenu "${dbiUserContextMenu.name
+            }" already loaded as "${self.data.interactions.get(dbiUserContextMenu.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
@@ -693,12 +803,16 @@ export class DBI<
         }
       );
 
+      let createInlineUserContextMenu = function (cfg: Omit<TDBIUserContextMenuOmitted<TNamespace>, "id" | "name">) {
+        let id = randomInlineId();
+        return UserContextMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
+
       let Modal = function (cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
         if (self.config.strict && self.data.interactions.has(dbiModal.name))
           throw new Error(
-            `DBIModal "${dbiModal.name}" already loaded as "${
-              self.data.interactions.get(dbiModal.name)?.type
+            `DBIModal "${dbiModal.name}" already loaded as "${self.data.interactions.get(dbiModal.name)?.type
             }"!`
           );
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiModal.name, dbiModal as any);
@@ -712,6 +826,11 @@ export class DBI<
           }
         }
       );
+
+      let createInlineModal = function (cfg: Omit<TDBIModalOmitted<TNamespace>, "name" | "id">) {
+        let id = randomInlineId();
+        return Modal({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
+      }
 
       let Locale = function (cfg: TDBILocaleConstructor<TNamespace>) {
         let dbiLocale = new DBILocale(self as any, cfg);
@@ -793,6 +912,16 @@ export class DBI<
         CustomEvent,
         Modal,
         InteractionLocale,
+        createInlineButton,
+        createInlineEvent,
+        createInlineStringSelectMenu,
+        createInlineUserSelectMenu,
+        createInlineRoleSelectMenu,
+        createInlineChannelSelectMenu,
+        createInlineMentionableSelectMenu,
+        createInlineMessageContextMenu,
+        createInlineUserContextMenu,
+        createInlineModal,
         onUnload(cb: () => Promise<any> | any) {
           self.data.registerUnloaders.add(cb);
         },

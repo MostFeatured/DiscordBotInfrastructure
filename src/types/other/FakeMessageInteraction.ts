@@ -319,7 +319,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 
   async deferReply(options: any): Promise<any> {
     if (this.repliedMessage) throw new Error("Already deferred reply.");
-    this.repliedMessage = await this.message.reply(options?.content ?? "Loading...");
+    this.repliedMessage = await this.message.reply(options?.content ?? (await this.dbi.config.defaults.messageCommands.deferReplyContent(this)));
     this.deferred = true;
     this._lastAction = "deferReply";
     return this.repliedMessage;

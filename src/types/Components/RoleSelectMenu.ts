@@ -12,7 +12,7 @@ export interface IDBIRoleSelectMenuExecuteCtx<TNamespace extends NamespaceEnums>
   data: TDBIReferencedData[];
 }
 
-export type TDBIRoleSelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIRoleSelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder">;
+export type TDBIRoleSelectMenuOmitted<TNamespace extends NamespaceEnums> = Omit<DBIRoleSelectMenu<TNamespace>, "type" | "description" | "dbi" | "toJSON" | "createBuilder" | "at">;
 
 export type SelectMenuDefaultOptions = Omit<Discord.RoleSelectMenuComponentData, "customId" | "type" | "options">;
 
