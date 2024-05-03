@@ -24,7 +24,7 @@ export class DBIChannelSelectMenu<TNamespace extends NamespaceEnums> extends DBI
     });
   }
 
-  declare options: SelectMenuDefaultOptions;
+  declare options?: SelectMenuDefaultOptions;
 
   override onExecute(ctx: IDBIChannelSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 

@@ -91,6 +91,52 @@ export async function handleMessageCommands(
     usedPrefix
   );
 
+  const { defaultMemberPermissions, directMessages } = chatInput as any;
+
+  if (typeof directMessages !== "undefined" && !directMessages && !message.guild) {
+    const res = await dbi.events.trigger(
+      "messageCommandDirectMessageUsageError", {
+      interaction,
+      message,
+      locale: {
+        user:
+          dbi.data.locales.get(interaction.locale) ||
+          dbi.data.locales.get(dbi.config.defaults.locale),
+        guild: message.guild?.preferredLocale
+          ? dbi.data.locales.get(
+            message.guild?.preferredLocale?.split("-")?.at(0)
+          ) || dbi.data.locales.get(dbi.config.defaults.locale)
+          : null,
+      },
+      dbiInteraction: chatInput
+    });
+    if (!res) return;
+  }
+
+  if (Array.isArray(defaultMemberPermissions) && message.guild && message.member) {
+    const perms = message.member.permissions.toArray();
+    if (!defaultMemberPermissions.every((p) => perms.includes(p))) {
+      const res = await dbi.events.trigger(
+        "messageCommandDefaultMemberPermissionsError", {
+        interaction,
+        message,
+        locale: {
+          user:
+            dbi.data.locales.get(interaction.locale) ||
+            dbi.data.locales.get(dbi.config.defaults.locale),
+          guild: message.guild?.preferredLocale
+            ? dbi.data.locales.get(
+              message.guild?.preferredLocale?.split("-")?.at(0)
+            ) || dbi.data.locales.get(dbi.config.defaults.locale)
+            : null,
+        },
+        dbiInteraction: chatInput,
+        permissions: defaultMemberPermissions
+      });
+      if (!res) return;
+    }
+  }
+
   if (chatInput.options.length) {
     let errorType: TDBIMessageCommandArgumentErrorTypes;
     let lastOption: any;
@@ -354,7 +400,7 @@ export async function handleMessageCommands(
         case ApplicationCommandOptionType.User: {
           await message.client.users
             .fetch(interaction.options.getUserId(option.name))
-            .catch(() => {});
+            .catch(() => { });
           if (option.required && !interaction.options.getUser(option.name)) {
             errorType = "InvalidUser";
             break;
@@ -364,7 +410,7 @@ export async function handleMessageCommands(
         case ApplicationCommandOptionType.Channel: {
           await message.client.channels
             .fetch(interaction.options.getChannelId(option.name))
-            .catch(() => {});
+            .catch(() => { });
           if (
             option.required &&
             !interaction.options.getChannel(
@@ -381,7 +427,7 @@ export async function handleMessageCommands(
         case ApplicationCommandOptionType.Role: {
           await message.guild.roles
             .fetch(interaction.options.getRoleId(option.name))
-            .catch(() => {});
+            .catch(() => { });
           if (option.required && !interaction.options.getRole(option.name)) {
             errorType = "InvalidRole";
             break;
@@ -390,9 +436,9 @@ export async function handleMessageCommands(
         }
         case ApplicationCommandOptionType.Mentionable: {
           let mentionableId = interaction.options.getMentionableId(option.name);
-          await message.guild.roles.fetch(mentionableId).catch(() => {});
-          await message.client.channels.fetch(mentionableId).catch(() => {});
-          await message.client.users.fetch(mentionableId).catch(() => {});
+          await message.guild.roles.fetch(mentionableId).catch(() => { });
+          await message.client.channels.fetch(mentionableId).catch(() => { });
+          await message.client.users.fetch(mentionableId).catch(() => { });
           if (
             option.required &&
             !interaction.options.getMentionable(option.name)
@@ -430,8 +476,8 @@ export async function handleMessageCommands(
             dbi.data.locales.get(dbi.config.defaults.locale),
           guild: message.guild?.preferredLocale
             ? dbi.data.locales.get(
-                message.guild?.preferredLocale?.split("-")?.at(0)
-              ) || dbi.data.locales.get(dbi.config.defaults.locale)
+              message.guild?.preferredLocale?.split("-")?.at(0)
+            ) || dbi.data.locales.get(dbi.config.defaults.locale)
             : null,
         },
         error: {
@@ -441,6 +487,7 @@ export async function handleMessageCommands(
           index: lastIndex,
         },
         value: lastValue,
+        dbiInteraction: chatInput,
       });
       if (!res) return;
     }

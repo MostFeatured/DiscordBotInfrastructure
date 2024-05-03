@@ -1,12 +1,13 @@
 import { NamespaceEnums, NamespaceData } from "../generated/namespaceData";
 import { DBI } from "./DBI";
 import { TDBIMessageCommandArgumentErrorTypes } from "./methods/handleMessageCommands";
+import { DBIChatInput } from "./types/ChatInput/ChatInput";
 import { TDBIValueName } from "./types/ChatInput/ChatInputOptions";
 import { ClientEvents, DBIEvent } from "./types/Event";
 import { IDBIBaseExecuteCtx, TDBIRateLimitTypes } from "./types/Interaction";
 import { FakeMessageInteraction } from "./types/other/FakeMessageInteraction";
 import { DBILocale } from "./types/other/Locale";
-import Discord from "discord.js";
+import Discord, { PermissionsString } from "discord.js";
 
 export type TDBIEventNames =
   | "beforeInteraction"
@@ -16,7 +17,9 @@ export type TDBIEventNames =
   | "afterEvent"
   | "interactionError"
   | "eventError"
-  | "messageCommandArgumentError";
+  | "messageCommandArgumentError"
+  | "messageCommandDirectMessageUsageError"
+  | "messageCommandDefaultMemberPermissionsError";
 
 export type TDBIEventHandlerCtx<TNamespace extends NamespaceEnums> = {
   [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
@@ -46,7 +49,7 @@ export class Events<TNamespace extends NamespaceEnums> {
 
   async trigger(name: TDBIEventNames, data: any): Promise<boolean> {
     let handlers = this.handlers[name];
-    if (!handlers) return true;
+    if (!handlers?.length) return true;
     for (let i = 0; i < handlers.length; i++) {
       const handler = handlers[i];
       let returned = await handler(data);
@@ -113,6 +116,30 @@ export class Events<TNamespace extends NamespaceEnums> {
       };
       value: any;
       locale: { guild?: DBILocale<TNamespace>; user: DBILocale<TNamespace> };
+      dbiInteraction: DBIChatInput<TNamespace>;
+    }) => Promise<boolean> | boolean,
+    options?: { once: boolean }
+  ): () => any;
+
+  on(
+    eventName: "messageCommandDefaultMemberPermissionsError",
+    handler: (data: {
+      message: Discord.Message;
+      interaction: FakeMessageInteraction;
+      locale: { guild?: DBILocale<TNamespace>; user: DBILocale<TNamespace> };
+      permissions: PermissionsString[];
+      dbiInteraction: DBIChatInput<TNamespace>;
+    }) => Promise<boolean> | boolean,
+    options?: { once: boolean }
+  ): () => any;
+
+  on(
+    eventName: "messageCommandDirectMessageUsageError",
+    handler: (data: {
+      message: Discord.Message;
+      interaction: FakeMessageInteraction;
+      locale: { guild?: DBILocale<TNamespace>; user: DBILocale<TNamespace> };
+      dbiInteraction: DBIChatInput<TNamespace>;
     }) => Promise<boolean> | boolean,
     options?: { once: boolean }
   ): () => any;

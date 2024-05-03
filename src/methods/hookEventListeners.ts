@@ -1,6 +1,7 @@
 import { Guild } from "discord.js";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI } from "../DBI";
+import { TDBIEventOrder } from "../types/Event";
 
 export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
 
@@ -40,25 +41,27 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
     let locale = guildLocale ? { guild: guildLocale } : null;
 
 
-    let ordered = [];
-    let unOrdered = [];
+    let awaitedEvents = [];
+    let unAwaitedEvents = [];
     for (let i = 0; i < dbi.data.events.size; i++) {
       const value = dbi.data.events.at(i);
       if (value.name == eventName) {
-        if (value.ordered) {
-          ordered.push(value);
+        if (value.ordered?.await) {
+          awaitedEvents.push(value);
         } else {
-          unOrdered.push(value);
+          unAwaitedEvents.push(value);
         }
       }
     }
 
     let arg = { eventName, ...ctxArgs, other, locale };
 
-    for (let i = 0; i < unOrdered.length; i++) {
-      const value = unOrdered[i];
+    for (let i = 0; i < unAwaitedEvents.length; i++) {
+      const value = unAwaitedEvents[i];
 
       if (value?.disabled) continue;
+
+      if (value.ordered?.delayBefore) await new Promise(resolve => setTimeout(resolve, value.ordered.delayBefore));
 
       if (!(await dbi.events.trigger("beforeEvent", { ...arg, dbiEvent: value }))) continue;
 
@@ -73,14 +76,17 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
           dbi.events.trigger("eventError", { ...arg, error, dbiEvent: value });
         }
       }
+      if (value.ordered?.delayAfter) await new Promise(resolve => setTimeout(resolve, value.ordered.delayAfter));
     }
 
-    for (let i = 0; i < ordered.length; i++) {
-      const value = ordered[i];
+    for (let i = 0; i < awaitedEvents.length; i++) {
+      const value = awaitedEvents[i];
 
       if (value?.disabled) continue;
 
       if (!(await dbi.events.trigger("beforeEvent", { ...arg, dbiEvent: value }))) continue;
+
+      if (value.ordered?.delayBefore) await new Promise(resolve => setTimeout(resolve, value.ordered.delayBefore));
 
       if (dbi.config.strict) {
         await value.onExecute({ ...arg, nextClient: getClientByEvent(value) });
@@ -93,6 +99,7 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
           await dbi.events.trigger("eventError", { ...arg, error, dbiEvent: value });
         }
       }
+      if (value.ordered?.delayAfter) await new Promise(resolve => setTimeout(resolve, value.ordered.delayAfter));
     }
 
     dbi.events.trigger("afterEvent", arg)

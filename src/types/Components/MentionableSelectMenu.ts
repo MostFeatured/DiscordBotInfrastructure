@@ -24,7 +24,7 @@ export class DBIMentionableSelectMenu<TNamespace extends NamespaceEnums> extends
     });
   }
 
-  declare options: SelectMenuDefaultOptions;
+  declare options?: SelectMenuDefaultOptions;
 
   override onExecute(ctx: IDBIMentionableSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 

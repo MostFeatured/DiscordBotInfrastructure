@@ -28,7 +28,7 @@ export class DBIModal<TNamespace extends NamespaceEnums> extends DBIBaseInteract
     });
   }
 
-  declare options: ModalComponentData;
+  declare options?: ModalComponentData;
 
   override onExecute(ctx: IDBIModalExecuteCtx<TNamespace>): Promise<void> | void { };
 

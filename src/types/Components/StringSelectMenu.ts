@@ -24,7 +24,7 @@ export class DBIStringSelectMenu<TNamespace extends NamespaceEnums> extends DBIB
     });
   }
 
-  declare options: SelectMenuDefaultOptions;
+  declare options?: SelectMenuDefaultOptions;
 
   override onExecute(ctx: IDBIStringSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
 

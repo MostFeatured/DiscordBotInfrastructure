@@ -102,6 +102,12 @@ export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
 
 export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi" | "toggle" | "disabled" | "at"> & { disabled?: boolean } & DBIEventCombinations<TNamespace>;
 
+export type TDBIEventOrder = {
+  await?: boolean;
+  delayBefore?: number;
+  delayAfter?: number;
+}
+
 export class DBIEvent<TNamespace extends NamespaceEnums> {
   readonly type: "Event";
   other?: Record<string, any>;
@@ -109,7 +115,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
   id?: string;
   name: string;
   onExecute: (...args: any[]) => any;
-  ordered?: boolean;
+  ordered?: TDBIEventOrder;
   dbi: DBI<TNamespace>;
   disabled: boolean = false;
   flag?: string;
@@ -122,7 +128,7 @@ export class DBIEvent<TNamespace extends NamespaceEnums> {
     this.other = cfg.other;
     this.name = cfg.name as any;
     this.onExecute = cfg.onExecute;
-    this.ordered = cfg.ordered ?? false;
+    this.ordered = cfg.ordered;
     this.triggerType = cfg.triggerType ?? "OneByOneGlobal";
     this.disabled ??= cfg.disabled;
     this.flag = cfg.flag;
