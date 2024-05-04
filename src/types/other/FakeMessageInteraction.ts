@@ -43,7 +43,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   _initialized: boolean = false;
   _lastAction: string | undefined;
 
-  constructor(private dbi: DBI<NamespaceEnums>, private message: Message, chatInput: TDBIInteractions<NamespaceEnums>, public locale: string, commandName: string, private usedPrefix: string) {
+  constructor(public dbi: DBI<NamespaceEnums>, public message: Message, chatInput: TDBIInteractions<NamespaceEnums>, public locale: string, commandName: string, public usedPrefix: string) {
     const self = this;
 
     this.channelId = message.channel.id;
@@ -319,7 +319,20 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
 
   async deferReply(options: any): Promise<any> {
     if (this.repliedMessage) throw new Error("Already deferred reply.");
-    this.repliedMessage = await this.message.reply(options?.content ?? (await this.dbi.config.defaults.messageCommands.deferReplyContent(this)));
+    this.repliedMessage = await this.message.reply(options?.content ?? (await this.dbi.config.defaults.messageCommands.deferReplyContent({
+      // @ts-ignore
+      dbiInteraction: this.dbiChatInput,
+      interaction: this,
+      locale: {
+        user: this.dbi.data.locales.get(this.locale) ||
+          this.dbi.data.locales.get(this.dbi.config.defaults.locale),
+        guild: this.message.guild?.preferredLocale
+          ? this.dbi.data.locales.get(
+            this.message.guild?.preferredLocale?.split("-")?.at(0)
+          ) || this.dbi.data.locales.get(this.dbi.config.defaults.locale)
+          : null,
+      }
+    })));
     this.deferred = true;
     this._lastAction = "deferReply";
     return this.repliedMessage;

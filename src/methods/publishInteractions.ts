@@ -4,7 +4,7 @@ import { REST } from "@discordjs/rest";
 import { Routes, RESTGetAPIUserResult, RESTPutAPIApplicationCommandsJSONBody, ApplicationCommandType, ApplicationCommandOptionType } from "discord-api-types/v9";
 import { reducePermissions } from "../utils/permissions";
 import snakecaseKeys from "snakecase-keys";
-import { DBI, DBIClientData } from "../DBI";
+import { DBI, TDBIClientData } from "../DBI";
 import { DBIInteractionLocale } from "../types/other/InteractionLocale";
 import { NamespaceEnums } from "../../generated/namespaceData";
 import { ApplicationRoleConnectionMetadataType, ApplicationRoleConnectionMetadata } from "../types/ApplicationRoleConnectionMetadata";
@@ -13,7 +13,7 @@ const PUBLISHABLE_TYPES = ["ChatInput", "UserContextMenu", "MessageContextMenu"]
 const ORIGINAL_LOCALES = ["da", "de", "en-GB", "en-US", "es-ES", "fr", "hr", "it", "lt", "hu", "nl", "no", "pl", "pt-BR", "ro", "fi", "sv-SE", "vi", "tr", "cs", "el", "bg", "ru", "uk", "hi", "th", "zh-CN", "ja", "zh-TW", "ko"];
 
 export async function publishInteractions(
-  clients: DBIClientData<NamespaceEnums>[],
+  clients: TDBIClientData<NamespaceEnums>[],
   interactions: Discord.Collection<string, DBIChatInput<NamespaceEnums>>,
   interactionsLocales: Discord.Collection<string, DBIInteractionLocale>,
   publishType: "Guild" | "Global",
@@ -22,7 +22,7 @@ export async function publishInteractions(
   interactions = interactions.filter(i => PUBLISHABLE_TYPES.includes(i.type));
   interactions = interactions.sort((a, b) => b.name.split(" ").length - a.name.split(" ").length);
 
-  let body: {[k: string]: RESTPutAPIApplicationCommandsJSONBody} =
+  let body: { [k: string]: RESTPutAPIApplicationCommandsJSONBody } =
     interactions.reduce((all, current) => {
       if (current.publish && !all[current.publish]) all[current.publish] = [];
       switch (current.type) {
@@ -165,16 +165,16 @@ export async function publishInteractions(
       }
 
       return all;
-    }, {} as {[k: string]: any});
-    
+    }, {} as { [k: string]: any });
+
 
   for (let i = 0; i < clients.length; i++) {
     const client = clients[i];
     const rest = new REST({ version: "10" });
     rest.setToken(client.token);
-  
+
     const me: RESTGetAPIUserResult = await rest.get(Routes.user()) as any;
-  
+
     switch (publishType) {
       case "Guild": {
         await rest.put(Routes.applicationGuildCommands(me.id, guildId), { body: body[client.namespace] || [] });
@@ -186,7 +186,7 @@ export async function publishInteractions(
       }
     }
   }
-  
+
 }
 
 export function localeifyOptions(options: any[], localeData: any): any[] {
@@ -237,7 +237,7 @@ export function formatLocale(locale: DBIInteractionLocale): any {
           if (!optionLocale.choiceLocales) optionLocale.choiceLocales = {};
           if (!optionLocale.choiceLocales[choiceOriginalName]) optionLocale.choiceLocales[choiceOriginalName] = {};
           let choiceLocale = optionLocale.choiceLocales[choiceOriginalName];
-          
+
           choiceLocale[longLocale] = choiceName;
         });
 
@@ -246,7 +246,7 @@ export function formatLocale(locale: DBIInteractionLocale): any {
       })
     });
   });
-  
+
   return {
     nameLocales,
     allNameLocales,

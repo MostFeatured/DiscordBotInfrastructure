@@ -10,7 +10,7 @@ import { recursiveUnload } from "./utils/recursiveUnload";
 
 export const generatedPath = path.resolve(__dirname, "../generated");
 
-export function createDBI<TNamespace extends NamespaceEnums, TOtherType = Record<string, any>>(namespace: TNamespace, cfg: DBIConfigConstructor): DBI<TNamespace, TOtherType> {
+export function createDBI<TNamespace extends NamespaceEnums, TOtherType = Record<string, any>>(namespace: TNamespace, cfg: DBIConfigConstructor<TNamespace>): DBI<TNamespace, TOtherType> {
   return new DBI<TNamespace, TOtherType>(namespace, cfg);
 };
 

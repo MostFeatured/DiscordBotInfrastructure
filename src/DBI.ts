@@ -69,14 +69,24 @@ export interface DBIStore {
   has(key: string): Promise<boolean>;
 }
 
-export type DBIClientData<TNamespace extends NamespaceEnums> = {
+export type TDBIClientData<TNamespace extends NamespaceEnums> = {
   namespace: NamespaceData[TNamespace]["clientNamespaces"];
   token: string;
   options: Discord.ClientOptions;
   client: Discord.Client<true>;
 };
 
-export interface DBIConfig {
+export type TDBIMessageCommandsActionCtx<TNamespace extends NamespaceEnums> = {
+  interaction: FakeMessageInteraction;
+  dbiInteraction: DBIChatInput<TNamespace>;
+  locale: { guild?: DBILocale<TNamespace>; user: DBILocale<TNamespace> };
+}
+
+export type TDBIMessageCommandsPrefixesCtx = {
+  message: Discord.Message;
+};
+
+export interface DBIConfig<TNamespace extends NamespaceEnums> {
   discord: {
     namespace: string;
     token: string;
@@ -87,7 +97,7 @@ export interface DBIConfig {
     directMessages: boolean;
     defaultMemberPermissions: Discord.PermissionsString[];
     messageCommands: {
-      deferReplyContent(interaction: FakeMessageInteraction): MessagePayload | string | Promise<MessagePayload | string>;
+      deferReplyContent(ctx: TDBIMessageCommandsActionCtx<TNamespace>): MessagePayload | string | Promise<MessagePayload | string>;
     };
   };
 
@@ -113,14 +123,14 @@ export interface DBIConfig {
 
   strict: boolean;
   messageCommands?: {
-    prefixes: string[];
+    prefixes(ctx: TDBIMessageCommandsPrefixesCtx): string[] | Promise<string[]>;
     typeAliases: {
       booleans: Record<string, boolean>;
     };
   };
 }
 
-export interface DBIConfigConstructor {
+export interface DBIConfigConstructor<TNamespace extends NamespaceEnums> {
   discord:
   | {
     token: string;
@@ -137,7 +147,7 @@ export interface DBIConfigConstructor {
     directMessages?: boolean;
     defaultMemberPermissions?: Discord.PermissionsString[];
     messageCommands?: {
-      deferReplyContent?: MessagePayload | string | ((interaction: FakeMessageInteraction) => MessagePayload | string | Promise<MessagePayload | string>);
+      deferReplyContent?: MessagePayload | string | ((ctx: TDBIMessageCommandsActionCtx<TNamespace>) => MessagePayload | string | Promise<MessagePayload | string>);
     };
   };
 
@@ -169,7 +179,7 @@ export interface DBIConfigConstructor {
   strict?: boolean;
 
   messageCommands?: {
-    prefixes: string[];
+    prefixes: string[] | ((ctx: TDBIMessageCommandsPrefixesCtx) => string[] | Promise<string[]>);
     typeAliases?: {
       /**
        * Example: {"yes": true, "no": false}
@@ -245,7 +255,7 @@ export class DBI<
   TOtherData = Record<string, any>
 > {
   namespace: TNamespace;
-  config: DBIConfig;
+  config: DBIConfig<TNamespace>;
   data: {
     interactions: Discord.Collection<string, TDBIInteractions<TNamespace>>;
     events: Discord.Collection<string, DBIEvent<TNamespace>>;
@@ -258,14 +268,14 @@ export class DBI<
     registers: Set<(...args: any[]) => any>;
     registerUnloaders: Set<(...args: any[]) => any>;
     refs: Map<string, { at: number; value: any; ttl?: number }>;
-    clients: DBIClientData<TNamespace>[] & {
-      next(key?: string): DBIClientData<TNamespace>;
-      random(): DBIClientData<TNamespace>;
-      random(size: number): DBIClientData<TNamespace>[];
-      first(): DBIClientData<TNamespace>;
+    clients: TDBIClientData<TNamespace>[] & {
+      next(key?: string): TDBIClientData<TNamespace>;
+      random(): TDBIClientData<TNamespace>;
+      random(size: number): TDBIClientData<TNamespace>[];
+      first(): TDBIClientData<TNamespace>;
       get(
         namespace: NamespaceData[TNamespace]["clientNamespaces"]
-      ): DBIClientData<TNamespace>;
+      ): TDBIClientData<TNamespace>;
       indexes: Record<string, number>;
     };
   };
@@ -273,7 +283,7 @@ export class DBI<
   cluster?: Sharding.ClusterClient<Discord.Client>;
   private _loaded: boolean;
   private _hooked: boolean;
-  constructor(namespace: TNamespace, config: DBIConfigConstructor) {
+  constructor(namespace: TNamespace, config: DBIConfigConstructor<TNamespace>) {
     this.namespace = namespace as any;
     const self = this;
 
@@ -306,11 +316,14 @@ export class DBI<
     };
 
     if (config.messageCommands) {
-      if (config.strict && !config.messageCommands?.prefixes?.length)
-        throw new Error("No message command prefixes provided.");
+      const { prefixes, typeAliases } = config.messageCommands;
 
-      let { typeAliases } = config.messageCommands;
+      if (Array.isArray(prefixes) && this.config.strict && !prefixes.length)
+        throw new Error("No prefixes provided.");
 
+      const prefixesFn = typeof prefixes === "function" ? prefixes : () => prefixes;
+
+      config.messageCommands.prefixes = prefixesFn;
       config.messageCommands.typeAliases = {
         booleans: typeAliases.booleans ?? {
           true: true,
@@ -955,7 +968,7 @@ export class DBI<
 
   client<TClientName extends NamespaceData[TNamespace]["clientNamespaces"]>(
     name?: TClientName
-  ): DBIClientData<TNamespace> {
+  ): TDBIClientData<TNamespace> {
     return name ? this.data.clients.get(name) : this.data.clients.first();
   }
   /**

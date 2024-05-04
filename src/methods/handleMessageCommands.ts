@@ -38,8 +38,8 @@ export async function handleMessageCommands(
   const chatInputs = dbi.data.interactions.filter(
     (i) => i.type === "ChatInput"
   );
-  const prefixes = dbi.config.messageCommands.prefixes ?? [];
-  if (!prefixes.length) return;
+  const prefixes = await dbi.config.messageCommands.prefixes({ message });
+  if (!prefixes?.length) return;
   const content = message.content;
   const usedPrefix = prefixes.find((p) => content.startsWith(p));
   if (!usedPrefix) return;
@@ -91,6 +91,17 @@ export async function handleMessageCommands(
     usedPrefix
   );
 
+  const builtLocale = {
+    user:
+      dbi.data.locales.get(interaction.locale) ||
+      dbi.data.locales.get(dbi.config.defaults.locale),
+    guild: message.guild?.preferredLocale
+      ? dbi.data.locales.get(
+        message.guild?.preferredLocale?.split("-")?.at(0)
+      ) || dbi.data.locales.get(dbi.config.defaults.locale)
+      : null,
+  };
+
   const { defaultMemberPermissions, directMessages } = chatInput as any;
 
   if (typeof directMessages !== "undefined" && !directMessages && !message.guild) {
@@ -98,16 +109,7 @@ export async function handleMessageCommands(
       "messageCommandDirectMessageUsageError", {
       interaction,
       message,
-      locale: {
-        user:
-          dbi.data.locales.get(interaction.locale) ||
-          dbi.data.locales.get(dbi.config.defaults.locale),
-        guild: message.guild?.preferredLocale
-          ? dbi.data.locales.get(
-            message.guild?.preferredLocale?.split("-")?.at(0)
-          ) || dbi.data.locales.get(dbi.config.defaults.locale)
-          : null,
-      },
+      locale: builtLocale,
       dbiInteraction: chatInput
     });
     if (!res) return;
@@ -120,16 +122,7 @@ export async function handleMessageCommands(
         "messageCommandDefaultMemberPermissionsError", {
         interaction,
         message,
-        locale: {
-          user:
-            dbi.data.locales.get(interaction.locale) ||
-            dbi.data.locales.get(dbi.config.defaults.locale),
-          guild: message.guild?.preferredLocale
-            ? dbi.data.locales.get(
-              message.guild?.preferredLocale?.split("-")?.at(0)
-            ) || dbi.data.locales.get(dbi.config.defaults.locale)
-            : null,
-        },
+        locale: builtLocale,
         dbiInteraction: chatInput,
         permissions: defaultMemberPermissions
       });
@@ -470,16 +463,7 @@ export async function handleMessageCommands(
       let res = await dbi.events.trigger("messageCommandArgumentError", {
         interaction,
         message,
-        locale: {
-          user:
-            dbi.data.locales.get(interaction.locale) ||
-            dbi.data.locales.get(dbi.config.defaults.locale),
-          guild: message.guild?.preferredLocale
-            ? dbi.data.locales.get(
-              message.guild?.preferredLocale?.split("-")?.at(0)
-            ) || dbi.data.locales.get(dbi.config.defaults.locale)
-            : null,
-        },
+        locale: builtLocale,
         error: {
           type: errorType,
           option: lastOption,

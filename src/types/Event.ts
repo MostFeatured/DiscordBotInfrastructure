@@ -1,6 +1,6 @@
 import Discord from "discord.js";
 import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
-import { DBI, DBIClientData } from "../DBI";
+import { DBI, TDBIClientData } from "../DBI";
 import { DBILocale } from "./other/Locale";
 export interface ClientEvents {
   applicationCommandPermissionsUpdate: { data: Discord.ApplicationCommandPermissionsUpdateData };
@@ -96,7 +96,7 @@ export interface ClientEvents {
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
   [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
     name: K,
-    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string, nextClient: DBIClientData<TNamespace> }) => Promise<any> | any
+    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string, nextClient: TDBIClientData<TNamespace> }) => Promise<any> | any
   }
 }[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
 
