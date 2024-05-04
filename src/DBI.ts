@@ -318,7 +318,7 @@ export class DBI<
     if (config.messageCommands) {
       const { prefixes, typeAliases } = config.messageCommands;
 
-      if (Array.isArray(prefixes) && this.config.strict && !prefixes.length)
+      if (Array.isArray(prefixes) && config.strict && !prefixes.length)
         throw new Error("No prefixes provided.");
 
       const prefixesFn = typeof prefixes === "function" ? prefixes : () => prefixes;
