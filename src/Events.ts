@@ -19,7 +19,8 @@ export type TDBIEventNames =
   | "eventError"
   | "messageCommandArgumentError"
   | "messageCommandDirectMessageUsageError"
-  | "messageCommandDefaultMemberPermissionsError";
+  | "messageCommandDefaultMemberPermissionsError"
+  | "clientsReady";
 
 export type TDBIEventHandlerCtx<TNamespace extends NamespaceEnums> = {
   [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
@@ -47,7 +48,7 @@ export class Events<TNamespace extends NamespaceEnums> {
     };
   }
 
-  async trigger(name: TDBIEventNames, data: any): Promise<boolean> {
+  async trigger(name: TDBIEventNames, data?: any): Promise<boolean> {
     let handlers = this.handlers[name];
     if (!handlers?.length) return true;
     for (let i = 0; i < handlers.length; i++) {
@@ -57,6 +58,12 @@ export class Events<TNamespace extends NamespaceEnums> {
     }
     return true;
   }
+
+  on(
+    eventName: "clientsReady",
+    handler: () => any,
+    options?: { once: boolean }
+  ): () => any;
 
   on(
     eventName: "beforeInteraction" | "afterInteraction",
