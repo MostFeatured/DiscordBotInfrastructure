@@ -1030,7 +1030,7 @@ export class DBI<
         this.config.sharding == "default" ? null : clientContext.token
       );
     });
-    await this.events.trigger("clientsReady");
+    this.events.trigger("clientsReady", undefined, true);
   }
 
   async register(cb: (api: DBIRegisterAPI<TNamespace>) => void): Promise<any> {

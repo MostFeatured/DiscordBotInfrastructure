@@ -48,13 +48,17 @@ export class Events<TNamespace extends NamespaceEnums> {
     };
   }
 
-  async trigger(name: TDBIEventNames, data?: any): Promise<boolean> {
+  async trigger(name: TDBIEventNames, data?: any, ignoreResponse = false): Promise<boolean> {
     let handlers = this.handlers[name];
     if (!handlers?.length) return true;
     for (let i = 0; i < handlers.length; i++) {
       const handler = handlers[i];
-      let returned = await handler(data);
-      if (returned !== true) return false;
+      if (!ignoreResponse) {
+        let returned = await handler(data);
+        if (returned !== true) return false;
+      } else {
+        handler(data);
+      }
     }
     return true;
   }
