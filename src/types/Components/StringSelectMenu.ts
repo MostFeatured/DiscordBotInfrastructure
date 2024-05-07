@@ -26,7 +26,7 @@ export class DBIStringSelectMenu<TNamespace extends NamespaceEnums> extends DBIB
 
   declare options?: SelectMenuDefaultOptions;
 
-  override onExecute(ctx: IDBIStringSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
+  override onExecute(ctx: IDBIStringSelectMenuExecuteCtx<TNamespace>) { };
 
   override toJSON(arg: IDBIToJSONArgs<DBIStringSelectMenuOverrides> = {}): Discord.StringSelectMenuComponentData {
     return {

@@ -239,12 +239,6 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   createInlineMentionableSelectMenu(
     cfg: Omit<TDBIMentionableSelectMenuOmitted<TNamespace>, "id" | "name">
   ): DBIMentionableSelectMenu<TNamespace>;
-  createInlineMessageContextMenu(
-    cfg: Omit<TDBIMessageContextMenuOmitted<TNamespace>, "id" | "name">
-  ): DBIMessageContextMenu<TNamespace>;
-  createInlineUserContextMenu(
-    cfg: Omit<TDBIUserContextMenuOmitted<TNamespace>, "id" | "name">
-  ): DBIUserContextMenu<TNamespace>;
   createInlineModal(cfg: Omit<TDBIModalOmitted<TNamespace>, "id" | "name">): DBIModal<TNamespace>;
 
   onUnload(cb: () => Promise<any> | any): any;
@@ -783,11 +777,6 @@ export class DBI<
         }
       );
 
-      let createInlineMessageContextMenu = function (cfg: Omit<TDBIMessageContextMenuOmitted<TNamespace>, "id" | "name">) {
-        let id = randomInlineId();
-        return MessageContextMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
-      }
-
       let UserContextMenu = function (
         cfg: TDBIUserContextMenuOmitted<TNamespace>
       ) {
@@ -815,11 +804,6 @@ export class DBI<
           }
         }
       );
-
-      let createInlineUserContextMenu = function (cfg: Omit<TDBIUserContextMenuOmitted<TNamespace>, "id" | "name">) {
-        let id = randomInlineId();
-        return UserContextMenu({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id, name: id } as any);
-      }
 
       let Modal = function (cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
@@ -932,8 +916,6 @@ export class DBI<
         createInlineRoleSelectMenu,
         createInlineChannelSelectMenu,
         createInlineMentionableSelectMenu,
-        createInlineMessageContextMenu,
-        createInlineUserContextMenu,
         createInlineModal,
         onUnload(cb: () => Promise<any> | any) {
           self.data.registerUnloaders.add(cb);

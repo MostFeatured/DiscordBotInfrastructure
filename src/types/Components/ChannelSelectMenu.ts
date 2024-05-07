@@ -26,7 +26,7 @@ export class DBIChannelSelectMenu<TNamespace extends NamespaceEnums> extends DBI
 
   declare options?: SelectMenuDefaultOptions;
 
-  override onExecute(ctx: IDBIChannelSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
+  override onExecute(ctx: IDBIChannelSelectMenuExecuteCtx<TNamespace>) { };
 
   override toJSON(arg: IDBIToJSONArgs<DBIChannelSelectMenuOverrides> = {}): Discord.ChannelSelectMenuComponentData {
     return {

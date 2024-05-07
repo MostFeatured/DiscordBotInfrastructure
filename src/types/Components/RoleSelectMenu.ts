@@ -26,7 +26,7 @@ export class DBIRoleSelectMenu<TNamespace extends NamespaceEnums> extends DBIBas
 
   declare options?: SelectMenuDefaultOptions;
 
-  override onExecute(ctx: IDBIRoleSelectMenuExecuteCtx<TNamespace>): Promise<void> | void { };
+  override onExecute(ctx: IDBIRoleSelectMenuExecuteCtx<TNamespace>) { };
 
   override toJSON(arg: IDBIToJSONArgs<DBIRoleSelectMenuOverrides> = {}): Discord.RoleSelectMenuComponentData {
     return {
