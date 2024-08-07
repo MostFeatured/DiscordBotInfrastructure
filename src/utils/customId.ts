@@ -2,13 +2,16 @@ import { DBI } from "../DBI";
 import * as stuffs from "stuffs";
 import { NamespaceEnums } from "../../generated/namespaceData";
 
-export function buildCustomId(dbi: DBI<NamespaceEnums>, name: string, data: any[], ttl?:number): string {
+export function buildCustomId(dbi: DBI<NamespaceEnums>, name: string, data: any[], ttl?: number): string {
   let customId = [
     name,
     ...data.map(value => {
       if (typeof value == "string") return value;
       if (typeof value == "number") return `π${value}`;
+      if (typeof value == "bigint") return `ᙖ${value.toString()}`;
       if (typeof value == "boolean") return `𝞫${value ? 1 : 0}`;
+      if (typeof value == "undefined") return "🗶u";
+      if (value === null) return "🗶n";
       let id = stuffs.randomString(8);
       Object.assign(value, {
         $ref: id,
@@ -23,13 +26,16 @@ export function buildCustomId(dbi: DBI<NamespaceEnums>, name: string, data: any[
   return customId;
 }
 
-export function parseCustomId(dbi: DBI<NamespaceEnums>, customId: string): {name: string, data: any[]} {
+export function parseCustomId(dbi: DBI<NamespaceEnums>, customId: string): { name: string, data: any[] } {
   let splitted = customId.split("—");
   let name = splitted.shift();
   let data = splitted.map(value => {
     if (value.startsWith("π")) return Number(value.slice(1));
     if (value.startsWith("𝞫")) return !!Number(value.slice(1));
+    if (value.startsWith("ᙖ")) return BigInt(value.slice(1));
     if (value.startsWith("¤")) return dbi.data.refs.get(value.slice(1))?.value;
+    if (value == "🗶u") return undefined;
+    if (value == "🗶n") return null;
     return value;
   });
   return {
