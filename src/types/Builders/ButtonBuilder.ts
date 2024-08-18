@@ -9,8 +9,8 @@ export type DBIButtonOverrides = RecursivePartial<{ style?: ButtonStyle } & Omit
 export class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
   component: DBIButton<TNamespace>
   overrides: DBIButtonOverrides;
-  reference: { data: (string | number | object)[], ttl?: number };
-  constructor(arg: { component: DBIButton<TNamespace>, overrides?: DBIButtonOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
+  reference: { data: (string | number | object | boolean | null | undefined)[], ttl?: number };
+  constructor(arg: { component: DBIButton<TNamespace>, overrides?: DBIButtonOverrides, reference?: { data: (string | number | object | boolean | null | undefined)[], ttl?: number } }) {
     this.component = arg.component;
     this.overrides = arg.overrides ?? {};
     this.reference = arg.reference ?? { data: [] };
@@ -26,12 +26,12 @@ export class DBIButtonBuilder<TNamespace extends NamespaceEnums> {
     return this;
   }
 
-  setData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace> {
+  setData(...data: (string | number | object | boolean | null | undefined)[]): DBIButtonBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]): DBIButtonBuilder<TNamespace> {
+  addData(...data: (string | number | object | boolean | null | undefined)[]): DBIButtonBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }

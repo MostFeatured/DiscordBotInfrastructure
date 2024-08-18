@@ -4,13 +4,13 @@ import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIChannelSelectMenu } from "../Components/ChannelSelectMenu";
 import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIChannelSelectMenuOverrides =  RecursivePartial<Omit<ChannelSelectMenuComponentData, "customId" | "type">>
+export type DBIChannelSelectMenuOverrides = RecursivePartial<Omit<ChannelSelectMenuComponentData, "customId" | "type">>
 
 export class DBIChannelSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIChannelSelectMenu<TNamespace>
   overrides: DBIChannelSelectMenuOverrides;
-  reference: { data: (string | number | object)[], ttl?: number };
-  constructor(arg: { component: DBIChannelSelectMenu<TNamespace>, overrides?: DBIChannelSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
+  reference: { data: (string | number | object | boolean | null | undefined)[], ttl?: number };
+  constructor(arg: { component: DBIChannelSelectMenu<TNamespace>, overrides?: DBIChannelSelectMenuOverrides, reference?: { data: (string | number | object | boolean | null | undefined)[], ttl?: number } }) {
     this.component = arg.component;
     this.overrides = arg.overrides ?? {};
     this.reference = arg.reference ?? { data: [] };
@@ -26,12 +26,12 @@ export class DBIChannelSelectMenuBuilder<TNamespace extends NamespaceEnums> {
     return this;
   }
 
-  setData(...data: (string | number | object)[]): DBIChannelSelectMenuBuilder<TNamespace> {
+  setData(...data: (string | number | object | boolean | null | undefined)[]): DBIChannelSelectMenuBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]): DBIChannelSelectMenuBuilder<TNamespace> {
+  addData(...data: (string | number | object | boolean | null | undefined)[]): DBIChannelSelectMenuBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }

@@ -4,13 +4,13 @@ import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIRoleSelectMenu } from "../Components/RoleSelectMenu";
 import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIRoleSelectMenuOverrides =  RecursivePartial<Omit<RoleSelectMenuComponentData, "customId" | "type">>
+export type DBIRoleSelectMenuOverrides = RecursivePartial<Omit<RoleSelectMenuComponentData, "customId" | "type">>
 
 export class DBIRoleSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIRoleSelectMenu<TNamespace>
   overrides: Partial<DBIRoleSelectMenuOverrides>;
-  reference: { data: (string | number | object)[], ttl?: number };
-  constructor(arg: { component: DBIRoleSelectMenu<TNamespace>, overrides?: DBIRoleSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
+  reference: { data: (string | number | object | boolean | null | undefined)[], ttl?: number };
+  constructor(arg: { component: DBIRoleSelectMenu<TNamespace>, overrides?: DBIRoleSelectMenuOverrides, reference?: { data: (string | number | object | boolean | null | undefined)[], ttl?: number } }) {
     this.component = arg.component;
     this.overrides = arg.overrides ?? {};
     this.reference = arg.reference ?? { data: [] };
@@ -26,12 +26,12 @@ export class DBIRoleSelectMenuBuilder<TNamespace extends NamespaceEnums> {
     return this;
   }
 
-  setData(...data: (string | number | object)[]): DBIRoleSelectMenuBuilder<TNamespace> {
+  setData(...data: (string | number | object | boolean | null | undefined)[]): DBIRoleSelectMenuBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]): DBIRoleSelectMenuBuilder<TNamespace> {
+  addData(...data: (string | number | object | boolean | null | undefined)[]): DBIRoleSelectMenuBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }

@@ -9,8 +9,8 @@ export type DBIModalOverrides = RecursivePartial<{ components?: (JSONEncodable<A
 export class DBIModalBuilder<TNamespace extends NamespaceEnums> {
   component: DBIModal<TNamespace>
   overrides: DBIModalOverrides;
-  reference: { data: (string | number | object)[], ttl?: number };
-  constructor(arg: { component: DBIModal<TNamespace>, overrides?: DBIModalOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
+  reference: { data: (string | number | object | boolean | null | undefined)[], ttl?: number };
+  constructor(arg: { component: DBIModal<TNamespace>, overrides?: DBIModalOverrides, reference?: { data: (string | number | object | boolean | null | undefined)[], ttl?: number } }) {
     this.component = arg.component;
     this.overrides = arg.overrides ?? {};
     this.reference = arg.reference ?? { data: [] };
@@ -26,12 +26,12 @@ export class DBIModalBuilder<TNamespace extends NamespaceEnums> {
     return this;
   }
 
-  setData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace> {
+  setData(...data: (string | number | object | boolean | null | undefined)[]): DBIModalBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]): DBIModalBuilder<TNamespace> {
+  addData(...data: (string | number | object | boolean | null | undefined)[]): DBIModalBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }

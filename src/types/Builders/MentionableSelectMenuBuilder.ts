@@ -4,13 +4,13 @@ import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBIMentionableSelectMenu } from "../Components/MentionableSelectMenu";
 import { RecursivePartial } from "../../utils/UtilTypes";
 
-export type DBIMentionableSelectMenuOverrides =  RecursivePartial<Omit<MentionableSelectMenuComponentData, "customId" | "type">>
+export type DBIMentionableSelectMenuOverrides = RecursivePartial<Omit<MentionableSelectMenuComponentData, "customId" | "type">>
 
 export class DBIMentionableSelectMenuBuilder<TNamespace extends NamespaceEnums> {
   component: DBIMentionableSelectMenu<TNamespace>
   overrides: DBIMentionableSelectMenuOverrides;
-  reference: { data: (string | number | object)[], ttl?: number };
-  constructor(arg: { component: DBIMentionableSelectMenu<TNamespace>, overrides?: DBIMentionableSelectMenuOverrides, reference?: { data: (string | number | object)[], ttl?: number } }) {
+  reference: { data: (string | number | object | boolean | null | undefined)[], ttl?: number };
+  constructor(arg: { component: DBIMentionableSelectMenu<TNamespace>, overrides?: DBIMentionableSelectMenuOverrides, reference?: { data: (string | number | object | boolean | null | undefined)[], ttl?: number } }) {
     this.component = arg.component;
     this.overrides = arg.overrides ?? {};
     this.reference = arg.reference ?? { data: [] };
@@ -26,12 +26,12 @@ export class DBIMentionableSelectMenuBuilder<TNamespace extends NamespaceEnums> 
     return this;
   }
 
-  setData(...data: (string | number | object)[]): DBIMentionableSelectMenuBuilder<TNamespace> {
+  setData(...data: (string | number | object | boolean | null | undefined)[]): DBIMentionableSelectMenuBuilder<TNamespace> {
     this.reference.data = data;
     return this;
   }
 
-  addData(...data: (string | number | object)[]): DBIMentionableSelectMenuBuilder<TNamespace> {
+  addData(...data: (string | number | object | boolean | null | undefined)[]): DBIMentionableSelectMenuBuilder<TNamespace> {
     this.reference.data = [...this.reference.data, ...data];
     return this;
   }
