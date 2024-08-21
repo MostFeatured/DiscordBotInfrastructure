@@ -298,7 +298,7 @@ export class DBI<
         const invalidPath = config.defaults?.locale?.invalidPath;
         return {
           ...(config.defaults?.locale || {}),
-          invalidPath: (typeof invalidPath === "function" ? invalidPath : (ctx: TDBILocaleInvalidPathCtx<TNamespace>) => invalidPath || `Invalid "${ctx.path}" locale path.`) as any
+          invalidPath: (typeof invalidPath === "function" ? invalidPath : (ctx: TDBILocaleInvalidPathCtx<TNamespace>) => (invalidPath || `Invalid locale path "${ctx.path}".`)) as any
         }
       })(),
       defaultMemberPermissions: [],
@@ -308,7 +308,7 @@ export class DBI<
         const deferReplyContent = config.defaults?.messageCommands?.deferReplyContent
         return {
           ...(config.defaults?.messageCommands || {}),
-          deferReplyContent: (typeof deferReplyContent === "function" ? deferReplyContent : () => deferReplyContent || "Loading...") as any
+          deferReplyContent: (typeof deferReplyContent === "function" ? deferReplyContent : () => (deferReplyContent || "Loading...")) as any
         }
       })(),
     };

@@ -2,6 +2,7 @@ import stuffs from "stuffs";
 import { NamespaceData, NamespaceEnums } from "../../../generated/namespaceData";
 import { DBI } from "../../DBI";
 import _ from "lodash";
+import util from "util";
 
 export interface DBILangObject {
   [property: string]: DBILangObject & ((...args: any[]) => string);
@@ -40,15 +41,19 @@ export class DBILocale<TNamespace extends NamespaceEnums> {
     return _.get(this._data as any, path) as string || null;
   }
   format(path: string, ...args: any[]): string {
-    const value = this.get(path);
+    let value = this.get(path);
     if (!value) {
       const defaultLocale = this.dbi.locale(this.dbi.config.defaults.locale.name);
-      if (!defaultLocale) return this.dbi.config.defaults.locale.invalidPath({
+      if (!defaultLocale || defaultLocale.name === this.name) return this.dbi.config.defaults.locale.invalidPath({
         locale: this,
         path,
       });
-      return defaultLocale.format(path, ...args);
+      value = defaultLocale.get(path);
     }
+    if (!value) return this.dbi.config.defaults.locale.invalidPath({
+      locale: this,
+      path,
+    });
     return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]));
   }
 }
