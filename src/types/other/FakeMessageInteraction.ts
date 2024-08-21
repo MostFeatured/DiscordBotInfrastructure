@@ -325,11 +325,11 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
       interaction: this,
       locale: {
         user: this.dbi.data.locales.get(this.locale) ||
-          this.dbi.data.locales.get(this.dbi.config.defaults.locale),
+          this.dbi.data.locales.get(this.dbi.config.defaults.locale.name),
         guild: this.message.guild?.preferredLocale
           ? this.dbi.data.locales.get(
             this.message.guild?.preferredLocale?.split("-")?.at(0)
-          ) || this.dbi.data.locales.get(this.dbi.config.defaults.locale)
+          ) || this.dbi.data.locales.get(this.dbi.config.defaults.locale.name)
           : null,
       }
     })));

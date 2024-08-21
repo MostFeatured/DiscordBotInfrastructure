@@ -49,7 +49,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     let userLocaleName = inter.locale.split("-")[0];
     let userLocale = dbi.data.locales.has(userLocaleName)
       ? dbi.data.locales.get(userLocaleName)
-      : dbi.data.locales.get(dbi.config.defaults.locale);
+      : dbi.data.locales.get(dbi.config.defaults.locale.name);
 
     let guildLocaleName = inter.guild
       ? inter.guild.preferredLocale.split("-")[0]
@@ -57,7 +57,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     let guildLocale = guildLocaleName
       ? dbi.data.locales.has(guildLocaleName)
         ? dbi.data.locales.get(guildLocaleName)
-        : dbi.data.locales.get(dbi.config.defaults.locale)
+        : dbi.data.locales.get(dbi.config.defaults.locale.name)
       : null;
 
     let locale = {

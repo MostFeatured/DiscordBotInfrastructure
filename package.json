@@ -1,18 +1,18 @@
 {
   "dependencies": {
-    "@discordjs/rest": "^1.0.1",
+    "@discordjs/rest": "^2.3.0",
     "async-and-quick": "^1.0.2",
     "discord-api-types": "^0.37.0",
     "discord-hybrid-sharding": "github:meister03/discord-hybrid-sharding",
     "discord.js": "^14.13.0",
     "lodash": "^4.17.21",
     "plsargs": "^0.1.6",
-    "snakecase-keys": "^5.4.2",
+    "snakecase-keys": "^8.0.1",
     "stuffs": "^0.1.21",
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "main": "dist/index.js",
   "type": "commonjs",
   "private": false,

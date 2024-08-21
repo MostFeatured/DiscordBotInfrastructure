@@ -94,11 +94,11 @@ export async function handleMessageCommands(
   const builtLocale = {
     user:
       dbi.data.locales.get(interaction.locale) ||
-      dbi.data.locales.get(dbi.config.defaults.locale),
+      dbi.data.locales.get(dbi.config.defaults.locale.name),
     guild: message.guild?.preferredLocale
       ? dbi.data.locales.get(
         message.guild?.preferredLocale?.split("-")?.at(0)
-      ) || dbi.data.locales.get(dbi.config.defaults.locale)
+      ) || dbi.data.locales.get(dbi.config.defaults.locale.name)
       : null,
   };
 

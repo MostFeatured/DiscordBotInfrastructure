@@ -1,7 +1,7 @@
 import stuffs from "stuffs";
 import { NamespaceData, NamespaceEnums } from "../../../generated/namespaceData";
 import { DBI } from "../../DBI";
-
+import _ from "lodash";
 
 export interface DBILangObject {
   [property: string]: DBILangObject & ((...args: any[]) => string);
@@ -18,7 +18,7 @@ export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBIL
 export class DBILocale<TNamespace extends NamespaceEnums> {
   name: TDBILocaleString;
   data: NamespaceData[TNamespace]["contentLocale"];
-  private _data: DBILangConstructorObject;
+  _data: DBILangConstructorObject;
   dbi: DBI<TNamespace, {}>;
   flag?: string
   constructor(dbi: DBI<TNamespace, {}>, cfg: TDBILocaleConstructor<TNamespace>) {
@@ -26,27 +26,40 @@ export class DBILocale<TNamespace extends NamespaceEnums> {
     this.name = cfg.name;
     this.flag = cfg.flag;
     this._data = cfg.data;
-    this.data = convertLang<TNamespace>(cfg.data);
+    this.data = createInfinitePathProxy((path, ...args) => {
+      return this.format(path.join("."), ...args);
+    });;
   }
   mergeLocale(locale: DBILocale<TNamespace>): DBILocale<TNamespace> {
     this._data = stuffs.defaultify(locale._data, this._data, true) as any;
-    this.data = convertLang<TNamespace>(this._data);
-
-    locale.data = this.data;
     locale._data = this._data;
 
     return this;
   }
+  get(path: string): string | null {
+    return _.get(this._data as any, path) as string || null;
+  }
+  format(path: string, ...args: any[]): string {
+    const value = this.get(path);
+    if (!value) {
+      const defaultLocale = this.dbi.locale(this.dbi.config.defaults.locale.name);
+      if (!defaultLocale) return this.dbi.config.defaults.locale.invalidPath({
+        locale: this,
+        path,
+      });
+      return defaultLocale.format(path, ...args);
+    }
+    return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]));
+  }
 }
 
-export function convertLang<TNamespace extends NamespaceEnums>(data: DBILangConstructorObject): NamespaceData[TNamespace]["contentLocale"] {
-  return Object.fromEntries(Object.entries(data).map(([key, value]) => {
-    if (typeof value === "string") {
-      return [key, (...args: any[]) => {
-        return stuffs.mapReplace(value, args.map((t, i) => [new RegExp(`\\{${i}(;[^}]+)?\\}`, "g"), t]))
-      }];
-    } else {
-      return [key, convertLang(value)];
+export function createInfinitePathProxy(onApplyPath: (path: string[], ...args: any[]) => string, path: string[] = []): any {
+  return new Proxy(() => { }, {
+    get(target, key) {
+      return createInfinitePathProxy(onApplyPath, [...path, key.toString()]);
+    },
+    apply(target, thisArg, args) {
+      return onApplyPath(path, ...args);
     }
-  }))
+  });
 }

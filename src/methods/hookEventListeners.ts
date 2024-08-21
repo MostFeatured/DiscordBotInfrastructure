@@ -36,7 +36,7 @@ export function hookEventListeners(dbi: DBI<NamespaceEnums>): () => any {
       if (current instanceof Guild) return current?.preferredLocale?.split?.("-")?.[0];
       return all;
     }, null);
-    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale)) : null;
+    let guildLocale = guildLocaleName ? (dbi.data.locales.has(guildLocaleName) ? dbi.data.locales.get(guildLocaleName) : dbi.data.locales.get(dbi.config.defaults.locale.name)) : null;
 
     let locale = guildLocale ? { guild: guildLocale } : null;
 

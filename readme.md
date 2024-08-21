@@ -26,7 +26,9 @@ let dbi = createDBI("xd", {
     }
   },
   defaults: {
-    locale: "en",
+    locale: {
+      name: "en"
+    },
     defaultMemberPermissions: ["SendMessages"],
     directMessages: false
   },

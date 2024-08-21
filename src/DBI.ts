@@ -86,6 +86,11 @@ export type TDBIMessageCommandsPrefixesCtx = {
   message: Discord.Message;
 };
 
+export type TDBILocaleInvalidPathCtx<TNamespace extends NamespaceEnums> = {
+  path: string;
+  locale: DBILocale<TNamespace>;
+}
+
 export interface DBIConfig<TNamespace extends NamespaceEnums> {
   discord: {
     namespace: string;
@@ -93,7 +98,10 @@ export interface DBIConfig<TNamespace extends NamespaceEnums> {
     options: Discord.ClientOptions;
   }[];
   defaults: {
-    locale: TDBILocaleString;
+    locale: {
+      name: TDBILocaleString;
+      invalidPath(ctx: TDBILocaleInvalidPathCtx<TNamespace>): string;
+    };
     directMessages: boolean;
     defaultMemberPermissions: Discord.PermissionsString[];
     messageCommands: {
@@ -143,7 +151,10 @@ export interface DBIConfigConstructor<TNamespace extends NamespaceEnums> {
   }[];
 
   defaults?: {
-    locale?: TDBILocaleString;
+    locale?: {
+      name?: TDBILocaleString;
+      invalidPath?: string | ((ctx: TDBILocaleInvalidPathCtx<TNamespace>) => string);
+    };
     directMessages?: boolean;
     defaultMemberPermissions?: Discord.PermissionsString[];
     messageCommands?: {
@@ -283,18 +294,25 @@ export class DBI<
 
     config.store = (config.store as any) || new MemoryStore();
     config.defaults = {
-      locale: "en",
+      locale: (() => {
+        const invalidPath = config.defaults?.locale?.invalidPath;
+        return {
+          ...(config.defaults?.locale || {}),
+          invalidPath: (typeof invalidPath === "function" ? invalidPath : (ctx: TDBILocaleInvalidPathCtx<TNamespace>) => invalidPath || `Invalid "${ctx.path}" locale path.`) as any
+        }
+      })(),
       defaultMemberPermissions: [],
       directMessages: false,
       ...(config.defaults || {}),
       messageCommands: (() => {
-        let deferReplyContent = config.defaults?.messageCommands?.deferReplyContent
+        const deferReplyContent = config.defaults?.messageCommands?.deferReplyContent
         return {
           ...(config.defaults?.messageCommands || {}),
           deferReplyContent: (typeof deferReplyContent === "function" ? deferReplyContent : () => deferReplyContent || "Loading...") as any
         }
       })(),
     };
+
     config.sharding = config.sharding ?? "off";
     config.strict = config.strict ?? true;
     config.references = {
