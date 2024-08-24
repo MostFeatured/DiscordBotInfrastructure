@@ -14,7 +14,7 @@ export interface DBILangConstructorObject {
 
 export type TDBILocaleString = "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl" | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it" | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru" | "es" | "sv" | "th" | "tr" | "uk" | "vi";
 
-export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi" | "mergeLocale"> & { data: DBILangConstructorObject };
+export type TDBILocaleConstructor<TNamespace extends NamespaceEnums> = Omit<DBILocale<TNamespace>, "data" | "dbi" | "mergeLocale" | "_data" | "get" | "format"> & { data: DBILangConstructorObject };
 
 export class DBILocale<TNamespace extends NamespaceEnums> {
   name: TDBILocaleString;
