@@ -43,7 +43,7 @@ export class DBILocale<TNamespace extends NamespaceEnums> {
   format(path: string, ...args: any[]): string {
     let value = this.get(path);
     if (!value) {
-      const defaultLocale = this.dbi.locale(this.dbi.config.defaults.locale.name);
+      const defaultLocale = this.dbi.locale(this.dbi.config.defaults.locale.name as TDBILocaleString);
       if (!defaultLocale || defaultLocale.name === this.name) return this.dbi.config.defaults.locale.invalidPath({
         locale: this,
         path,
