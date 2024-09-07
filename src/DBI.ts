@@ -138,7 +138,7 @@ export interface DBIConfig<TNamespace extends NamespaceEnums> {
   };
 }
 
-export interface DBIConfigConstructor<TNamespace extends NamespaceEnums> {
+export interface DBIConfigConstructor<TNamespace extends NamespaceEnums, OtherData extends Record<string, any>> {
   discord:
   | {
     token: string;
@@ -183,7 +183,7 @@ export interface DBIConfigConstructor<TNamespace extends NamespaceEnums> {
   };
 
   data?: {
-    other?: Record<string, any>;
+    other?: OtherData;
     refs?: Map<string, { at: number; value: any; ttl?: number }>;
   };
 
@@ -257,7 +257,7 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
 
 export class DBI<
   TNamespace extends NamespaceEnums,
-  TOtherData = Record<string, any>
+  TOtherData extends Record<string, any> = Record<string, any>
 > {
   namespace: TNamespace;
   config: DBIConfig<TNamespace>;
@@ -288,7 +288,7 @@ export class DBI<
   cluster?: Sharding.ClusterClient<Discord.Client>;
   private _loaded: boolean;
   private _hooked: boolean;
-  constructor(namespace: TNamespace, config: DBIConfigConstructor<TNamespace>) {
+  constructor(namespace: TNamespace, config: DBIConfigConstructor<TNamespace, TOtherData>) {
     this.namespace = namespace as any;
     const self = this;
 
