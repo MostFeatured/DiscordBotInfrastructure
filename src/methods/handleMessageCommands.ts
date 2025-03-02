@@ -80,7 +80,7 @@ export async function handleMessageCommands(
     }
   }
 
-  if (!chatInput) return;
+  if (!chatInput || chatInput.other?.messageCommand?.ignore) return;
 
   const interaction = new FakeMessageInteraction(
     dbi,
