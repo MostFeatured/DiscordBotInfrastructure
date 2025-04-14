@@ -18,8 +18,8 @@ importers:
         specifier: ^0.37.100
         version: 0.37.100
       discord-hybrid-sharding:
-        specifier: github:meister03/discord-hybrid-sharding
-        version: https://codeload.github.com/meister03/discord-hybrid-sharding/tar.gz/21a301991fd478a55d77b42a558a4ae17df4e9bd
+        specifier: ^2.2.6
+        version: 2.2.6
       discord.js:
         specifier: ^14.16.2
         version: 14.16.2
@@ -132,9 +132,8 @@ packages:
   discord-api-types@0.37.97:
     resolution: {integrity: sha512-No1BXPcVkyVD4ZVmbNgDKaBoqgeQ+FJpzZ8wqHkfmBnTZig1FcH3iPPersiK1TUIAzgClh2IvOuVUYfcWLQAOA==}
 
-  discord-hybrid-sharding@https://codeload.github.com/meister03/discord-hybrid-sharding/tar.gz/21a301991fd478a55d77b42a558a4ae17df4e9bd:
-    resolution: {tarball: https://codeload.github.com/meister03/discord-hybrid-sharding/tar.gz/21a301991fd478a55d77b42a558a4ae17df4e9bd}
-    version: 2.2.0
+  discord-hybrid-sharding@2.2.6:
+    resolution: {integrity: sha512-I/MaEg3+/DD1oDZx5kDWXyajkKqiJwG4nxF5hv8nLBfioFSO19sXjaq2z9klMJRINvPhX0zNAj52dRRNuzqyzQ==}
 
   discord.js@14.16.2:
     resolution: {integrity: sha512-VGNi9WE2dZIxYM8/r/iatQQ+3LT8STW4hhczJOwm+DBeHq66vsKDCk8trChNCB01sMO9crslYuEMeZl2d7r3xw==}
@@ -308,7 +307,7 @@ snapshots:
 
   discord-api-types@0.37.97: {}
 
-  discord-hybrid-sharding@https://codeload.github.com/meister03/discord-hybrid-sharding/tar.gz/21a301991fd478a55d77b42a558a4ae17df4e9bd: {}
+  discord-hybrid-sharding@2.2.6: {}
 
   discord.js@14.16.2:
     dependencies:

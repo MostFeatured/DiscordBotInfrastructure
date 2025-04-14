@@ -3,7 +3,7 @@
     "@discordjs/rest": "^2.4.0",
     "async-and-quick": "^1.0.2",
     "discord-api-types": "^0.37.100",
-    "discord-hybrid-sharding": "github:meister03/discord-hybrid-sharding",
+    "discord-hybrid-sharding": "^2.2.6",
     "discord.js": "^14.16.2",
     "lodash": "^4.17.21",
     "plsargs": "^0.1.6",
