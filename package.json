@@ -12,7 +12,7 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "main": "dist/index.js",
   "type": "commonjs",
   "private": false,
