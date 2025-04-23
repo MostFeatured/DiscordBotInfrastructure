@@ -2,23 +2,31 @@ import { DBI, Pack, Inspector, Locales } from '@mostfeatured/dbi';
 
 const dbi = new DBI();
 
-const pack = new Pack({ name: 'examplePack' });
-const inspector = new Inspector({ name: 'exampleInspector' });
-const locales = new Locales({ name: 'exampleLocales' });
+const pack = new Pack({ name: 'ExamplePack' });
+const inspector = new Inspector({ name: 'ExampleInspector' });
+const locales = new Locales({ name: 'ExampleLocales' });
 
 pack.onUnload(
   locales.loadFile({
-    id: 'example',
+    id: 'Example',
     filePath: 'example.json',
     path: '$',
     type: "Content"
   }),
-  locales.addLocale("en", {})
+  locales.addLocale({
+    id: "Example2",
+    locale: "",
+    data: {}
+  }),
+  locales.addInteractionLocale({
+    id: "Example3",
+    locale: "",
+    name: "system set settings",
+    data: {}
+  })
 )
-// dc açılmıo lan equicordla bile hiç bi şekilde bozuldu nedense
-locales.addInteractionLocale("en", "example interaction", {
 
-})
+
 const pattern = 'system (set|unset) settings';
 pack.event({
 
