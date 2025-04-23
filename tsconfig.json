@@ -1,6 +1,7 @@
 {
   // Mapped from https://www.typescriptlang.org/tsconfig
   "compilerOptions": {
+    "jsx": "preserve",
     // Type Checking
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

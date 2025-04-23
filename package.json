@@ -6,6 +6,7 @@
     "discord-hybrid-sharding": "^2.2.6",
     "discord.js": "^14.16.2",
     "lodash": "^4.17.21",
+    "minimatch": "^10.0.1",
     "plsargs": "^0.1.6",
     "snakecase-keys": "^8.0.1",
     "stuffs": "^0.1.42",
