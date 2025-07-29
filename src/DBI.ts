@@ -543,14 +543,6 @@ export class DBI<
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiChatInput.name, dbiChatInput);
         return dbiChatInput;
       };
-      ChatInput = Object.assign(
-        ChatInput,
-        class {
-          constructor(...args: any[]) {
-            return ChatInput.apply(this, args as any);
-          }
-        }
-      );
 
       let Event = function (cfg: TDBIEventOmitted<TNamespace>) {
         let dbiEvent = new DBIEvent(self as any, cfg);
@@ -564,14 +556,6 @@ export class DBI<
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.events.set(dbiEvent.id || dbiEvent.name, dbiEvent);
         return dbiEvent;
       };
-      Event = Object.assign(
-        Event,
-        class {
-          constructor(...args: any[]) {
-            return Event.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineEvent = function (cfg: Omit<TDBIEventOmitted<TNamespace>, "id">) {
         return Event({ ...cfg, ttl: cfg?.ttl || self.config.inlineListeners.autoClear?.ttl, id: randomInlineId() } as any);
@@ -587,14 +571,6 @@ export class DBI<
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiButton.name, dbiButton as any);
         return dbiButton;
       };
-      Button = Object.assign(
-        Button,
-        class {
-          constructor(...args: any[]) {
-            return Button.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineButton = function (cfg: Omit<TDBIButtonOmitted<TNamespace>, "name" | "id">) {
         let id = randomInlineId();
@@ -620,14 +596,6 @@ export class DBI<
         );
         return dbiStringSelectMenu;
       };
-      StringSelectMenu = Object.assign(
-        StringSelectMenu,
-        class {
-          constructor(...args: any[]) {
-            return StringSelectMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineStringSelectMenu = function (cfg: Omit<TDBIStringSelectMenuOmitted<TNamespace>, "id" | "name">) {
         let id = randomInlineId();
@@ -652,14 +620,6 @@ export class DBI<
         );
         return dbiUserSelectMenu;
       };
-      UserSelectMenu = Object.assign(
-        UserSelectMenu,
-        class {
-          constructor(...args: any[]) {
-            return UserSelectMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineUserSelectMenu = function (cfg: Omit<TDBIUserSelectMenuOmitted<TNamespace>, "id" | "name">) {
         let id = randomInlineId();
@@ -684,14 +644,6 @@ export class DBI<
         );
         return dbiRoleSelectMenu;
       };
-      RoleSelectMenu = Object.assign(
-        RoleSelectMenu,
-        class {
-          constructor(...args: any[]) {
-            return RoleSelectMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineRoleSelectMenu = function (cfg: Omit<TDBIRoleSelectMenuOmitted<TNamespace>, "id" | "name">) {
         let id = randomInlineId();
@@ -717,14 +669,6 @@ export class DBI<
         );
         return dbiChannelSelectMenu;
       };
-      ChannelSelectMenu = Object.assign(
-        ChannelSelectMenu,
-        class {
-          constructor(...args: any[]) {
-            return ChannelSelectMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineChannelSelectMenu = function (cfg: Omit<TDBIChannelSelectMenuOmitted<TNamespace>, "id" | "name">) {
         let id = randomInlineId();
@@ -753,14 +697,6 @@ export class DBI<
         );
         return dbiMentionableSelectMenu;
       };
-      MentionableSelectMenu = Object.assign(
-        MentionableSelectMenu,
-        class {
-          constructor(...args: any[]) {
-            return MentionableSelectMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineMentionableSelectMenu = function (cfg: Omit<TDBIMentionableSelectMenuOmitted<TNamespace>, "id" | "name">) {
         let id = randomInlineId();
@@ -786,14 +722,6 @@ export class DBI<
         );
         return dbiMessageContextMenu;
       };
-      MessageContextMenu = Object.assign(
-        MessageContextMenu,
-        class {
-          constructor(...args: any[]) {
-            return MessageContextMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let UserContextMenu = function (
         cfg: TDBIUserContextMenuOmitted<TNamespace>
@@ -814,14 +742,6 @@ export class DBI<
         );
         return dbiUserContextMenu;
       };
-      UserContextMenu = Object.assign(
-        UserContextMenu,
-        class {
-          constructor(...args: any[]) {
-            return UserContextMenu.apply(this, args as any);
-          }
-        }
-      );
 
       let Modal = function (cfg: TDBIModalOmitted<TNamespace>) {
         let dbiModal = new DBIModal(self as any, cfg);
@@ -833,14 +753,6 @@ export class DBI<
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(dbiModal.name, dbiModal as any);
         return dbiModal;
       };
-      Modal = Object.assign(
-        Modal,
-        class {
-          constructor(...args: any[]) {
-            return Modal.apply(this, args as any);
-          }
-        }
-      );
 
       let createInlineModal = function (cfg: Omit<TDBIModalOmitted<TNamespace>, "name" | "id">) {
         let id = randomInlineId();
@@ -859,14 +771,6 @@ export class DBI<
         if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.locales.set(dbiLocale.name, dbiLocale);
         return dbiLocale;
       };
-      Locale = Object.assign(
-        Locale,
-        class {
-          constructor(...args: any[]) {
-            return Locale.apply(this, args as any);
-          }
-        }
-      );
 
       let CustomEvent = function (cfg: TDBICustomEventOmitted<TNamespace>) {
         let dbiCustomEvent = new DBICustomEvent(self, cfg) as any;
@@ -878,14 +782,6 @@ export class DBI<
         self.data.customEventNames.add(dbiCustomEvent.name);
         return dbiCustomEvent;
       };
-      CustomEvent = Object.assign(
-        CustomEvent,
-        class {
-          constructor(...args: any[]) {
-            return CustomEvent.apply(this, args as any);
-          }
-        }
-      );
 
       let InteractionLocale = function (cfg: TDBIInteractionLocaleOmitted) {
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
@@ -902,14 +798,6 @@ export class DBI<
         );
         return dbiInteractionLocale;
       };
-      InteractionLocale = Object.assign(
-        InteractionLocale,
-        class {
-          constructor(...args: any[]) {
-            return InteractionLocale.apply(this, args as any);
-          }
-        }
-      );
 
       await cb({
         ChatInput,

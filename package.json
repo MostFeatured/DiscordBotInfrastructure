@@ -1,14 +1,16 @@
 {
   "dependencies": {
-    "@discordjs/rest": "^2.4.0",
+    "@discordjs/rest": "^2.5.1",
     "async-and-quick": "^1.0.2",
     "discord-api-types": "^0.37.100",
     "discord-hybrid-sharding": "^2.2.6",
-    "discord.js": "^14.16.2",
+    "discord.js": "^14.21.0",
+    "eta": "^3.5.0",
+    "jsdom": "^26.1.0",
     "lodash": "^4.17.21",
     "plsargs": "^0.1.6",
     "snakecase-keys": "^8.0.1",
-    "stuffs": "^0.1.42",
+    "stuffs": "^0.1.43",
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
@@ -35,6 +37,7 @@
   "homepage": "https://github.com/MostFeatured/DiscordBotInfrastructure#readme",
   "description": "",
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/lodash": "^4.14.182",
     "typescript": "^5.2.2"
   },

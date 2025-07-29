@@ -1,0 +1,3 @@
+dont forget to handle v2 custom ids
+implement all html components
+implement handling system 
