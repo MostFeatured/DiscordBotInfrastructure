@@ -115,7 +115,9 @@ export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string
   const { window: { document } } = new JSDOM(eta.renderString(template, data));
 
   const components = document.querySelector("components");
-  return Array.from(components?.children || []).map((element) => {
+  const children = Array.from(components?.children || []);
+  if (!children.length) throw new Error("No components found in the provided HTML template.");
+  return children.map((element) => {
     return parseElement(dbi, dbiName, element);
   });
 }
