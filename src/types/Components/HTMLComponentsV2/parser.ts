@@ -32,6 +32,25 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
   return list.length ? list : data ? [data] : [];
 }
 
+function parseCustomIdAttributes(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element): string {
+  let customId = element.getAttribute("custom-id");
+  if (!customId) {
+    let name = element.getAttribute("name");
+    if (!name) throw new Error("String Select Menu must have a name or custom-id attribute.");
+    customId = buildCustomId(
+      dbi,
+      dbiName,
+      [
+        name,
+        ...parseElementDataAttributes(element.attributes),
+      ],
+      element.hasAttribute("ttl") ? parseInt(element.getAttribute("ttl")!) : undefined,
+      true
+    );
+  }
+  return customId;
+}
+
 function parseActionRow(dbi: DBI<NamespaceEnums>, dbiName: string, actionRow: Element) {
   return {
     type: ComponentType.ActionRow,
@@ -42,27 +61,12 @@ function parseActionRow(dbi: DBI<NamespaceEnums>, dbiName: string, actionRow: El
 }
 
 function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element) {
-  let customId = button.getAttribute("custom-id");
-  if (!customId) {
-    let name = button.getAttribute("name");
-    if (!name) throw new Error("Button must have a name or custom-id attribute.");
-    customId = buildCustomId(
-      dbi,
-      dbiName,
-      [
-        name,
-        ...parseElementDataAttributes(button.attributes),
-      ],
-      button.hasAttribute("ttl") ? parseInt(button.getAttribute("ttl")!) : undefined,
-      true
-    );
-  }
   return {
     type: ComponentType.Button,
     style: ButtonStyle[button.getAttribute("style") || "Primary"],
     label: button.textContent?.trim(),
     emoji: button.getAttribute("emoji"),
-    custom_id: customId,
+    custom_id: parseCustomIdAttributes(dbi, dbiName, button),
     disabled: button.hasAttribute("disabled"),
     url: button.getAttribute("url"),
     sku_id: button.getAttribute("sku-id"),
@@ -70,22 +74,6 @@ function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element)
 }
 
 function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSelect: Element) {
-  let customId = stringSelect.getAttribute("custom-id");
-  if (!customId) {
-    let name = stringSelect.getAttribute("name");
-    if (!name) throw new Error("String Select Menu must have a name or custom-id attribute.");
-    customId = buildCustomId(
-      dbi,
-      dbiName,
-      [
-        name,
-        ...parseElementDataAttributes(stringSelect.attributes),
-      ],
-      stringSelect.hasAttribute("ttl") ? parseInt(stringSelect.getAttribute("ttl")!) : undefined,
-      true
-    );
-  }
-
   let minValues = parseInt(stringSelect.getAttribute("min-values"));
   let maxValues = parseInt(stringSelect.getAttribute("max-values"));
 
@@ -101,7 +89,7 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
 
   return {
     type: ComponentType.StringSelect,
-    custom_id: customId,
+    custom_id: parseCustomIdAttributes(dbi, dbiName, stringSelect),
     placeholder: stringSelect.getAttribute("placeholder"),
     min_values: !isNaN(minValues) ? minValues : undefined,
     max_values: !isNaN(maxValues) ? maxValues : undefined,
