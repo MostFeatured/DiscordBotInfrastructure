@@ -7,13 +7,23 @@ import { buildCustomId } from "../../../utils/customId";
 
 const eta = new Eta();
 
-function parseElementDataAttributes(attributes: NamedNodeMap): string[] {
+function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
   let list = Array.from(attributes)
     .filter(attr => attr.nodeName.startsWith("data-"))
     .map(attr => {
+      let splited = attr.nodeName.split("-");
+      let index = parseInt(splited[1]);
+      let value;
+      switch (splited[2]) {
+        case "number": value = Number(attr.nodeValue!); break;
+        case "boolean": value = attr.nodeValue === "true"; break;
+        case "json": value = JSON.parse(attr.nodeValue!); break;
+        case "string":
+        default: value = attr.nodeValue; break;
+      }
       return {
-        index: parseInt(attr.nodeName.slice(5)),
-        value: attr.nodeValue
+        index,
+        value
       };
     })
     .sort((a, b) => a.index - b.index)
@@ -59,12 +69,55 @@ function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element)
   }
 }
 
+function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSelect: Element) {
+  let customId = stringSelect.getAttribute("custom-id");
+  if (!customId) {
+    let name = stringSelect.getAttribute("name");
+    if (!name) throw new Error("String Select Menu must have a name or custom-id attribute.");
+    customId = buildCustomId(
+      dbi,
+      dbiName,
+      [
+        name,
+        ...parseElementDataAttributes(stringSelect.attributes),
+      ],
+      stringSelect.hasAttribute("ttl") ? parseInt(stringSelect.getAttribute("ttl")!) : undefined,
+      true
+    );
+  }
+
+  let minValues = parseInt(stringSelect.getAttribute("min-values"));
+  let maxValues = parseInt(stringSelect.getAttribute("max-values"));
+
+  let options = Array.from(stringSelect.querySelectorAll("option")).map(option => {
+    return {
+      label: option.textContent?.trim(),
+      value: option.getAttribute("value"),
+      description: option.getAttribute("description"),
+      emoji: option.getAttribute("emoji"),
+      default: option.hasAttribute("default")
+    }
+  });
+
+  return {
+    type: ComponentType.StringSelect,
+    custom_id: customId,
+    placeholder: stringSelect.getAttribute("placeholder"),
+    min_values: !isNaN(minValues) ? minValues : undefined,
+    max_values: !isNaN(maxValues) ? maxValues : undefined,
+    disabled: stringSelect.hasAttribute("disabled"),
+    options
+  }
+}
+
 function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element) {
   switch (element.tagName) {
     case "ACTION-ROW":
       return parseActionRow(dbi, dbiName, element);
     case "BUTTON":
       return parseButton(dbi, dbiName, element);
+    case "STRING-SELECT":
+      return parseStringSelect(dbi, dbiName, element);
     default:
       throw new Error(`Unknown HTML component: ${element.tagName}`);
   }
