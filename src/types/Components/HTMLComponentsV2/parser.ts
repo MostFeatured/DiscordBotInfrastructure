@@ -63,7 +63,7 @@ function parseActionRow(dbi: DBI<NamespaceEnums>, dbiName: string, actionRow: El
 function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element) {
   return {
     type: ComponentType.Button,
-    style: ButtonStyle[button.getAttribute("style") || "Primary"],
+    style: ButtonStyle[button.getAttribute("button-style") || button.getAttribute("style") || "Primary"],
     label: button.textContent?.trim(),
     emoji: button.getAttribute("emoji"),
     custom_id: parseCustomIdAttributes(dbi, dbiName, button),
@@ -98,6 +98,28 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
   }
 }
 
+function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSelect: Element, type: ComponentType) {
+  let minValues = parseInt(userSelect.getAttribute("min-values"));
+  let maxValues = parseInt(userSelect.getAttribute("max-values"));
+
+  let options = Array.from(userSelect.querySelectorAll("option")).map(option => {
+    return {
+      id: option.textContent?.trim() || option.getAttribute("id"),
+      type: option.getAttribute("type")
+    }
+  });
+
+  return {
+    type,
+    custom_id: parseCustomIdAttributes(dbi, dbiName, userSelect),
+    placeholder: userSelect.getAttribute("placeholder"),
+    min_values: !isNaN(minValues) ? minValues : undefined,
+    max_values: !isNaN(maxValues) ? maxValues : undefined,
+    disabled: userSelect.hasAttribute("disabled"),
+    options
+  }
+}
+
 function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element) {
   switch (element.tagName) {
     case "ACTION-ROW":
@@ -106,6 +128,14 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
       return parseButton(dbi, dbiName, element);
     case "STRING-SELECT":
       return parseStringSelect(dbi, dbiName, element);
+    case "USER-SELECT":
+      return parseNonStringSelect(dbi, dbiName, element, ComponentType.UserSelect);
+    case "ROLE-SELECT":
+      return parseNonStringSelect(dbi, dbiName, element, ComponentType.RoleSelect);
+    case "MENTIONABLE-SELECT":
+      return parseNonStringSelect(dbi, dbiName, element, ComponentType.MentionableSelect);
+    case "CHANNEL-SELECT":
+      return parseNonStringSelect(dbi, dbiName, element, ComponentType.ChannelSelect);
     default:
       throw new Error(`Unknown HTML component: ${element.tagName}`);
   }
@@ -116,7 +146,7 @@ export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string
 
   const components = document.querySelector("components");
   const children = Array.from(components?.children || []);
-  
+
   if (!children.length) throw new Error("No components found in the provided HTML template.");
 
   return children.map((element) => {
