@@ -11,7 +11,7 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
   let list = Array.from(attributes)
     .filter(attr => attr.nodeName.startsWith("data-"))
     .map(attr => {
-      let splited = attr.nodeName.split("-");
+      let splited = attr.nodeName.slice(5).split(":");
       let index = parseInt(splited[1]);
       let value;
       switch (splited[2]) {
