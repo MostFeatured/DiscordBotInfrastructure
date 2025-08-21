@@ -1,6 +1,6 @@
 import { NamespaceEnums } from "../../../../generated/namespaceData";
 import { DBI } from "../../../DBI";
-import { IDBIBaseExecuteCtx, TDBIReferencedData } from "../../Interaction";
+import { DBIBaseInteraction, DBIRateLimit, IDBIBaseExecuteCtx, TDBIReferencedData } from "../../Interaction";
 import { parseHTMLComponentsV2 } from "./parser";
 import fs from "fs";
 
@@ -14,19 +14,21 @@ export interface IDBIHTMLComponentsV2ExecuteCtx<TNamespace extends NamespaceEnum
   data: TDBIReferencedData[];
 }
 
-export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> {
-  type = "HTMLComponentsV2";
+export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIBaseInteraction<TNamespace> {
   template?: string;
   file?: string;
-  name: string;
-  flag?: string;
 
-  constructor(public dbi: DBI<TNamespace>, args: TDBIHTMLComponentsV2Omitted<TNamespace>) {
+  constructor(dbi: DBI<TNamespace>, args: TDBIHTMLComponentsV2Omitted<TNamespace>) {
+    super(dbi, {
+      ...(args as any),
+      type: "HTMLComponentsV2",
+    });
     this.template = args.template || fs.readFileSync(args.file || "", "utf-8");
     this.name = args.name;
+    this.handlers = args.handlers || [];
   }
 
-  toJSON(arg: TDBIHTMLComponentsV2ToJSONArgs = {}): any {
+  override toJSON(arg: TDBIHTMLComponentsV2ToJSONArgs = {}): any {
     return parseHTMLComponentsV2(
       this.dbi as any,
       this.template,
@@ -35,7 +37,7 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> {
     )
   }
 
-  onExecute?(ctx: IDBIHTMLComponentsV2ExecuteCtx<TNamespace>) { };
+  override onExecute?(ctx: IDBIHTMLComponentsV2ExecuteCtx<TNamespace>) { };
 
   handlers?: any[] = [];
 }

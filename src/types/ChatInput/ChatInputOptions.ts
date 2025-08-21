@@ -28,7 +28,7 @@ export interface IDBIValuedInteraction<
   TNamespace extends NamespaceEnums,
   TInteractionType extends Discord.Interaction,
   TValueType = string | number
-> extends IDBIBaseExecuteCtx<TNamespace> {
+> extends Omit<IDBIBaseExecuteCtx<TNamespace>, 'interaction'> {
   value: TValueType;
   interaction: TInteractionType;
 }
@@ -312,11 +312,11 @@ export class DBIChatInputOptions<TNamespace extends NamespaceEnums> {
     cfg: TDBIBaseOption & {
       channelTypes: Discord.ChannelType[];
     } & TDBIValidator<
-        TDBIValidateCtx<TNamespace, Discord.Channel>,
-        Discord.Channel,
-        "Result",
-        boolean
-      >
+      TDBIValidateCtx<TNamespace, Discord.Channel>,
+      Discord.Channel,
+      "Result",
+      boolean
+    >
   ) {
     return {
       type: Discord.ApplicationCommandOptionType.Channel,

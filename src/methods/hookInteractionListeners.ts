@@ -17,30 +17,34 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
   async function handle(inter: Discord.Interaction<"cached">) {
     const dbiInter =
       (inter as any).dbiChatInput ??
-      dbi.data.interactions.find((i) => {
+      dbi.data.interactions.find((dbiInter) => {
         let isUsesCustomId =
           inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit();
         let parsedId = isUsesCustomId
           ? parseCustomId(dbi, (inter as any).customId)
           : null;
         return (
-          (i.type == "ChatInput" &&
+          (dbiInter.type == "ChatInput" &&
             (inter.isChatInputCommand() || inter.isAutocomplete()) &&
-            i.name ==
+            dbiInter.name ==
             [
               inter.commandName,
               inter.options.getSubcommandGroup(false),
               inter.options.getSubcommand(false),
             ]
               .filter((i) => !!i)
-              .join(" ")) ||
-          ((i.type == "MessageContextMenu" || i.type == "UserContextMenu") &&
+              .join(" "))
+          ||
+          ((dbiInter.type == "MessageContextMenu" || dbiInter.type == "UserContextMenu") &&
             (inter.isMessageContextMenuCommand() ||
               inter.isUserContextMenuCommand()) &&
-            inter.commandName == i.name) ||
-          (componentTypes.includes(i.type) &&
+            inter.commandName == dbiInter.name)
+          ||
+          (componentTypes.includes(dbiInter.type) &&
             isUsesCustomId &&
-            parsedId?.name == i.name)
+            parsedId?.name == dbiInter.name)
+          ||
+          (parsedId.v2 && dbiInter.type == "HTMLComponentsV2" && parsedId.name == dbiInter.name)
         );
       });
 
@@ -227,7 +231,8 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       v2
     };
 
-    if (v2 && dbiInter.type === "HTMLComponentsV2") {
+
+    if (dbiInter.type === "HTMLComponentsV2") {
       if (dbi.config.strict) {
         // @ts-ignore
         await dbiInter.onExecute?.(arg);

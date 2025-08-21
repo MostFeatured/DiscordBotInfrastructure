@@ -2,7 +2,7 @@ import { JSDOM } from "jsdom";
 import { Eta } from "eta";
 import { DBI } from "../../../DBI";
 import { NamespaceEnums } from "../../../../generated/namespaceData";
-import { ButtonStyle, ComponentType } from "discord.js";
+import { ButtonStyle, ComponentType, TextInputStyle } from "discord.js";
 import { buildCustomId } from "../../../utils/customId";
 
 const eta = new Eta();
@@ -12,9 +12,9 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
     .filter(attr => attr.nodeName.startsWith("data-"))
     .map(attr => {
       let splited = attr.nodeName.slice(5).split(":");
-      let index = parseInt(splited[1]);
+      let index = parseInt(splited[0]);
       let value;
-      switch (splited[2]) {
+      switch (splited[1]) {
         case "number": value = Number(attr.nodeValue!); break;
         case "boolean": value = attr.nodeValue === "true"; break;
         case "json": value = JSON.parse(attr.nodeValue!); break;
@@ -121,10 +121,11 @@ function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSel
 }
 
 function parseSection(dbi: DBI<NamespaceEnums>, dbiName: string, sectionElement: Element) {
-  const components = sectionElement.querySelector("& > components");
+  const childs = [...sectionElement.children];
+  const components = childs.find(el => el.tagName === "COMPONENTS");
   const children = Array.from(components?.children || []);
 
-  const accessory = sectionElement.querySelector("accessory");
+  const accessory = childs.find(el => el.tagName === "ACCESSORY")?.children?.[0];
 
   return {
     type: ComponentType.Section,
@@ -138,7 +139,7 @@ function parseSection(dbi: DBI<NamespaceEnums>, dbiName: string, sectionElement:
 function parseTextDisplay(dbi: DBI<NamespaceEnums>, dbiName: string, textDisplayElement: Element) {
   return {
     type: ComponentType.TextDisplay,
-    component: textDisplayElement.textContent?.trim() || "",
+    content: textDisplayElement.textContent?.trim() || "",
   }
 }
 
@@ -178,23 +179,40 @@ function parseFile(dbi: DBI<NamespaceEnums>, dbiName: string, fileElement: Eleme
 
 function parseSeparator(dbi: DBI<NamespaceEnums>, dbiName: string, separatorElement: Element) {
   return {
-    type: ComponentType.File,
+    type: ComponentType.Separator,
     divider: separatorElement.hasAttribute("divider"),
-    spacing: parseInt(separatorElement.getAttribute("spacing") || '0'),
+    spacing: parseInt(separatorElement.getAttribute("spacing") || '1'),
   }
 }
 
 function parseContainer(dbi: DBI<NamespaceEnums>, dbiName: string, containerElement: Element) {
-  const components = containerElement.querySelector("& > components");
+  const components = [...containerElement.children].find(el => el.tagName === "COMPONENTS");
   const children = Array.from(components?.children || []);
 
   return {
-    type: ComponentType.Section,
+    type: ComponentType.Container,
     components: children.map((element) => {
       return parseElement(dbi, dbiName, element);
     }),
     accent_color: parseColor(containerElement.getAttribute("accent-color") || ""),
     spoiler: containerElement.hasAttribute("spoiler"),
+  }
+}
+
+function parseTextInput(dbi: DBI<NamespaceEnums>, dbiName: string, textInputSelect: Element) {
+  let minLength = parseInt(textInputSelect.getAttribute("min-length"));
+  let maxLength = parseInt(textInputSelect.getAttribute("max-length"));
+
+  return {
+    type: ComponentType.TextInput,
+    custom_id: textInputSelect.getAttribute("custom-id") || textInputSelect.getAttribute("id"),
+    style: TextInputStyle[textInputSelect.getAttribute("input-style") || textInputSelect.getAttribute("style") || "Short"],
+    label: textInputSelect.getAttribute("label"),
+    placeholder: textInputSelect.getAttribute("placeholder"),
+    min_length: !isNaN(minLength) ? minLength : undefined,
+    max_length: !isNaN(maxLength) ? maxLength : undefined,
+    required: textInputSelect.hasAttribute("required"),
+    value: textInputSelect.textContent?.trim() || textInputSelect.getAttribute("value"),
   }
 }
 
@@ -240,6 +258,8 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
       return parseSeparator(dbi, dbiName, element);
     case "CONTAINER":
       return parseContainer(dbi, dbiName, element);
+    case "TEXT-INPUT":
+      return parseTextInput(dbi, dbiName, element);
     default:
       throw new Error(`Unknown HTML component: ${element.tagName}`);
   }
@@ -248,7 +268,7 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
 export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string, dbiName: string, { data }: any = {}) {
   const { window: { document } } = new JSDOM(eta.renderString(template, data));
 
-  const components = document.body.querySelector("& > components");
+  const components = [...document.body.children].find(el => el.tagName === "COMPONENTS");
   const children = Array.from(components?.children || []);
 
   if (!children.length) throw new Error("No components found in the provided HTML template.");

@@ -8,8 +8,9 @@ import { DBIMessageContextMenu } from "./other/MessageContextMenu";
 import { DBIModal } from "./Components/Modal";
 import { DBIStringSelectMenu } from "./Components/StringSelectMenu";
 import { DBIUserContextMenu } from "./other/UserContextMenu";
+import { DBIHTMLComponentsV2 } from "./Components/HTMLComponentsV2";
 
-export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBIStringSelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace>;
+export type TDBIInteractions<TNamespace extends NamespaceEnums> = DBIChatInput<TNamespace> | DBIButton<TNamespace> | DBIStringSelectMenu<TNamespace> | DBIMessageContextMenu<TNamespace> | DBIUserContextMenu<TNamespace> | DBIModal<TNamespace> | DBIHTMLComponentsV2<TNamespace>;
 
 export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   interaction:
@@ -45,7 +46,8 @@ export type TDBIInteractionTypes =
   | "ChannelSelectMenu"
   | "MentionableSelectMenu"
   | "RoleSelectMenu"
-  | "Button";
+  | "Button"
+  | "HTMLComponentsV2";
 
 export type TDBIRateLimitTypes =
   | "User"
@@ -90,9 +92,9 @@ export class DBIBaseInteraction<TNamespace extends NamespaceEnums> {
   flag?: string;
   ttl?: number;
   at?: number;
-  toJSON(overrides: any): any { }
+  toJSON(overrides?: any): any { }
 
-  onExecute(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void {
+  onExecute?(ctx: IDBIBaseExecuteCtx<TNamespace>): Promise<void> | void {
 
   }
 }

@@ -236,7 +236,7 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
     cfg: TDBICustomEventOmitted<TNamespace, T>
   ): DBICustomEvent<TNamespace, T>;
 
-  HTMLComponentsV2(cfg: DBIHTMLComponentsV2<TNamespace>): DBIHTMLComponentsV2<TNamespace>;
+  HTMLComponentsV2(cfg: TDBIHTMLComponentsV2Omitted<TNamespace>): DBIHTMLComponentsV2<TNamespace>;
   HTMLComponentsV2Handlers: DBIHTMLComponentsV2Handlers<TNamespace>;
 
   createInlineEvent(cfg: Omit<TDBIEventOmitted<TNamespace>, "id">): DBIEvent<TNamespace>;
