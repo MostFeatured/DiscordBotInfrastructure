@@ -120,6 +120,96 @@ function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSel
   }
 }
 
+function parseSection(dbi: DBI<NamespaceEnums>, dbiName: string, sectionElement: Element) {
+  const components = sectionElement.querySelector("& > components");
+  const children = Array.from(components?.children || []);
+
+  const accessory = sectionElement.querySelector("accessory");
+
+  return {
+    type: ComponentType.Section,
+    components: children.map((element) => {
+      return parseElement(dbi, dbiName, element);
+    }),
+    ...(accessory ? { accessory: parseElement(dbi, dbiName, accessory) } : {})
+  }
+}
+
+function parseTextDisplay(dbi: DBI<NamespaceEnums>, dbiName: string, textDisplayElement: Element) {
+  return {
+    type: ComponentType.TextDisplay,
+    component: textDisplayElement.textContent?.trim() || "",
+  }
+}
+
+function parseThumbnail(dbi: DBI<NamespaceEnums>, dbiName: string, thumbnailElement: Element) {
+  return {
+    type: ComponentType.Thumbnail,
+    media: {
+      url: thumbnailElement.getAttribute("url")
+    }
+  }
+}
+
+function parseMediaGallery(dbi: DBI<NamespaceEnums>, dbiName: string, mediaGalleryElement: Element) {
+  return {
+    type: ComponentType.MediaGallery,
+    items: Array.from(mediaGalleryElement.querySelectorAll("item")).map(item => {
+      return {
+        media: {
+          url: item.getAttribute("url")
+        },
+        description: item.textContent?.trim() || item.getAttribute("description") || "",
+        spoiler: item.hasAttribute("spoiler"),
+      };
+    })
+  }
+}
+
+function parseFile(dbi: DBI<NamespaceEnums>, dbiName: string, fileElement: Element) {
+  return {
+    type: ComponentType.File,
+    file: {
+      url: fileElement.getAttribute("url"),
+    },
+    spoiler: fileElement.hasAttribute("spoiler"),
+  }
+}
+
+function parseSeparator(dbi: DBI<NamespaceEnums>, dbiName: string, separatorElement: Element) {
+  return {
+    type: ComponentType.File,
+    divider: separatorElement.hasAttribute("divider"),
+    spacing: parseInt(separatorElement.getAttribute("spacing") || '0'),
+  }
+}
+
+function parseContainer(dbi: DBI<NamespaceEnums>, dbiName: string, containerElement: Element) {
+  const components = containerElement.querySelector("& > components");
+  const children = Array.from(components?.children || []);
+
+  return {
+    type: ComponentType.Section,
+    components: children.map((element) => {
+      return parseElement(dbi, dbiName, element);
+    }),
+    accent_color: parseColor(containerElement.getAttribute("accent-color") || ""),
+    spoiler: containerElement.hasAttribute("spoiler"),
+  }
+}
+
+function parseColor(color: string) {
+  if (!color) return;
+  if (/\d{3,6}/.test(color)) return parseInt(color, 10);
+  if (color.startsWith("#")) return parseInt(color.slice(1), 16);
+  if (color.startsWith("0x")) return parseInt(color.slice(2), 16);
+  if (color.startsWith("rgb(")) {
+    const rgb = color.slice(4, -1).split(",").map(Number);
+    return (rgb[0] << 16) + (rgb[1] << 8) + rgb[2];
+  }
+  return parseInt(color, 16);
+}
+
 function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element) {
   switch (element.tagName) {
     case "ACTION-ROW":
@@ -136,6 +226,20 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.MentionableSelect);
     case "CHANNEL-SELECT":
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.ChannelSelect);
+    case "SECTION":
+      return parseSection(dbi, dbiName, element);
+    case "TEXT-DISPLAY":
+      return parseTextDisplay(dbi, dbiName, element);
+    case "THUMBNAIL":
+      return parseThumbnail(dbi, dbiName, element);
+    case "MEDIA-GALLERY":
+      return parseMediaGallery(dbi, dbiName, element);
+    case "FILE":
+      return parseFile(dbi, dbiName, element);
+    case "SEPARATOR":
+      return parseSeparator(dbi, dbiName, element);
+    case "CONTAINER":
+      return parseContainer(dbi, dbiName, element);
     default:
       throw new Error(`Unknown HTML component: ${element.tagName}`);
   }
@@ -144,7 +248,7 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
 export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string, dbiName: string, { data }: any = {}) {
   const { window: { document } } = new JSDOM(eta.renderString(template, data));
 
-  const components = document.querySelector("components");
+  const components = document.body.querySelector("& > components");
   const children = Array.from(components?.children || []);
 
   if (!children.length) throw new Error("No components found in the provided HTML template.");
