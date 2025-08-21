@@ -27,13 +27,13 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
           (i.type == "ChatInput" &&
             (inter.isChatInputCommand() || inter.isAutocomplete()) &&
             i.name ==
-              [
-                inter.commandName,
-                inter.options.getSubcommandGroup(false),
-                inter.options.getSubcommand(false),
-              ]
-                .filter((i) => !!i)
-                .join(" ")) ||
+            [
+              inter.commandName,
+              inter.options.getSubcommandGroup(false),
+              inter.options.getSubcommand(false),
+            ]
+              .filter((i) => !!i)
+              .join(" ")) ||
           ((i.type == "MessageContextMenu" || i.type == "UserContextMenu") &&
             (inter.isMessageContextMenuCommand() ||
               inter.isUserContextMenuCommand()) &&
@@ -65,10 +65,12 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       guild: guildLocale,
     };
 
-    let data =
-      inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()
-        ? parseCustomId(dbi, inter.customId).data
-        : undefined;
+    let parsedId = inter.isButton() || inter.isAnySelectMenu() || inter.isModalSubmit()
+      ? parseCustomId(dbi, inter.customId)
+      : undefined;
+
+    let data = parsedId?.data;
+    let v2 = parsedId?.v2 || false;
 
     let other = {};
 
@@ -81,6 +83,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
         data,
         other,
         dbiInteraction: dbiInter,
+        v2
       }))
     )
       return;
@@ -100,6 +103,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
           other,
           locale,
           step: "Autocomplete",
+          v2,
         });
 
         if (Array.isArray(res) && res.length > 0) {
@@ -119,6 +123,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
           data,
           other,
           locale,
+          v2
         });
         await inter.respond(response);
       }
@@ -153,6 +158,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
               type: key,
               ...val,
             },
+            v2
           })) === true
         )
           return;
@@ -184,12 +190,12 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
                 ? dcOption.attachment
                 : dbiOption.type ===
                   Discord.ApplicationCommandOptionType.Channel
-                ? dcOption.channel
-                : dbiOption.type === Discord.ApplicationCommandOptionType.Role
-                ? dcOption.role
-                : dbiOption.type === Discord.ApplicationCommandOptionType.User
-                ? dcOption.user
-                : dcOption.value,
+                  ? dcOption.channel
+                  : dbiOption.type === Discord.ApplicationCommandOptionType.Role
+                    ? dcOption.role
+                    : dbiOption.type === Discord.ApplicationCommandOptionType.User
+                      ? dcOption.user
+                      : dcOption.value,
             interaction: inter,
             dbiInteraction: dbiInter,
             dbi,
@@ -218,21 +224,54 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       data,
       // @ts-ignore
       other,
+      v2
     };
 
-    if (dbi.config.strict) {
-      // @ts-ignore
-      await dbiInter.onExecute(arg);
+    if (v2 && dbiInter.type === "HTMLComponentsV2") {
+      if (dbi.config.strict) {
+        // @ts-ignore
+        await dbiInter.onExecute?.(arg);
+
+        const elementName = data.shift();
+        dbiInter.handlers.forEach((handler) => {
+          if (handler.name === elementName) {
+            handler.onExecute(arg);
+          }
+        });
+      } else {
+        try {
+          // @ts-ignore
+          await dbiInter.onExecute?.(arg);
+
+          const elementName = data.shift();
+          dbiInter.handlers.forEach((handler) => {
+            if (handler.name === elementName) {
+              handler.onExecute(arg);
+            }
+          });
+        } catch (error) {
+          // @ts-ignore
+          await dbi.events.trigger(
+            "interactionError",
+            Object.assign(arg, { error })
+          );
+        }
+      }
     } else {
-      try {
+      if (dbi.config.strict) {
         // @ts-ignore
         await dbiInter.onExecute(arg);
-      } catch (error) {
-        // @ts-ignore
-        await dbi.events.trigger(
-          "interactionError",
-          Object.assign(arg, { error })
-        );
+      } else {
+        try {
+          // @ts-ignore
+          await dbiInter.onExecute(arg);
+        } catch (error) {
+          // @ts-ignore
+          await dbi.events.trigger(
+            "interactionError",
+            Object.assign(arg, { error })
+          );
+        }
       }
     }
 
@@ -245,6 +284,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       setRateLimit,
       data,
       other,
+      v2
     });
   }
 

@@ -29,6 +29,7 @@ export interface IDBIBaseExecuteCtx<TNamespace extends NamespaceEnums> {
   setRateLimit(type: TDBIRateLimitTypes, duration: number): Promise<any>;
   other: Record<string, any>;
   clientNamespace: NamespaceData[TNamespace]["clientNamespaces"];
+  v2: boolean;
 }
 
 export type TDBIReferencedData = ({ [key: string]: any, $ref: string, $unRef(): boolean } | string | number);

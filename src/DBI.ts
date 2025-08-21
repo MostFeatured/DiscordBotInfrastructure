@@ -61,6 +61,8 @@ import {
 } from "./types/Components/RoleSelectMenu";
 import { handleMessageCommands } from "./methods/handleMessageCommands";
 import { FakeMessageInteraction } from "./types/other/FakeMessageInteraction";
+import { DBIHTMLComponentsV2, TDBIHTMLComponentsV2Omitted } from "./types/Components/HTMLComponentsV2";
+import { DBIHTMLComponentsV2Handlers } from "./types/Components/HTMLComponentsV2/HTMLComponentsV2Handlers";
 
 export interface DBIStore {
   get(key: string, defaultValue?: any): Promise<any>;
@@ -203,6 +205,7 @@ export interface DBIConfigConstructor<TNamespace extends NamespaceEnums, OtherDa
 export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   ChatInput(cfg: TDBIChatInputOmitted<TNamespace>): DBIChatInput<TNamespace>;
   ChatInputOptions: DBIChatInputOptions<TNamespace>;
+
   Event(cfg: TDBIEventOmitted<TNamespace>): DBIEvent<TNamespace>;
   Locale(cfg: TDBILocaleConstructor<TNamespace>): DBILocale<TNamespace>;
   Button(cfg: TDBIButtonOmitted<TNamespace>): DBIButton<TNamespace>;
@@ -232,6 +235,9 @@ export interface DBIRegisterAPI<TNamespace extends NamespaceEnums> {
   CustomEvent<T extends keyof NamespaceData[TNamespace]["customEvents"]>(
     cfg: TDBICustomEventOmitted<TNamespace, T>
   ): DBICustomEvent<TNamespace, T>;
+
+  HTMLComponentsV2(cfg: DBIHTMLComponentsV2<TNamespace>): DBIHTMLComponentsV2<TNamespace>;
+  HTMLComponentsV2Handlers: DBIHTMLComponentsV2Handlers<TNamespace>;
 
   createInlineEvent(cfg: Omit<TDBIEventOmitted<TNamespace>, "id">): DBIEvent<TNamespace>;
   createInlineButton(cfg: Omit<TDBIButtonOmitted<TNamespace>, "id" | "name">): DBIButton<TNamespace>;
@@ -529,6 +535,7 @@ export class DBI<
   private async _registerAll(flags: string[] = []) {
     const self = this;
     const ChatInputOptions = new DBIChatInputOptions(self);
+    const HTMLComponentsV2Handlers = new DBIHTMLComponentsV2Handlers(self);
 
     const randomInlineId = () => `inline:${Math.random().toString(36).slice(2)}`;
 
@@ -787,7 +794,7 @@ export class DBI<
         let dbiInteractionLocale = new DBIInteractionLocale(self, cfg);
         if (
           self.config.strict &&
-          self.data.interactionLocales.has(dbiInteractionLocale.name)
+          self.data.interactions.has(dbiInteractionLocale.name)
         )
           throw new Error(
             `DBIInteractionLocale "${dbiInteractionLocale.name}" already loaded!`
@@ -797,6 +804,26 @@ export class DBI<
           dbiInteractionLocale
         );
         return dbiInteractionLocale;
+      };
+
+      let HTMLComponentsV2 = function (
+        cfg: TDBIHTMLComponentsV2Omitted<TNamespace>
+      ) {
+        let dbiHTMLComponentsV2 = new DBIHTMLComponentsV2(self as any, cfg);
+        if (
+          self.config.strict &&
+          self.data.interactions.has(dbiHTMLComponentsV2.name)
+        )
+          throw new Error(
+            `DBIHTMLComponentsV2 "${dbiHTMLComponentsV2.name
+            }" already loaded as "${self.data.interactions.get(dbiHTMLComponentsV2.name)?.type
+            }"!`
+          );
+        if (!cfg.flag || flags.includes("all") || flags.includes(cfg.flag)) self.data.interactions.set(
+          dbiHTMLComponentsV2.name,
+          dbiHTMLComponentsV2 as any
+        );
+        return dbiHTMLComponentsV2;
       };
 
       await cb({
@@ -814,6 +841,8 @@ export class DBI<
         UserContextMenu,
         CustomEvent,
         Modal,
+        HTMLComponentsV2,
+        HTMLComponentsV2Handlers,
         InteractionLocale,
         createInlineButton,
         createInlineEvent,
