@@ -36,7 +36,7 @@ function parseCustomIdAttributes(dbi: DBI<NamespaceEnums>, dbiName: string, elem
   let customId = element.getAttribute("custom-id");
   if (!customId) {
     let name = element.getAttribute("name");
-    if (!name) throw new Error("String Select Menu must have a name or custom-id attribute.");
+    if (!name) throw new Error("Element must have a name or custom-id attribute.");
     customId = buildCustomId(
       dbi,
       dbiName,
@@ -61,12 +61,13 @@ function parseActionRow(dbi: DBI<NamespaceEnums>, dbiName: string, actionRow: El
 }
 
 function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element) {
+  const style = button.getAttribute("style") || button.getAttribute("button-style") || "Primary";
   return {
     type: ComponentType.Button,
-    style: ButtonStyle[button.getAttribute("button-style") || button.getAttribute("style") || "Primary"],
+    style: ButtonStyle[style],
     label: button.textContent?.trim(),
     emoji: button.getAttribute("emoji"),
-    custom_id: parseCustomIdAttributes(dbi, dbiName, button),
+    custom_id: style !== "Link" && style !== "Premium" ? parseCustomIdAttributes(dbi, dbiName, button) : undefined,
     disabled: button.hasAttribute("disabled"),
     url: button.getAttribute("url"),
     sku_id: button.getAttribute("sku-id"),

@@ -44,7 +44,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
             isUsesCustomId &&
             parsedId?.name == dbiInter.name)
           ||
-          (parsedId.v2 && dbiInter.type == "HTMLComponentsV2" && parsedId.name == dbiInter.name)
+          (parsedId?.v2 && dbiInter.type == "HTMLComponentsV2" && parsedId?.name == dbiInter.name)
         );
       });
 

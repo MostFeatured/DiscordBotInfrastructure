@@ -4,7 +4,7 @@ import { DBIBaseInteraction, DBIRateLimit, IDBIBaseExecuteCtx, TDBIReferencedDat
 import { parseHTMLComponentsV2 } from "./parser";
 import fs from "fs";
 
-export type TDBIHTMLComponentsV2Omitted<TNamespace extends NamespaceEnums> = Omit<DBIHTMLComponentsV2<TNamespace>, "type" | "dbi" | "toJSON">;
+export type TDBIHTMLComponentsV2Omitted<TNamespace extends NamespaceEnums> = Omit<DBIHTMLComponentsV2<TNamespace>, "type" | "dbi" | "toJSON" | "description">;
 
 export type TDBIHTMLComponentsV2ToJSONArgs = {
   data?: Record<string, any>;
