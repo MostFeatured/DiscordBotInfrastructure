@@ -7,6 +7,10 @@ import { buildCustomId } from "../../../utils/customId";
 
 const eta = new Eta();
 
+function getAttributeBoolean(element: Element, attribute: string): boolean {
+  return element.hasAttribute(attribute) ? ['true', ''].includes(element.getAttribute(attribute)) : false
+}
+
 function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
   let list = Array.from(attributes)
     .filter(attr => attr.nodeName.startsWith("data-"))
@@ -16,7 +20,8 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
       let value;
       switch (splited[1]) {
         case "number": value = Number(attr.nodeValue!); break;
-        case "boolean": value = attr.nodeValue === "true"; break;
+        case "bool":
+        case "boolean": value = attr.nodeValue === "true" || attr.nodeValue === "1"; break;
         case "json": value = JSON.parse(attr.nodeValue!); break;
         case "string":
         default: value = attr.nodeValue; break;
@@ -68,7 +73,7 @@ function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element)
     label: button.textContent?.trim(),
     emoji: button.getAttribute("emoji"),
     custom_id: style !== "Link" && style !== "Premium" ? parseCustomIdAttributes(dbi, dbiName, button) : undefined,
-    disabled: button.hasAttribute("disabled"),
+    disabled: getAttributeBoolean(button, "disabled"),
     url: button.getAttribute("url"),
     sku_id: button.getAttribute("sku-id"),
   }
@@ -84,7 +89,7 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
       value: option.getAttribute("value"),
       description: option.getAttribute("description"),
       emoji: option.getAttribute("emoji"),
-      default: option.hasAttribute("default")
+      default: getAttributeBoolean(option, "default"),
     }
   });
 
@@ -94,7 +99,7 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
     placeholder: stringSelect.getAttribute("placeholder"),
     min_values: !isNaN(minValues) ? minValues : undefined,
     max_values: !isNaN(maxValues) ? maxValues : undefined,
-    disabled: stringSelect.hasAttribute("disabled"),
+    disabled: getAttributeBoolean(stringSelect, "disabled"),
     options
   }
 }
@@ -116,7 +121,7 @@ function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSel
     placeholder: userSelect.getAttribute("placeholder"),
     min_values: !isNaN(minValues) ? minValues : undefined,
     max_values: !isNaN(maxValues) ? maxValues : undefined,
-    disabled: userSelect.hasAttribute("disabled"),
+    disabled: getAttributeBoolean(userSelect, "disabled"),
     options
   }
 }
@@ -162,7 +167,7 @@ function parseMediaGallery(dbi: DBI<NamespaceEnums>, dbiName: string, mediaGalle
           url: item.getAttribute("url")
         },
         description: item.textContent?.trim() || item.getAttribute("description") || "",
-        spoiler: item.hasAttribute("spoiler"),
+        spoiler: getAttributeBoolean(item, "spoiler"),
       };
     })
   }
@@ -174,7 +179,7 @@ function parseFile(dbi: DBI<NamespaceEnums>, dbiName: string, fileElement: Eleme
     file: {
       url: fileElement.getAttribute("url"),
     },
-    spoiler: fileElement.hasAttribute("spoiler"),
+    spoiler: getAttributeBoolean(fileElement, "spoiler"),
   }
 }
 
