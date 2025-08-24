@@ -33,7 +33,10 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       this.dbi as any,
       this.template,
       this.name,
-      { data: arg.data }
+      {
+        data: arg.data,
+        ttl: this.ttl
+      }
     )
   }
 

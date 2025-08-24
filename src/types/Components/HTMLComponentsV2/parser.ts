@@ -4,14 +4,17 @@ import { DBI } from "../../../DBI";
 import { NamespaceEnums } from "../../../../generated/namespaceData";
 import { ButtonStyle, ComponentType, TextInputStyle } from "discord.js";
 import { buildCustomId } from "../../../utils/customId";
+import * as stuffs from "stuffs";
 
-const eta = new Eta();
+const eta = new Eta({
+  useWith: true,
+});
 
 function getAttributeBoolean(element: Element, attribute: string): boolean {
   return element.hasAttribute(attribute) ? ['true', ''].includes(element.getAttribute(attribute)) : false
 }
 
-function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
+function parseElementDataAttributes(dbi: DBI<NamespaceEnums>, attributes: NamedNodeMap): any[] {
   let list = Array.from(attributes)
     .filter(attr => attr.nodeName.startsWith("data-"))
     .map(attr => {
@@ -19,11 +22,17 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
       let index = parseInt(splited[0]);
       let value;
       switch (splited[1]) {
+        case "int":
+        case "integer":
+        case "float":
         case "number": value = Number(attr.nodeValue!); break;
         case "bool":
         case "boolean": value = attr.nodeValue === "true" || attr.nodeValue === "1"; break;
-        case "json": value = JSON.parse(attr.nodeValue!); break;
         case "string":
+        case "str": value = attr.nodeValue; break;
+        case "refrence":
+        case "ref": value = dbi.data.refs.get(attr.nodeValue!)?.value; break;
+        case "json": value = JSON.parse(attr.nodeValue!); break;
         default: value = attr.nodeValue; break;
       }
       return {
@@ -51,7 +60,7 @@ function parseCustomIdAttributes(dbi: DBI<NamespaceEnums>, dbiName: string, elem
       dbiName,
       [
         name,
-        ...parseElementDataAttributes(element.attributes),
+        ...parseElementDataAttributes(dbi, element.attributes),
       ],
       element.hasAttribute("ttl") ? parseInt(element.getAttribute("ttl")!) : undefined,
       true
@@ -275,8 +284,25 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
   }
 }
 
-export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string, dbiName: string, { data }: any = {}) {
-  const { window: { document } } = new JSDOM(eta.renderString(template, data));
+export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string, dbiName: string, { data = {}, ttl = 0 }: any = { data: {}, ttl: 0 }) {
+  const { window: { document } } = new JSDOM(
+    eta.renderString(
+      template, 
+      {
+        it: data,
+        $refId(obj: any) {
+          if (obj && typeof obj == "object" && obj.$ref) return obj.$ref;
+          let id = stuffs.randomString(8);
+          Object.assign(obj, {
+            $ref: id,
+            $unRef() { return dbi.data.refs.delete(id); },
+          });
+          dbi.data.refs.set(id, { at: Date.now(), value: obj, ttl });
+          return id;
+        }
+      }
+    )
+  );
 
   const components = [...document.body.children].find(el => el.tagName === "COMPONENTS");
   const children = Array.from(components?.children || []);

@@ -16,7 +16,7 @@ export function buildCustomId(dbi: DBI<NamespaceEnums>, name: string, data: any[
       Object.assign(value, {
         $ref: id,
         $unRef() { return dbi.data.refs.delete(id); },
-      })
+      });
       dbi.data.refs.set(id, { at: Date.now(), value, ttl });
       return `¤${id}`;
     })
