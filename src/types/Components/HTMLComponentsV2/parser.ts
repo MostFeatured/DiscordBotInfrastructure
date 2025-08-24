@@ -291,7 +291,7 @@ export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string
       {
         it: data,
         $refId(obj: any) {
-          if (obj && typeof obj == "object" && obj.$ref) return `¤${obj.$ref}`;
+          if (obj?.$ref) return `¤${obj.$ref}`;
           let id = stuffs.randomString(8);
           Object.assign(obj, {
             $ref: id,

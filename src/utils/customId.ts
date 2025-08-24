@@ -12,7 +12,7 @@ export function buildCustomId(dbi: DBI<NamespaceEnums>, name: string, data: any[
       if (typeof value == "boolean") return `𝞫${value ? 1 : 0}`;
       if (typeof value == "undefined") return "🗶u";
       if (value === null) return "🗶n";
-      if (value.$ref) return `¤${value.$ref}`;
+      if (value?.$ref) return `¤${value.$ref}`;
       let id = stuffs.randomString(8);
       Object.assign(value, {
         $ref: id,
