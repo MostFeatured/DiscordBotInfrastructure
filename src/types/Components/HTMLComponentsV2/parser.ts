@@ -37,6 +37,10 @@ function parseElementDataAttributes(attributes: NamedNodeMap): any[] {
   return list.length ? list : data ? [data] : [];
 }
 
+function getCleanTextContent(element: Element): string {
+  return (element.textContent?.trim() || "").split("\n").map(line => line.trim()).join("\n");
+}
+
 function parseCustomIdAttributes(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element): string {
   let customId = element.getAttribute("custom-id");
   if (!customId) {
@@ -70,7 +74,7 @@ function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element)
   return {
     type: ComponentType.Button,
     style: ButtonStyle[style],
-    label: button.textContent?.trim(),
+    label: getCleanTextContent(button),
     emoji: button.getAttribute("emoji"),
     custom_id: style !== "Link" && style !== "Premium" ? parseCustomIdAttributes(dbi, dbiName, button) : undefined,
     disabled: getAttributeBoolean(button, "disabled"),
@@ -85,7 +89,7 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
 
   let options = Array.from(stringSelect.querySelectorAll("option")).map(option => {
     return {
-      label: option.textContent?.trim(),
+      label: getCleanTextContent(option),
       value: option.getAttribute("value"),
       description: option.getAttribute("description"),
       emoji: option.getAttribute("emoji"),
@@ -110,7 +114,7 @@ function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSel
 
   let options = Array.from(userSelect.querySelectorAll("option")).map(option => {
     return {
-      id: option.textContent?.trim() || option.getAttribute("id"),
+      id: getCleanTextContent(option) || option.getAttribute("id"),
       type: option.getAttribute("type")
     }
   });
@@ -145,7 +149,7 @@ function parseSection(dbi: DBI<NamespaceEnums>, dbiName: string, sectionElement:
 function parseTextDisplay(dbi: DBI<NamespaceEnums>, dbiName: string, textDisplayElement: Element) {
   return {
     type: ComponentType.TextDisplay,
-    content: textDisplayElement.textContent?.trim() || "",
+    content: getCleanTextContent(textDisplayElement) || "",
   }
 }
 
@@ -166,7 +170,7 @@ function parseMediaGallery(dbi: DBI<NamespaceEnums>, dbiName: string, mediaGalle
         media: {
           url: item.getAttribute("url")
         },
-        description: item.textContent?.trim() || item.getAttribute("description") || "",
+        description: getCleanTextContent(mediaGalleryElement) || item.getAttribute("description") || "",
         spoiler: getAttributeBoolean(item, "spoiler"),
       };
     })
@@ -218,7 +222,7 @@ function parseTextInput(dbi: DBI<NamespaceEnums>, dbiName: string, textInputSele
     min_length: !isNaN(minLength) ? minLength : undefined,
     max_length: !isNaN(maxLength) ? maxLength : undefined,
     required: textInputSelect.hasAttribute("required"),
-    value: textInputSelect.textContent?.trim() || textInputSelect.getAttribute("value"),
+    value: getCleanTextContent(textInputSelect) || textInputSelect.getAttribute("value"),
   }
 }
 
