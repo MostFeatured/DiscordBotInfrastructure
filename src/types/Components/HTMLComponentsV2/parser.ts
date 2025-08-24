@@ -287,18 +287,18 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
 export function parseHTMLComponentsV2(dbi: DBI<NamespaceEnums>, template: string, dbiName: string, { data = {}, ttl = 0 }: any = { data: {}, ttl: 0 }) {
   const { window: { document } } = new JSDOM(
     eta.renderString(
-      template, 
+      template,
       {
         it: data,
         $refId(obj: any) {
-          if (obj && typeof obj == "object" && obj.$ref) return obj.$ref;
+          if (obj && typeof obj == "object" && obj.$ref) return `¤${obj.$ref}`;
           let id = stuffs.randomString(8);
           Object.assign(obj, {
             $ref: id,
             $unRef() { return dbi.data.refs.delete(id); },
           });
           dbi.data.refs.set(id, { at: Date.now(), value: obj, ttl });
-          return id;
+          return `¤${id}`;
         }
       }
     )
