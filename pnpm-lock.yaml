@@ -21,8 +21,8 @@ importers:
         specifier: ^2.2.6
         version: 2.2.6
       discord.js:
-        specifier: ^14.22.0
-        version: 14.22.0
+        specifier: ^14.22.1
+        version: 14.22.1
       eta:
         specifier: ^3.5.0
         version: 3.5.0
@@ -194,8 +194,8 @@ packages:
   discord-hybrid-sharding@2.2.6:
     resolution: {integrity: sha512-I/MaEg3+/DD1oDZx5kDWXyajkKqiJwG4nxF5hv8nLBfioFSO19sXjaq2z9klMJRINvPhX0zNAj52dRRNuzqyzQ==}
 
-  discord.js@14.22.0:
-    resolution: {integrity: sha512-IDSeDdWSEA4DoOyspekbetcFKkEonJO09cxR+kqQQlTWd5CTm/3Z48I4Te+EL8uxn52s718FZ0rI2dLxRkTpwg==}
+  discord.js@14.22.1:
+    resolution: {integrity: sha512-3k+Kisd/v570Jr68A1kNs7qVhNehDwDJAPe4DZ2Syt+/zobf9zEcuYFvsfIaAOgCa0BiHMfOOKQY4eYINl0z7w==}
     engines: {node: '>=18'}
 
   dot-case@3.0.4:
@@ -533,7 +533,7 @@ snapshots:
 
   discord-hybrid-sharding@2.2.6: {}
 
-  discord.js@14.22.0:
+  discord.js@14.22.1:
     dependencies:
       '@discordjs/builders': 1.11.2
       '@discordjs/collection': 1.5.3
