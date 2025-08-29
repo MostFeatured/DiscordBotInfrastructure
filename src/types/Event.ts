@@ -48,7 +48,7 @@ export interface ClientEvents {
   messageReactionRemove: { reaction: Discord.MessageReaction | Discord.PartialMessageReaction, user: Discord.User | Discord.PartialUser };
   messageUpdate: { oldMessage: Discord.Message | Discord.PartialMessage, newMessage: Discord.Message | Discord.PartialMessage };
   presenceUpdate: { oldPresence: Discord.Presence | null, newPresence: Discord.Presence };
-  ready: { client: Discord.Client<true> };
+  clientReady: { client: Discord.Client<true> };
   invalidated: {};
   roleCreate: { role: Discord.Role };
   roleDelete: { role: Discord.Role };
@@ -66,7 +66,7 @@ export interface ClientEvents {
   typingStart: { typing: Discord.Typing };
   userUpdate: { oldUser: Discord.User | Discord.PartialUser, newUser: Discord.User };
   voiceStateUpdate: { oldState: Discord.VoiceState, newState: Discord.VoiceState };
-  webhookUpdate: { channel: Discord.TextChannel | Discord.NewsChannel | Discord.VoiceChannel };
+  webhooksUpdate: { channel: Discord.TextChannel | Discord.NewsChannel | Discord.VoiceChannel };
   interactionCreate: { interaction: Discord.Interaction };
   shardDisconnect: { closeEvent: Discord.CloseEvent, shardId: number };
   shardError: { error: Error, shardId: number };
