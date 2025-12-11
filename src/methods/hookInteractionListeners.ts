@@ -233,27 +233,38 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
 
 
     if (dbiInter.type === "HTMLComponentsV2") {
+      // For HTMLComponentsV2, first element of data is the element name (button name, etc.)
+      const elementName = data?.[0];
+      console.log("[Hook] HTMLComponentsV2 interaction found, elementName:", elementName);
+      console.log("[Hook] onExecute exists:", typeof dbiInter.onExecute);
+
       if (dbi.config.strict) {
         // @ts-ignore
         await dbiInter.onExecute?.(arg);
 
-        const elementName = data.shift();
-        dbiInter.handlers.forEach((handler) => {
-          if (handler.name === elementName) {
-            handler.onExecute(arg);
-          }
-        });
-      } else {
-        try {
-          // @ts-ignore
-          await dbiInter.onExecute?.(arg);
-
-          const elementName = data.shift();
+        // For traditional handlers (non-Svelte mode)
+        if (dbiInter.handlers?.length > 0) {
+          data.shift(); // Remove element name from data
           dbiInter.handlers.forEach((handler) => {
             if (handler.name === elementName) {
               handler.onExecute(arg);
             }
           });
+        }
+      } else {
+        try {
+          // @ts-ignore
+          await dbiInter.onExecute?.(arg);
+
+          // For traditional handlers (non-Svelte mode)
+          if (dbiInter.handlers?.length > 0) {
+            data.shift(); // Remove element name from data
+            dbiInter.handlers.forEach((handler) => {
+              if (handler.name === elementName) {
+                handler.onExecute(arg);
+              }
+            });
+          }
         } catch (error) {
           // @ts-ignore
           await dbi.events.trigger(

@@ -80,13 +80,17 @@ function parseActionRow(dbi: DBI<NamespaceEnums>, dbiName: string, actionRow: El
 
 function parseButton(dbi: DBI<NamespaceEnums>, dbiName: string, button: Element) {
   const style = button.getAttribute("style") || button.getAttribute("button-style") || "Primary";
+  const isDisabled = getAttributeBoolean(button, "disabled");
+
+  const needsCustomId = style !== "Link" && style !== "Premium";
+
   return {
     type: ComponentType.Button,
     style: ButtonStyle[style],
     label: getCleanTextContent(button),
     emoji: button.getAttribute("emoji"),
-    custom_id: style !== "Link" && style !== "Premium" ? parseCustomIdAttributes(dbi, dbiName, button) : undefined,
-    disabled: getAttributeBoolean(button, "disabled"),
+    custom_id: needsCustomId ? parseCustomIdAttributes(dbi, dbiName, button) : undefined,
+    disabled: isDisabled,
     url: button.getAttribute("url"),
     sku_id: button.getAttribute("sku-id"),
   }
@@ -144,7 +148,13 @@ function parseSection(dbi: DBI<NamespaceEnums>, dbiName: string, sectionElement:
   const components = childs.find(el => el.tagName === "COMPONENTS");
   const children = Array.from(components?.children || []);
 
-  const accessory = childs.find(el => el.tagName === "ACCESSORY")?.children?.[0];
+  // Look for accessory in <accessory> wrapper or directly as <thumbnail>/<button>
+  let accessory = childs.find(el => el.tagName === "ACCESSORY")?.children?.[0];
+
+  // If no <accessory> wrapper, look for direct thumbnail or button
+  if (!accessory) {
+    accessory = childs.find(el => el.tagName === "THUMBNAIL" || el.tagName === "BUTTON");
+  }
 
   return {
     type: ComponentType.Section,
@@ -166,7 +176,7 @@ function parseThumbnail(dbi: DBI<NamespaceEnums>, dbiName: string, thumbnailElem
   return {
     type: ComponentType.Thumbnail,
     media: {
-      url: thumbnailElement.getAttribute("url")
+      url: thumbnailElement.getAttribute("url") || thumbnailElement.getAttribute("media")
     }
   }
 }
