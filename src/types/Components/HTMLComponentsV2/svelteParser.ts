@@ -1,7 +1,20 @@
-import { parse } from "svelte/compiler";
-import { walk } from "estree-walker";
+import type { walk as WalkType } from "estree-walker";
 import * as stuffs from "stuffs";
 
+// Lazy imports to avoid issues with package managers that don't properly hoist dependencies
+let _parse: typeof import("svelte/compiler").parse;
+let _walk: typeof WalkType;
+
+async function ensureImports() {
+  if (!_parse) {
+    const svelteCompiler = await import("svelte/compiler");
+    _parse = svelteCompiler.parse;
+  }
+  if (!_walk) {
+    const estreeWalker = await import("estree-walker");
+    _walk = estreeWalker.walk;
+  }
+}
 
 export interface SvelteHandlerInfo {
   name: string;
@@ -20,8 +33,9 @@ export interface SvelteComponentInfo {
  * Parse a Svelte component and extract event handlers
  * Also injects auto-generated names into elements that have handlers but no name
  */
-export function parseSvelteComponent(source: string, data?: Record<string, any>): SvelteComponentInfo {
-  const ast = parse(source);
+export async function parseSvelteComponent(source: string, data?: Record<string, any>): Promise<SvelteComponentInfo> {
+  await ensureImports();
+  const ast = _parse(source);
   const handlers = new Map<string, SvelteHandlerInfo>();
   let scriptContent = "";
 
@@ -36,7 +50,7 @@ export function parseSvelteComponent(source: string, data?: Record<string, any>)
   let autoNameCounter = 0;
 
   // Walk through HTML nodes to find event handlers
-  walk(ast.html as any, {
+  _walk(ast.html as any, {
     enter(node: any) {
       if (node.type === "Element" || node.type === "InlineComponent") {
         const attributes = node.attributes || [];

@@ -4,7 +4,7 @@
     "async-and-quick": "^1.0.2",
     "discord-api-types": "^0.37.100",
     "discord-hybrid-sharding": "^2.2.6",
-    "discord.js": "^14.22.1",
+    "discord.js": "^14.25.1",
     "estree-walker": "^3.0.3",
     "eta": "^3.5.0",
     "jsdom": "^26.1.0",
@@ -16,9 +16,9 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.2.2",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "0.2.5",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "typesVersions": {
     "*": {
       "svelte": [
@@ -75,6 +75,18 @@
     "@types/jsdom": "^21.1.7",
     "@types/lodash": "^4.14.182",
     "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "estree-walker": "^3.0.0",
+    "svelte": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "estree-walker": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public",

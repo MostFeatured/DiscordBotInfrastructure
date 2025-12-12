@@ -19,17 +19,17 @@ export interface SvelteRenderResult {
 /**
  * Compile and render a Svelte component to Discord components
  */
-export function renderSvelteComponent(
+export async function renderSvelteComponent(
   dbi: DBI<NamespaceEnums>,
   source: string,
   dbiName: string,
   options: SvelteRenderOptions = {}
-): SvelteRenderResult {
+): Promise<SvelteRenderResult> {
   const { data = {}, ttl = 0 } = options;
 
   // Parse the Svelte component to extract handlers
   // This also injects auto-generated names into elements without name attribute
-  const componentInfo = parseSvelteComponent(source, data);
+  const componentInfo = await parseSvelteComponent(source, data);
 
   // Use the processed source (with auto-generated names injected)
   const processedSource = componentInfo.processedSource;
@@ -320,13 +320,13 @@ function evaluateCompiledComponent(code: string, context: Record<string, any>): 
 /**
  * Render a Svelte component from a file
  */
-export function renderSvelteComponentFromFile(
+export async function renderSvelteComponentFromFile(
   dbi: DBI<NamespaceEnums>,
   filePath: string,
   dbiName: string,
   options: SvelteRenderOptions = {}
-): SvelteRenderResult {
+): Promise<SvelteRenderResult> {
   const fs = require("fs");
   const source = fs.readFileSync(filePath, "utf-8");
-  return renderSvelteComponent(dbi, source, dbiName, options);
+  return await renderSvelteComponent(dbi, source, dbiName, options);
 }

@@ -70,18 +70,25 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       this._userOnExecute = userOnExecute;
     }
 
-    // Pre-extract Svelte handlers at registration time
+    // Pre-extract Svelte handlers at registration time (lazy loaded)
     if (this.mode === 'svelte' && this.template) {
-      this.svelteComponentInfo = parseSvelteComponent(this.template);
+      // Defer the parsing to avoid sync import issues
+      this._initSvelteComponent();
+    }
+
+    // Re-assign onExecute method after super() call because parent class sets it to undefined
+    this.onExecute = this._handleExecute.bind(this);
+  }
+
+  private async _initSvelteComponent() {
+    if (this.template && !this.svelteComponentInfo) {
+      this.svelteComponentInfo = await parseSvelteComponent(this.template);
 
       // Debug log
       console.log(`[Svelte] Component "${this.name}" registered with handlers:`,
         Array.from(this.svelteComponentInfo.handlers.entries())
       );
     }
-
-    // Re-assign onExecute method after super() call because parent class sets it to undefined
-    this.onExecute = this._handleExecute.bind(this);
   }
 
   private _handleExecute(ctx: IDBIHTMLComponentsV2ExecuteCtx<TNamespace>) {
@@ -200,10 +207,10 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     }
   }
 
-  override toJSON(arg: TDBIHTMLComponentsV2ToJSONArgs = {}): any {
+  override async toJSON(arg: TDBIHTMLComponentsV2ToJSONArgs = {}): Promise<any> {
     if (this.mode === 'svelte' && this.template) {
       // Render Svelte component
-      const result = renderSvelteComponent(
+      const result = await renderSvelteComponent(
         this.dbi as any,
         this.template,
         this.name,
