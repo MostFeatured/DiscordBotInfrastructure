@@ -104,15 +104,28 @@ export async function parseSvelteComponent(source: string, data?: Record<string,
         attr.type === "Attribute" && attr.name === "name"
       );
 
-      // Check if element has an onclick/onchange handler and get the handler info
+      // Check if element has an onclick/onchange/handler and get the handler info
       let foundHandler: { eventType: string; handlerName: string } | null = null;
 
       for (const attr of attributes) {
         const isEventHandler = attr.type === "EventHandler";
         const isOnAttribute = attr.type === "Attribute" && attr.name && attr.name.startsWith("on");
+        const isHandlerAttribute = attr.type === "Attribute" && attr.name === "handler";
 
-        if (isEventHandler || isOnAttribute) {
-          const eventType = attr.name;
+        if (isEventHandler || isOnAttribute || isHandlerAttribute) {
+          // For "handler" attribute, use the element type to determine eventType
+          // button -> onclick, select -> onchange
+          let eventType = attr.name;
+          if (isHandlerAttribute) {
+            const elementName = node.name.toLowerCase();
+            if (elementName === "button") {
+              eventType = "onclick";
+            } else if (elementName.includes("select")) {
+              eventType = "onchange";
+            } else {
+              eventType = "handler"; // fallback
+            }
+          }
           let handlerName = "";
 
           if (attr.type === "Attribute" && Array.isArray(attr.value)) {
@@ -618,6 +631,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         }
         
         // Create reactive proxy for data
+        // Also properly forwards Object.keys/values/entries operations
         function __createReactiveProxy__(target, path) {
           if (typeof target !== 'object' || target === null) return target;
           
@@ -638,6 +652,16 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 __markDataChanged__();
               }
               return true;
+            },
+            // Forward Object.keys/values/entries operations
+            ownKeys: function(target) {
+              return Reflect.ownKeys(target);
+            },
+            getOwnPropertyDescriptor: function(target, prop) {
+              return Reflect.getOwnPropertyDescriptor(target, prop);
+            },
+            has: function(target, prop) {
+              return Reflect.has(target, prop);
             }
           });
         }
@@ -656,9 +680,13 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
           var originalInteraction = __ctx__.interaction;
           
           // Create a proxy for interaction that wraps reply/followUp/deferReply
+          // Also properly forwards Object.keys/values/entries operations
+          // Uses Reflect.get to properly handle getters with correct 'this' binding
           interaction = new Proxy(originalInteraction, {
-            get: function(target, prop) {
-              var value = target[prop];
+            get: function(target, prop, receiver) {
+              // Use Reflect.get to properly handle getters (like 'roles', 'users', etc.)
+              // This ensures 'this' context is correct for Discord.js Collection getters
+              var value = Reflect.get(target, prop, target);
               
               // Wrap methods that "consume" the interaction (reply, followUp, defer)
               if (prop === 'reply' || prop === 'followUp' || prop === 'deferReply' || prop === 'deferUpdate') {
@@ -698,16 +726,38 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
               }
               
               return value;
+            },
+            // Forward Object.keys/values/entries operations
+            ownKeys: function(target) {
+              return Reflect.ownKeys(target);
+            },
+            getOwnPropertyDescriptor: function(target, prop) {
+              return Reflect.getOwnPropertyDescriptor(target, prop);
+            },
+            has: function(target, prop) {
+              return Reflect.has(target, prop);
             }
           });
           
           // Create wrapped ctx with the proxied interaction
+          // Also properly forwards Object.keys/values/entries operations
           ctx = new Proxy(__ctx__, {
-            get: function(target, prop) {
+            get: function(target, prop, receiver) {
               if (prop === 'interaction') {
                 return interaction;
               }
-              return target[prop];
+              // Use Reflect.get for proper getter handling
+              return Reflect.get(target, prop, target);
+            },
+            // Forward Object.keys/values/entries operations
+            ownKeys: function(target) {
+              return Reflect.ownKeys(target);
+            },
+            getOwnPropertyDescriptor: function(target, prop) {
+              return Reflect.getOwnPropertyDescriptor(target, prop);
+            },
+            has: function(target, prop) {
+              return Reflect.has(target, prop);
             }
           });
         }

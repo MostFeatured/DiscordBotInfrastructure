@@ -82,15 +82,23 @@ export async function renderSvelteComponent(
     }
 
     // Add state ref to all elements with name attribute (buttons, selects)
+    // This includes both manual names and auto-generated names from svelteParser
     html = html.replace(/<button([^>]*name="[^"]*"[^>]*)>/g, (match, attrs) => {
       // Check if it already has data attributes
       if (attrs.includes('data-1:')) return match;
       return `<button${attrs} data-1:ref="${stateRefId}">`;
     });
     // Also handle select elements (with optional -menu suffix for Svelte compatibility)
+    // Supports: string-select, user-select, role-select, channel-select, mentionable-select
+    // Both with and without -menu suffix (e.g., string-select-menu or string-select)
     html = html.replace(/<(string-select(?:-menu)?|user-select(?:-menu)?|role-select(?:-menu)?|channel-select(?:-menu)?|mentionable-select(?:-menu)?)([^>]*name="[^"]*"[^>]*)>/g, (match, tag, attrs) => {
       if (attrs.includes('data-1:')) return match;
       return `<${tag}${attrs} data-1:ref="${stateRefId}">`;
+    });
+    // Handle modal elements with name attribute
+    html = html.replace(/<modal([^>]*name="[^"]*"[^>]*)>/g, (match, attrs) => {
+      if (attrs.includes('data-1:')) return match;
+      return `<modal${attrs} data-1:ref="${stateRefId}">`;
     });
   }
 
