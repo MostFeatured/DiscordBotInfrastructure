@@ -14,10 +14,21 @@ export async function recursiveImport(folderPath: string, exts: string[] = [".js
     let relative = path.relative(dirName, filePath);
     if (!relative.includes(`${path.sep}-`)) {
       if (file.isDirectory()) {
-        await recursiveImport(filePath, exts)
+        await recursiveImport(filePath, exts, ignore);
       } else if (exts.some(i => file.name.endsWith(i)) && !ignore.some(i => file.name.endsWith(i))) {
-        // Use require for CommonJS compatibility with Bun and other runtimes
-        require(filePath);
+        // Use require for CommonJS compatibility
+        // Wrap in try-catch for Bun compatibility - Bun throws "Missing 'default' export"
+        // but still executes the module's side effects (dbi.register calls)
+        try {
+          require(filePath);
+        } catch (e: any) {
+          // Ignore "Missing 'default' export" errors in Bun runtime
+          // The module's side effects still execute before the error is thrown
+          if (!e.message?.includes("Missing 'default' export") && 
+              !e.message?.includes("does not provide an export named 'default'")) {
+            throw e;
+          }
+        }
       }
     }
   }
