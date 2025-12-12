@@ -5,7 +5,7 @@ import path from "path";
  * @example
  * await recursiveImport("./src", [".js"], [".d.ts"])
  */
-export async function recursiveImport(folderPath: string, exts: string[] = [".js"], ignore: string[] = [".d.ts",".js.map",".d.ts.map"]): Promise<any> {
+export async function recursiveImport(folderPath: string, exts: string[] = [".js"], ignore: string[] = [".d.ts", ".js.map", ".d.ts.map"]): Promise<any> {
   let files = await fs.promises.readdir(folderPath, { withFileTypes: true });
   let dirName = __dirname;
 
@@ -24,8 +24,8 @@ export async function recursiveImport(folderPath: string, exts: string[] = [".js
         } catch (e: any) {
           // Ignore "Missing 'default' export" errors in Bun runtime
           // The module's side effects still execute before the error is thrown
-          if (!e.message?.includes("Missing 'default' export") && 
-              !e.message?.includes("does not provide an export named 'default'")) {
+          if (!e.message?.includes("Missing 'default' export") &&
+            !e.message?.includes("does not provide an export named 'default'")) {
             throw e;
           }
         }

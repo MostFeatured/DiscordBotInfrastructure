@@ -4,6 +4,7 @@ import { NamespaceEnums } from "../../../../generated/namespaceData";
 import { parseHTMLComponentsV2 } from "./parser";
 import { parseSvelteComponent, createHandlerContext, SvelteComponentInfo, HandlerContextResult } from "./svelteParser";
 import * as stuffs from "stuffs";
+import * as vm from "vm";
 
 export interface SvelteRenderOptions {
   data?: Record<string, any>;
@@ -34,7 +35,7 @@ export async function renderSvelteComponent(
   // Use the processed source (with auto-generated names injected)
   const processedSource = componentInfo.processedSource;
 
-  // Compile the Svelte component for SSR
+  // Compile the Svelte component for SSR (Svelte 5)
   const compiled = compile(processedSource, {
     generate: "server",
     css: "injected",
@@ -45,22 +46,15 @@ export async function renderSvelteComponent(
   let html = "";
   try {
     const moduleContext = createModuleContext(dbi, data, ttl);
-    const componentModule = evaluateCompiledComponent(compiled.js.code, moduleContext);
+    const Component = evaluateCompiledComponent(compiled.js.code, moduleContext);
 
-    // Render the component with props (include data in props)
-    const renderResult = componentModule.render({ ...data, data });
-    html = renderResult.html || renderResult.body || "";
-
-    // Debug: Log rendered HTML
-    if (process.env.DEBUG_SVELTE) {
-      console.log("Rendered HTML:", html);
-    }
+    // Svelte 5 SSR: Use render from svelte/server
+    const { render } = require("svelte/server");
+    const renderResult = render(Component, { props: { ...data, data } });
+    html = renderResult.body || "";
   } catch (error) {
-    console.error("Error rendering Svelte component:", error);
     throw error;
   }
-
-  console.log("Rendered HTML:", html);
 
   // For Svelte mode, inject state into interactive elements as a ref
   // Reuse existing ref if data already has one, otherwise create new
@@ -99,12 +93,8 @@ export async function renderSvelteComponent(
     });
   }
 
-  console.log("HTML with state:", html);
-
   // Parse the rendered HTML to Discord components
   const components = parseHTMLComponentsV2(dbi, html, dbiName, { data, ttl });
-
-  console.log("Parsed Components:", JSON.stringify(components, null, 2));
 
   // Create handler context (also captures $effect callbacks)
   const handlerContext = createHandlerContext(componentInfo.scriptContent, data);
@@ -158,161 +148,145 @@ function createModuleContext(dbi: DBI<NamespaceEnums>, data: Record<string, any>
  */
 function evaluateCompiledComponent(code: string, context: Record<string, any>): any {
   try {
-    // Aggressively strip ALL import statements
-    // Svelte 5 generates imports with special chars like $ that need careful handling
+    // Load Svelte 5 internal runtime
+    const svelteInternal = require("svelte/internal/server");
+
+    // Process the code to work in our context
     let processedCode = code;
 
-    // Remove all lines that start with 'import' (most reliable approach)
+    // Collect external modules to inject into sandbox
+    const externalModules: Record<string, any> = {};
+
+    // Replace svelte internal imports
+    processedCode = processedCode.replace(
+      /import\s*\*\s*as\s*(\w+)\s*from\s*["']svelte\/internal\/server["'];?/g,
+      'const $1 = __svelteInternal;'
+    );
+    processedCode = processedCode.replace(
+      /import\s*\{([^}]+)\}\s*from\s*["']svelte\/internal\/server["'];?/g,
+      (match, imports) => {
+        const importList = imports.split(',').map((i: string) => i.trim());
+        return `const { ${importList.join(', ')} } = __svelteInternal;`;
+      }
+    );
+
+    // Handle external module imports (default imports)
+    processedCode = processedCode.replace(
+      /import\s+(\w+)\s+from\s*["']([^"']+)["'];?/g,
+      (match, varName, modulePath) => {
+        // Skip svelte imports
+        if (modulePath.startsWith('svelte')) return '';
+        try {
+          const mod = require(modulePath);
+          externalModules[varName] = mod.default || mod;
+          return `const ${varName} = __externalModules.${varName};`;
+        } catch (e) {
+          return '';
+        }
+      }
+    );
+
+    // Handle named imports from external modules
+    processedCode = processedCode.replace(
+      /import\s*\{([^}]+)\}\s*from\s*["']([^"']+)["'];?/g,
+      (match, imports, modulePath) => {
+        // Skip svelte imports
+        if (modulePath.startsWith('svelte')) return '';
+        try {
+          const mod = require(modulePath);
+          const importList = imports.split(',').map((i: string) => i.trim());
+          importList.forEach((importName: string) => {
+            const [name, alias] = importName.split(' as ').map(s => s.trim());
+            externalModules[alias || name] = mod[name] || mod.default?.[name];
+          });
+          return importList.map((importName: string) => {
+            const [name, alias] = importName.split(' as ').map(s => s.trim());
+            return `const ${alias || name} = __externalModules.${alias || name};`;
+          }).join('\n');
+        } catch (e) {
+          return '';
+        }
+      }
+    );
+
+    // Handle namespace imports from external modules
+    processedCode = processedCode.replace(
+      /import\s*\*\s*as\s*(\w+)\s*from\s*["']([^"']+)["'];?/g,
+      (match, varName, modulePath) => {
+        // Skip svelte imports
+        if (modulePath.startsWith('svelte')) return '';
+        try {
+          const mod = require(modulePath);
+          externalModules[varName] = mod;
+          return `const ${varName} = __externalModules.${varName};`;
+        } catch (e) {
+          return '';
+        }
+      }
+    );
+
+    // Remove any remaining import statements
     processedCode = processedCode
       .split('\n')
       .filter(line => !line.trim().startsWith('import '))
       .join('\n');
 
-    // Also remove 'export default' and replace with assignment
-    processedCode = processedCode.replace(/export\s+default\s+/g, 'module.exports = ');
+    // Replace 'export default' with assignment
+    processedCode = processedCode.replace(/export\s+default\s+/g, '__exports.default = ');
+    // Replace 'export function' with assignment
+    processedCode = processedCode.replace(/export\s+function\s+(\w+)/g, '__exports.$1 = function $1');
+    // Replace 'export const' with assignment
+    processedCode = processedCode.replace(/export\s+const\s+(\w+)/g, '__exports.$1 = ');
+    // Replace 'export let' with assignment  
+    processedCode = processedCode.replace(/export\s+let\s+(\w+)/g, '__exports.$1 = ');
 
-    // Create exports object
-    const exports: any = {};
-    const module = { exports };
-
-    // Provide Svelte 5 server runtime functions
-    // The compiled code references these via the $ namespace
-    const $: any = {
-      // Escape functions
-      escape: (str: any) => String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;"),
-      escape_text: (str: any) => String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;"),
-      escape_attribute_value: (str: any) => String(str)
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;"),
-      // Array helpers for {#each}
-      ensure_array_like: (value: any) => {
-        if (Array.isArray(value)) return value;
-        if (value == null) return [];
-        if (typeof value === 'object' && Symbol.iterator in value) {
-          return Array.from(value);
-        }
-        return [value];
-      },
-      // Renderer methods
-      component: (fn: Function) => fn,
-      push: (content: string) => content,
-      pop: () => { },
-      attr: (name: string, value: any, is_boolean?: boolean) => {
-        if (is_boolean && !value) return '';
-        if (value == null) return '';
-        return ` ${name}="${String(value)}"`;
-      },
-      spread_attributes: (attrs: Record<string, any>) => {
-        return Object.entries(attrs)
-          .map(([key, value]) => ` ${key}="${String(value)}"`)
-          .join('');
-      },
-      spread_props: (props: Record<string, any>) => props,
-      bind_props: (props: Record<string, any>, names: string[]) => {
-        const result: any = {};
-        names.forEach(name => {
-          if (name in props) result[name] = props[name];
-        });
-        return result;
-      },
-      stringify: (value: any) => JSON.stringify(value),
-      store_get: (store: any) => store,
-      unsubscribe_stores: () => { },
-      // Control flow
-      each: (items: any[], fn: Function) => {
-        return items.map((item, index) => fn(item, index)).join('');
-      },
-      // Lifecycle
+    // Create the sandbox context
+    const __exports: any = {};
+    // Svelte lifecycle functions - no-ops for SSR
+    const svelteLifecycle = {
+      onMount: () => () => { }, // Returns cleanup function
+      onDestroy: () => { },
+      beforeUpdate: () => { },
+      afterUpdate: () => { },
       tick: () => Promise.resolve(),
-      flush: () => { },
-      // Validation
-      validate_component: (component: any) => component,
-      validate_store: (store: any) => store,
-      // Misc
-      noop: () => { },
-      run: (fn: Function) => fn(),
-      run_all: (fns: Function[]) => fns.forEach(f => f()),
-      is_promise: (value: any) => value && typeof value.then === 'function',
-      missing_component: { $$render: () => '' },
+      untrack: (fn: () => any) => fn(),
+      createEventDispatcher: () => () => { },
     };
 
-    // Create renderer object that accumulates HTML
-    let html = '';
-    const $$renderer: any = {
-      out: '',
-      head: '',
-      component: (fn: Function) => {
-        return fn($$renderer);
-      },
-      push: (content: string) => {
-        html += content;
-        return $$renderer;
-      },
-      pop: () => $$renderer,
-      element: (tag: string, fn: Function) => {
-        html += `<${tag}`;
-        fn();
-        html += `>`;
-        return $$renderer;
-      },
-      close: (tag: string) => {
-        html += `</${tag}>`;
-        return $$renderer;
-      },
-    };
+    // Note: Svelte 5 runes ($state, $derived, etc.) are compile-time features
+    // The compiler transforms them, so we don't need runtime implementations.
+    // The `$` variable is used by compiled code as the svelte/internal/server namespace.
 
-    // Create a function wrapper with all context and Svelte runtime
-    // Include lifecycle stubs - these are no-ops in SSR but need to be defined
-    const allContext = {
+    const sandbox = {
+      __svelteInternal: svelteInternal,
+      __externalModules: externalModules,
+      $: svelteInternal, // Direct alias for compiled Svelte code that uses `$`
+      __exports,
+      console,
+      ...svelteLifecycle,
       ...context,
-      $,
-      $$renderer,
-      module,
-      exports,
-      // Lifecycle stubs for SSR (actual lifecycle runs in handler context)
-      onMount: (fn: Function) => { /* SSR no-op, real onMount runs in handler context */ },
-      onDestroy: (fn: Function) => { /* SSR no-op, real onDestroy runs in handler context */ },
     };
 
-    const contextKeys = Object.keys(allContext);
-    const contextValues = Object.values(allContext);
-
-    // Wrap in IIFE
+    // Wrap code in IIFE
     const wrappedCode = `
-      (function(${contextKeys.join(", ")}) {
+      (function() {
         ${processedCode}
-        return module.exports;
-      })
+      })();
     `;
 
-    // Evaluate the code
-    const func = eval(wrappedCode);
-    const component = func(...contextValues);
+    // Run in VM context for better isolation
+    vm.createContext(sandbox);
+    vm.runInContext(wrappedCode, sandbox);
 
-    // Return a render function
-    return {
-      render: (props: any) => {
-        html = '';
-        try {
-          component($$renderer, props);
-          return { html, head: '', css: { code: '', map: null } };
-        } catch (e) {
-          console.error('Component render error:', e);
-          throw e;
-        }
-      }
-    };
+    // Return the component
+    const Component = sandbox.__exports.default;
+
+    if (!Component) {
+      throw new Error("Svelte component did not export a default component");
+    }
+
+    return Component;
   } catch (error) {
-    console.error("Error evaluating compiled component:", error);
-    console.error("Code preview (first 500 chars):", code.substring(0, 500));
     throw error;
   }
 }

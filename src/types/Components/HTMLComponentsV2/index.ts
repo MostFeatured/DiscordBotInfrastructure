@@ -83,17 +83,10 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
   private async _initSvelteComponent() {
     if (this.template && !this.svelteComponentInfo) {
       this.svelteComponentInfo = await parseSvelteComponent(this.template);
-
-      // Debug log
-      console.log(`[Svelte] Component "${this.name}" registered with handlers:`,
-        Array.from(this.svelteComponentInfo.handlers.entries())
-      );
     }
   }
 
   private _handleExecute(ctx: IDBIHTMLComponentsV2ExecuteCtx<TNamespace>) {
-    console.log("[Svelte] onExecute called with data:", ctx.data);
-
     // Call user's onExecute callback first if provided
     if (this._userOnExecute) {
       this._userOnExecute(ctx);
@@ -102,18 +95,15 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     // If using Svelte mode, find and execute the handler
     if (this.mode === 'svelte' && this.svelteComponentInfo) {
       const [elementName, ...handlerData] = ctx.data;
-      console.log("[Svelte] Element name:", elementName, "Handler data:", handlerData);
 
       if (typeof elementName === 'string') {
         // Find the handler info for this element
         const handlerInfo = this.svelteComponentInfo.handlers.get(elementName);
-        console.log("[Svelte] Handler info:", handlerInfo);
 
         if (handlerInfo) {
           // Extract current state from handlerData (refs that were passed)
           // The second element in data array contains the current state
           const currentState = handlerData[0] || {} as Record<string, any>;
-          console.log("[Svelte] Current state:", currentState);
 
           // Get ref id for lifecycle tracking (if available)
           const refId = (currentState as any)?.$ref || null;
@@ -136,7 +126,6 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
           );
 
           const handlerFn = handlerContext.handlers[handlerInfo.handlerName];
-          console.log("[Svelte] Handler function:", handlerFn ? "found" : "not found", handlerInfo.handlerName);
 
           if (handlerFn && typeof handlerFn === 'function') {
             try {
@@ -195,13 +184,9 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
                 handlerContext.flushRender();
               }
             } catch (error) {
-              console.error(`Error executing Svelte handler '${handlerInfo.handlerName}':`, error);
+              // Handler execution failed
             }
-          } else {
-            console.warn(`Handler function '${handlerInfo.handlerName}' not found for element '${elementName}'`);
           }
-        } else {
-          console.warn(`No handler info found for element '${elementName}'`);
         }
       }
     }
@@ -259,8 +244,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
   async send(target: any, options: TDBIHTMLComponentsV2SendOptions = {}): Promise<any> {
     const { data = {}, flags = ["IsComponentsV2"], content, ephemeral, reply, followUp } = options;
 
-    // Render components
-    const components = this.toJSON({ data });
+    // Render components (toJSON is async)
+    const components = await this.toJSON({ data });
 
     // Build message options
     const messageOptions: any = { components, flags };
@@ -352,7 +337,6 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     const refId = typeof refOrData === 'string' ? refOrData : refOrData?.$ref;
 
     if (!refId) {
-      console.warn("[Svelte] Cannot destroy: no ref ID provided");
       return false;
     }
 

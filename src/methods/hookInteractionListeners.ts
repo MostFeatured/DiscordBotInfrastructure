@@ -235,8 +235,6 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     if (dbiInter.type === "HTMLComponentsV2") {
       // For HTMLComponentsV2, first element of data is the element name (button name, etc.)
       const elementName = data?.[0];
-      console.log("[Hook] HTMLComponentsV2 interaction found, elementName:", elementName);
-      console.log("[Hook] onExecute exists:", typeof dbiInter.onExecute);
 
       if (dbi.config.strict) {
         // @ts-ignore

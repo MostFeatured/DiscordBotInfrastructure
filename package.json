@@ -5,7 +5,6 @@
     "discord-api-types": "^0.37.100",
     "discord-hybrid-sharding": "^2.2.6",
     "discord.js": "^14.25.1",
-    "estree-walker": "^3.0.3",
     "eta": "^3.5.0",
     "jsdom": "^26.1.0",
     "lodash": "^4.17.21",
@@ -16,7 +15,7 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.2.8",
+  "version": "0.2.10",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "typesVersions": {
@@ -77,13 +76,9 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
-    "estree-walker": "^3.0.0",
     "svelte": "^5.0.0"
   },
   "peerDependenciesMeta": {
-    "estree-walker": {
-      "optional": true
-    },
     "svelte": {
       "optional": true
     }

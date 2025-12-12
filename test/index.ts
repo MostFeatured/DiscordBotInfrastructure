@@ -26,10 +26,7 @@ dbi.register(({ ChatInput, HTMLComponentsV2 }) => {
   HTMLComponentsV2({
     name: "product-showcase",
     mode: 'svelte',
-    file: path.join(__dirname, "product-showcase.svelte"),
-    onExecute(ctx) {
-      console.log("Product showcase interaction:", ctx.data[0]);
-    }
+    file: path.join(__dirname, "product-showcase.svelte")
   });
 
   // Test command

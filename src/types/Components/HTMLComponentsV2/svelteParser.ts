@@ -1,18 +1,63 @@
-import type { walk as WalkType } from "estree-walker";
 import * as stuffs from "stuffs";
 
 // Lazy imports to avoid issues with package managers that don't properly hoist dependencies
 let _parse: typeof import("svelte/compiler").parse;
-let _walk: typeof WalkType;
 
 async function ensureImports() {
   if (!_parse) {
     const svelteCompiler = await import("svelte/compiler");
     _parse = svelteCompiler.parse;
   }
-  if (!_walk) {
-    const estreeWalker = await import("estree-walker");
-    _walk = estreeWalker.walk;
+}
+
+/**
+ * Simple AST walker for Svelte AST nodes
+ */
+function walkSvelteAst(node: any, callback: (node: any) => void) {
+  if (!node || typeof node !== 'object') return;
+
+  callback(node);
+
+  // Walk children based on node type
+  if (node.children && Array.isArray(node.children)) {
+    for (const child of node.children) {
+      walkSvelteAst(child, callback);
+    }
+  }
+  if (node.fragment && node.fragment.nodes) {
+    for (const child of node.fragment.nodes) {
+      walkSvelteAst(child, callback);
+    }
+  }
+  if (node.nodes && Array.isArray(node.nodes)) {
+    for (const child of node.nodes) {
+      walkSvelteAst(child, callback);
+    }
+  }
+  // Handle other potential child properties
+  if (node.else) {
+    walkSvelteAst(node.else, callback);
+  }
+  if (node.consequent) {
+    walkSvelteAst(node.consequent, callback);
+  }
+  if (node.alternate) {
+    walkSvelteAst(node.alternate, callback);
+  }
+  if (node.then) {
+    walkSvelteAst(node.then, callback);
+  }
+  if (node.catch) {
+    walkSvelteAst(node.catch, callback);
+  }
+  if (node.body) {
+    if (Array.isArray(node.body)) {
+      for (const child of node.body) {
+        walkSvelteAst(child, callback);
+      }
+    } else {
+      walkSvelteAst(node.body, callback);
+    }
   }
 }
 
@@ -50,95 +95,93 @@ export async function parseSvelteComponent(source: string, data?: Record<string,
   let autoNameCounter = 0;
 
   // Walk through HTML nodes to find event handlers
-  _walk(ast.html as any, {
-    enter(node: any) {
-      if (node.type === "Element" || node.type === "InlineComponent") {
-        const attributes = node.attributes || [];
+  walkSvelteAst(ast.html || ast.fragment, (node: any) => {
+    if (node.type === "Element" || node.type === "InlineComponent" || node.type === "RegularElement" || node.type === "Component") {
+      const attributes = node.attributes || [];
 
-        // Find name attribute
-        const nameAttr = attributes.find((attr: any) =>
-          attr.type === "Attribute" && attr.name === "name"
-        );
+      // Find name attribute
+      const nameAttr = attributes.find((attr: any) =>
+        attr.type === "Attribute" && attr.name === "name"
+      );
 
-        // Check if element has an onclick/onchange handler and get the handler info
-        let foundHandler: { eventType: string; handlerName: string } | null = null;
+      // Check if element has an onclick/onchange handler and get the handler info
+      let foundHandler: { eventType: string; handlerName: string } | null = null;
 
-        for (const attr of attributes) {
-          const isEventHandler = attr.type === "EventHandler";
-          const isOnAttribute = attr.type === "Attribute" && attr.name && attr.name.startsWith("on");
+      for (const attr of attributes) {
+        const isEventHandler = attr.type === "EventHandler";
+        const isOnAttribute = attr.type === "Attribute" && attr.name && attr.name.startsWith("on");
 
-          if (isEventHandler || isOnAttribute) {
-            const eventType = attr.name;
-            let handlerName = "";
+        if (isEventHandler || isOnAttribute) {
+          const eventType = attr.name;
+          let handlerName = "";
 
-            if (attr.type === "Attribute" && Array.isArray(attr.value)) {
-              const exprValue = attr.value.find((v: any) => v.type === "ExpressionTag" || v.type === "MustacheTag");
-              if (exprValue && exprValue.expression) {
-                if (exprValue.expression.type === "Identifier") {
-                  handlerName = exprValue.expression.name;
-                } else if (exprValue.expression.type === "CallExpression" && exprValue.expression.callee) {
-                  handlerName = exprValue.expression.callee.name;
-                }
-              }
-            } else if (attr.expression) {
-              if (attr.expression.type === "Identifier") {
-                handlerName = attr.expression.name;
-              } else if (attr.expression.type === "CallExpression" && attr.expression.callee) {
-                handlerName = attr.expression.callee.name;
-              } else if (attr.expression.type === "MemberExpression") {
-                handlerName = extractMemberExpressionName(attr.expression);
+          if (attr.type === "Attribute" && Array.isArray(attr.value)) {
+            const exprValue = attr.value.find((v: any) => v.type === "ExpressionTag" || v.type === "MustacheTag");
+            if (exprValue && exprValue.expression) {
+              if (exprValue.expression.type === "Identifier") {
+                handlerName = exprValue.expression.name;
+              } else if (exprValue.expression.type === "CallExpression" && exprValue.expression.callee) {
+                handlerName = exprValue.expression.callee.name;
               }
             }
-
-            if (handlerName) {
-              foundHandler = { eventType, handlerName };
-              break;
+          } else if (attr.expression) {
+            if (attr.expression.type === "Identifier") {
+              handlerName = attr.expression.name;
+            } else if (attr.expression.type === "CallExpression" && attr.expression.callee) {
+              handlerName = attr.expression.callee.name;
+            } else if (attr.expression.type === "MemberExpression") {
+              handlerName = extractMemberExpressionName(attr.expression);
             }
           }
+
+          if (handlerName) {
+            foundHandler = { eventType, handlerName };
+            break;
+          }
         }
+      }
 
-        if (!foundHandler) return; // No handler found, skip
+      if (!foundHandler) return; // No handler found, skip
 
-        let componentName: string;
-        if (nameAttr) {
-          componentName = getAttributeValue(nameAttr);
+      let componentName: string;
+      if (nameAttr) {
+        componentName = getAttributeValue(nameAttr);
+      } else {
+        // No name attribute - generate a deterministic one based on position
+        // Use the handler name and counter for deterministic naming
+        const positionKey = `${node.name.toLowerCase()}_${autoNameCounter++}`;
+
+        // If data is provided, use/store in $autoNames for persistence across re-renders
+        if (data) {
+          if (!data.$autoNames) {
+            data.$autoNames = {};
+          }
+          if (!data.$autoNames[positionKey]) {
+            data.$autoNames[positionKey] = `__auto_${positionKey}`;
+          }
+          componentName = data.$autoNames[positionKey];
         } else {
-          // No name attribute - generate a deterministic one based on position
-          // Use the handler name and counter for deterministic naming
-          const positionKey = `${node.name.toLowerCase()}_${autoNameCounter++}`;
-
-          // If data is provided, use/store in $autoNames for persistence across re-renders
-          if (data) {
-            if (!data.$autoNames) {
-              data.$autoNames = {};
-            }
-            if (!data.$autoNames[positionKey]) {
-              data.$autoNames[positionKey] = `__auto_${positionKey}`;
-            }
-            componentName = data.$autoNames[positionKey];
-          } else {
-            // No data - use deterministic name based on position
-            componentName = `__auto_${positionKey}`;
-          }
-
-          // Track this element for source injection
-          elementsNeedingNames.push({
-            node,
-            name: componentName,
-            handlerName: foundHandler.handlerName,
-            eventType: foundHandler.eventType,
-            element: node.name.toLowerCase()
-          });
+          // No data - use deterministic name based on position
+          componentName = `__auto_${positionKey}`;
         }
 
-        // Add to handlers map
-        handlers.set(componentName, {
+        // Track this element for source injection
+        elementsNeedingNames.push({
+          node,
           name: componentName,
           handlerName: foundHandler.handlerName,
           eventType: foundHandler.eventType,
-          element: node.name.toLowerCase(),
+          element: node.name.toLowerCase()
         });
       }
+
+      // Add to handlers map
+      handlers.set(componentName, {
+        name: componentName,
+        handlerName: foundHandler.handlerName,
+        eventType: foundHandler.eventType,
+        element: node.name.toLowerCase(),
+      });
     }
   });
 
@@ -318,7 +361,7 @@ function loadModules(imports: ImportInfo[]): { modules: Record<string, any>; var
         declarations.push(`var ${varName} = __modules__["${varName}"];`);
       }
     } catch (err) {
-      console.error(`[Svelte] Failed to import module "${importInfo.moduleName}":`, err);
+      // Module import failed
     }
   }
 
@@ -441,7 +484,6 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             // Check for rate limit (429)
             if (err.status === 429 || (err.message && err.message.includes('rate limit'))) {
               var retryAfter = err.retry_after || err.retryAfter || 1;
-              console.log("[Svelte] Rate limited, waiting " + retryAfter + "s before retry");
               __isRateLimited__ = true;
               __rateLimitEndTime__ = Date.now() + (retryAfter * 1000);
               
@@ -451,13 +493,11 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                   if (retryCount < maxRetries) {
                     resolve(__safeEdit__(editFn, retryCount + 1));
                   } else {
-                    console.error("[Svelte] Max retries reached after rate limit");
                     resolve();
                   }
                 }, retryAfter * 1000);
               });
             }
-            console.error("[Svelte] Edit error:", err.message);
             return Promise.resolve();
           });
         }
@@ -499,8 +539,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         }
         
         // Actual render execution
-        function __executeRender__() {
-          var components = __component__.toJSON({ data: __data__ });
+        async function __executeRender__() {
+          var components = await __component__.toJSON({ data: __data__ });
           
           // Try to use current interaction if available
           if (__ctx__ && __ctx__.interaction) {
@@ -530,7 +570,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 });
               }
             } catch (err) {
-              console.error("[Svelte] Error in render with interaction:", err.message);
+              // Silently fail
             }
           }
           
@@ -544,7 +584,6 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             });
           }
           
-          console.error("[Svelte] Cannot render: no interaction or message context");
           return Promise.resolve();
         }
         
@@ -637,7 +676,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                         __throttledRender__(false);
                       }
                     }).catch(function(err) {
-                      console.error("[Svelte] Error in " + prop + ":", err.message);
+                      // Silently fail
                     });
                   }
                   return result;
@@ -675,30 +714,30 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         
         // Helper: Force update message using interaction.update (for button clicks without reply)
         // Helper: Force update message using interaction.update (for button clicks without reply)
-        function update() {
+        async function update() {
           if (!__ctx__ || !__ctx__.interaction) {
-            console.error("[Svelte] Cannot update: no interaction context");
             return Promise.resolve();
           }
           __autoRenderEnabled__ = false; // Disable auto-render since manual update called
+          var components = await __component__.toJSON({ data: __data__ });
           return __safeEdit__(function() {
             return __ctx__.interaction.update({
-              components: __component__.toJSON({ data: __data__ }),
+              components: components,
               flags: ["IsComponentsV2"],
             });
           });
         }
         
         // Helper: Force re-render message using message.edit (after reply/followUp)
-        function rerender() {
+        async function rerender() {
           if (!__ctx__ || !__ctx__.interaction || !__ctx__.interaction.message) {
-            console.error("[Svelte] Cannot rerender: no message context");
             return Promise.resolve();
           }
           __autoRenderEnabled__ = false; // Disable auto-render since manual rerender called
+          var components = await __component__.toJSON({ data: __data__ });
           return __safeEdit__(function() {
             return __ctx__.interaction.message.edit({
-              components: __component__.toJSON({ data: __data__ }),
+              components: components,
               flags: ["IsComponentsV2"],
             });
           });
@@ -757,7 +796,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 __destroyCallbacks__.push(result);
               }
             } catch (err) {
-              console.error("[Svelte] Error in onMount:", err);
+              // Mount callback failed
             }
           }
         }
@@ -768,7 +807,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             try {
               __destroyCallbacks__[i]();
             } catch (err) {
-              console.error("[Svelte] Error in onDestroy:", err);
+              // Destroy callback failed
             }
           }
           // Clear pending timeouts
@@ -799,10 +838,6 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       };
     `;
 
-    console.log("[Svelte] Processed script:", processedScript);
-    console.log("[Svelte] Wrapped script:", wrappedScript);
-    console.log("[Svelte] Initial data:", initialData);
-
     // Create the factory function
     const factoryFunc = new Function('console', wrappedScript);
     const createHandlers = factoryFunc(console);
@@ -820,7 +855,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         try {
           effect();
         } catch (error) {
-          console.error("Error running effect:", error);
+          // Effect failed
         }
       }
     };
@@ -839,8 +874,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       setInHandler: result.setInHandler || (() => { })
     };
   } catch (error) {
-    console.error("Error creating handler context:", error);
-    console.error("Processed script:", scriptContent);
+    // Silently fail and return fallback
   }
 
   // Function to run all effects (fallback)
@@ -849,7 +883,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       try {
         effect();
       } catch (error) {
-        console.error("Error running effect:", error);
+        // Effect failed
       }
     }
   };

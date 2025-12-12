@@ -12,7 +12,7 @@
     "noUncheckedIndexedAccess": true,
     // Modules
     "module": "commonjs",
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     // Emit
     "declaration": true,
