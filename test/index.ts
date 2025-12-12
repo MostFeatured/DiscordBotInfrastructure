@@ -36,8 +36,8 @@ dbi.register(({ ChatInput, HTMLComponentsV2 }) => {
   ChatInput({
     name: "test-svelte",
     description: "Test Svelte product showcase",
-    onExecute({ interaction, dbi }) {
-      const showcase = dbi.interaction("product-showcase");
+    async onExecute({ interaction, dbi }) {
+      const showcase = dbi.interaction("product-showcase") as any;
 
       const products = [
         {
@@ -78,24 +78,23 @@ dbi.register(({ ChatInput, HTMLComponentsV2 }) => {
         }
       ];
 
-      const components = showcase.toJSON({
+      // Use send() method - this sends the message AND initializes lifecycle hooks (onMount)
+      // The interval in onMount will start immediately after the message is sent
+      await showcase.send(interaction, {
         data: {
           products,
           currentIndex: 0,
           cart: [],
-          view: 'browse'
+          view: 'browse',
+          elapsedTime: 0
         }
-      });
-
-      interaction.reply({
-        components,
-        flags: ["IsComponentsV2"]
       });
     }
   });
 });
 
 setTimeout(() => {
+  console.log("Loading DBI...");
   dbi.load().then(() => {
     dbi.publish("Guild", "1341841733511806978")
     console.log("DBI loaded.");

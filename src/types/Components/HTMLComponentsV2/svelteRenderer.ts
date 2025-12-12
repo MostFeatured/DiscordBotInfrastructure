@@ -2,7 +2,7 @@ import { compile } from "svelte/compiler";
 import { DBI } from "../../../DBI";
 import { NamespaceEnums } from "../../../../generated/namespaceData";
 import { parseHTMLComponentsV2 } from "./parser";
-import { parseSvelteComponent, createHandlerContext, SvelteComponentInfo } from "./svelteParser";
+import { parseSvelteComponent, createHandlerContext, SvelteComponentInfo, HandlerContextResult } from "./svelteParser";
 import * as stuffs from "stuffs";
 
 export interface SvelteRenderOptions {
@@ -28,10 +28,14 @@ export function renderSvelteComponent(
   const { data = {}, ttl = 0 } = options;
 
   // Parse the Svelte component to extract handlers
-  const componentInfo = parseSvelteComponent(source);
+  // This also injects auto-generated names into elements without name attribute
+  const componentInfo = parseSvelteComponent(source, data);
+
+  // Use the processed source (with auto-generated names injected)
+  const processedSource = componentInfo.processedSource;
 
   // Compile the Svelte component for SSR
-  const compiled = compile(source, {
+  const compiled = compile(processedSource, {
     generate: "server",
     css: "injected",
     dev: false,
@@ -102,13 +106,16 @@ export function renderSvelteComponent(
 
   console.log("Parsed Components:", JSON.stringify(components, null, 2));
 
-  // Create handler context
+  // Create handler context (also captures $effect callbacks)
   const handlerContext = createHandlerContext(componentInfo.scriptContent, data);
   const handlers = new Map<string, { handlerFn: Function, context: any }>();
 
+  // Run effects on initial render
+  handlerContext.runEffects();
+
   // Map handlers to component names
   componentInfo.handlers.forEach((handlerInfo, componentName) => {
-    const handlerFn = handlerContext[handlerInfo.handlerName];
+    const handlerFn = handlerContext.handlers[handlerInfo.handlerName];
     if (handlerFn && typeof handlerFn === "function") {
       handlers.set(componentName, {
         handlerFn,
@@ -263,12 +270,16 @@ function evaluateCompiledComponent(code: string, context: Record<string, any>): 
     };
 
     // Create a function wrapper with all context and Svelte runtime
+    // Include lifecycle stubs - these are no-ops in SSR but need to be defined
     const allContext = {
       ...context,
       $,
       $$renderer,
       module,
       exports,
+      // Lifecycle stubs for SSR (actual lifecycle runs in handler context)
+      onMount: (fn: Function) => { /* SSR no-op, real onMount runs in handler context */ },
+      onDestroy: (fn: Function) => { /* SSR no-op, real onDestroy runs in handler context */ },
     };
 
     const contextKeys = Object.keys(allContext);

@@ -33,9 +33,19 @@
     "lib": [
       "ESNext"
     ],
-    "target": "ESNext",    
+    "target": "ESNext",
     "useDefineForClassFields": true,
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true
-  }
+    "skipDefaultLibCheck": true,
+    // Include DBI Svelte type definitions
+    "typeRoots": [
+      "./node_modules/@types",
+      "./generated"
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "generated/**/*"
+  ]
 }
