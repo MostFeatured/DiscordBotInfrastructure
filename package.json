@@ -16,7 +16,7 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "typesVersions": {
@@ -45,7 +45,32 @@
     "url": "https://github.com/MostFeatured/DiscordBotInfrastructure/issues"
   },
   "homepage": "https://github.com/MostFeatured/DiscordBotInfrastructure#readme",
-  "description": "",
+  "description": "The most advanced, modern, and developer-friendly Discord.js v14 bot infrastructure with slash commands, components, localization, sharding, and Svelte UI support.",
+  "keywords": [
+    "discord",
+    "discord.js",
+    "discord-bot",
+    "bot-framework",
+    "bot-infrastructure",
+    "slash-commands",
+    "discord-interactions",
+    "discord-components",
+    "buttons",
+    "select-menu",
+    "modals",
+    "localization",
+    "i18n",
+    "sharding",
+    "hybrid-sharding",
+    "svelte",
+    "typescript",
+    "discord-api",
+    "chatinput",
+    "context-menu",
+    "rate-limiting",
+    "multi-client",
+    "hot-reload"
+  ],
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
     "@types/lodash": "^4.14.182",
