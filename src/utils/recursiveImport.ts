@@ -16,7 +16,8 @@ export async function recursiveImport(folderPath: string, exts: string[] = [".js
       if (file.isDirectory()) {
         await recursiveImport(filePath, exts)
       } else if (exts.some(i => file.name.endsWith(i)) && !ignore.some(i => file.name.endsWith(i))) {
-        await import(filePath);
+        // Use require for CommonJS compatibility with Bun and other runtimes
+        require(filePath);
       }
     }
   }
