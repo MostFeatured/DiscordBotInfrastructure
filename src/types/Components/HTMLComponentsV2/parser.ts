@@ -100,9 +100,10 @@ function parseStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, stringSele
   let minValues = parseInt(stringSelect.getAttribute("min-values"));
   let maxValues = parseInt(stringSelect.getAttribute("max-values"));
 
-  let options = Array.from(stringSelect.querySelectorAll("option")).map(option => {
+  // Support both <option> and <select-option> elements (Svelte may output either)
+  let options = Array.from(stringSelect.querySelectorAll("option, select-option")).map(option => {
     return {
-      label: getCleanTextContent(option),
+      label: option.getAttribute("label") || getCleanTextContent(option),
       value: option.getAttribute("value"),
       description: option.getAttribute("description"),
       emoji: option.getAttribute("emoji"),
@@ -125,7 +126,8 @@ function parseNonStringSelect(dbi: DBI<NamespaceEnums>, dbiName: string, userSel
   let minValues = parseInt(userSelect.getAttribute("min-values"));
   let maxValues = parseInt(userSelect.getAttribute("max-values"));
 
-  let options = Array.from(userSelect.querySelectorAll("option")).map(option => {
+  // Support both <option> and <select-option> elements (Svelte may output either)
+  let options = Array.from(userSelect.querySelectorAll("option, select-option")).map(option => {
     return {
       id: getCleanTextContent(option) || option.getAttribute("id"),
       type: option.getAttribute("type")
@@ -264,14 +266,19 @@ function parseElement(dbi: DBI<NamespaceEnums>, dbiName: string, element: Elemen
     case "BUTTON":
       return parseButton(dbi, dbiName, element);
     case "STRING-SELECT":
+    case "STRING-SELECT-MENU":
       return parseStringSelect(dbi, dbiName, element);
     case "USER-SELECT":
+    case "USER-SELECT-MENU":
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.UserSelect);
     case "ROLE-SELECT":
+    case "ROLE-SELECT-MENU":
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.RoleSelect);
     case "MENTIONABLE-SELECT":
+    case "MENTIONABLE-SELECT-MENU":
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.MentionableSelect);
     case "CHANNEL-SELECT":
+    case "CHANNEL-SELECT-MENU":
       return parseNonStringSelect(dbi, dbiName, element, ComponentType.ChannelSelect);
     case "SECTION":
       return parseSection(dbi, dbiName, element);

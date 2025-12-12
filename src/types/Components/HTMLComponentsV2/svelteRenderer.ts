@@ -50,7 +50,8 @@ export async function renderSvelteComponent(
 
     // Svelte 5 SSR: Use render from svelte/server
     const { render } = require("svelte/server");
-    const renderResult = render(Component, { props: { ...data, data } });
+    // Pass data properties as top-level props (Svelte 5 expects flat props object)
+    const renderResult = render(Component, { props: data });
     html = renderResult.body || "";
   } catch (error) {
     throw error;
@@ -86,8 +87,8 @@ export async function renderSvelteComponent(
       if (attrs.includes('data-1:')) return match;
       return `<button${attrs} data-1:ref="${stateRefId}">`;
     });
-    // Also handle select elements
-    html = html.replace(/<(string-select|user-select|role-select|channel-select|mentionable-select)([^>]*name="[^"]*"[^>]*)>/g, (match, tag, attrs) => {
+    // Also handle select elements (with optional -menu suffix for Svelte compatibility)
+    html = html.replace(/<(string-select(?:-menu)?|user-select(?:-menu)?|role-select(?:-menu)?|channel-select(?:-menu)?|mentionable-select(?:-menu)?)([^>]*name="[^"]*"[^>]*)>/g, (match, tag, attrs) => {
       if (attrs.includes('data-1:')) return match;
       return `<${tag}${attrs} data-1:ref="${stateRefId}">`;
     });

@@ -3,7 +3,7 @@ import path from "path";
 
 const dbi = createDBI("svelte", {
   discord: {
-    token: "YOUR_BOT_TOKEN_HERE",
+    token: process.env.DISCORD_TOKEN || "",
     options: {
       intents: [
         "GuildMessages",
