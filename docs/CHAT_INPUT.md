@@ -805,3 +805,7 @@ await dbi.load();
 - [Components](./COMPONENTS.md) - Add interactive buttons and menus
 - [Localization](./LOCALIZATION.md) - Support multiple languages
 - [Advanced Features](./ADVANCED_FEATURES.md) - Rate limiting, references, and more
+
+---
+
+> 📄 **LLM-optimized version:** [llm/CHAT_INPUT.txt](./llm/CHAT_INPUT.txt)

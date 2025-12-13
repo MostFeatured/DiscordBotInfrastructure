@@ -562,3 +562,7 @@ dbi.register(({ Event }) => {
 - [Localization](./LOCALIZATION.md) - Multi-language support
 - [Advanced Features](./ADVANCED_FEATURES.md) - Message commands, multi-client
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
+
+---
+
+> 📄 **LLM-optimized version:** [llm/EVENTS.txt](./llm/EVENTS.txt)

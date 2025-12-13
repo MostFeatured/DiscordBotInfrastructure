@@ -392,3 +392,7 @@ Now that you have a basic bot running, explore these guides:
 - Check the [documentation](./README.md)
 - Review the [examples](../test/)
 - Report issues on GitHub
+
+---
+
+> 📄 **LLM-optimized version:** [llm/GETTING_STARTED.txt](./llm/GETTING_STARTED.txt)

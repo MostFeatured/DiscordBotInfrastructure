@@ -1105,3 +1105,7 @@ interface SendOptions {
 ### IDE not showing autocomplete?
 - Add `/// <reference types="@mostfeatured/dbi/svelte" />` at top of script
 - Make sure `@mostfeatured/dbi` is installed
+
+---
+
+> 📄 **LLM-optimized version:** [llm/SVELTE_COMPONENTS.txt](./llm/SVELTE_COMPONENTS.txt)

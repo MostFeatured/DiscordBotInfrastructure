@@ -771,3 +771,7 @@ dbi.register(({ ChatInput }) => {
 - [Advanced Features](./ADVANCED_FEATURES.md) - Message commands, multi-client
 - [Svelte Components](./SVELTE_COMPONENTS.md) - Reactive UI components
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
+
+---
+
+> 📄 **LLM-optimized version:** [llm/LOCALIZATION.txt](./llm/LOCALIZATION.txt)

@@ -923,3 +923,7 @@ interface HandlerContext {
 - [Localization](./LOCALIZATION.md)
 - [Svelte Components](./SVELTE_COMPONENTS.md)
 - [Advanced Features](./ADVANCED_FEATURES.md)
+
+---
+
+> 📄 **LLM-optimized version:** [llm/API_REFERENCE.txt](./llm/API_REFERENCE.txt)

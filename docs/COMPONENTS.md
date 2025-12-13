@@ -1033,3 +1033,7 @@ dbi.register(({ Button }) => {
 - [Events](./EVENTS.md) - Handle Discord events
 - [Svelte Components](./SVELTE_COMPONENTS.md) - Build reactive UIs
 - [Advanced Features](./ADVANCED_FEATURES.md) - Rate limiting and more
+
+---
+
+> 📄 **LLM-optimized version:** [llm/COMPONENTS.txt](./llm/COMPONENTS.txt)

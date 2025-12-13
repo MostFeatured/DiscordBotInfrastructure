@@ -339,3 +339,7 @@ GPL-3.0 License - See [LICENSE](../LICENSE) for details.
 **Made with ❤️ by [TheArmagan](https://github.com/TheArmagan) and the MostFeatured team**
 
 </div>
+
+---
+
+> 📄 **LLM-optimized version:** [llm/README.txt](./llm/README.txt)

@@ -834,3 +834,7 @@ Without strict mode:
 
 - [Svelte Components](./SVELTE_COMPONENTS.md) - Build reactive Discord UIs
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
+
+---
+
+> 📄 **LLM-optimized version:** [llm/ADVANCED_FEATURES.txt](./llm/ADVANCED_FEATURES.txt)
