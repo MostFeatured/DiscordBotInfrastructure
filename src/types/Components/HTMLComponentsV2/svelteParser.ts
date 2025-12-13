@@ -705,14 +705,19 @@ function parseImports(script: string): { imports: ImportInfo[]; cleanedScript: s
 /**
  * Load modules and create injection variables
  */
-function loadModules(imports: ImportInfo[]): { modules: Record<string, any>; varDeclarations: string } {
+function loadModules(imports: ImportInfo[], sourceDir?: string): { modules: Record<string, any>; varDeclarations: string } {
   const modules: Record<string, any> = {};
   const declarations: string[] = [];
+  const path = require("path");
 
   for (const importInfo of imports) {
     try {
+      // Resolve relative paths from source file directory
+      const resolvedPath = importInfo.moduleName.startsWith('.') && sourceDir
+        ? path.resolve(sourceDir, importInfo.moduleName)
+        : importInfo.moduleName;
       // Try to require the module
-      const mod = require(importInfo.moduleName);
+      const mod = require(resolvedPath);
 
       if (importInfo.isDefault && importInfo.defaultName) {
         // Default or namespace import
@@ -737,15 +742,16 @@ function loadModules(imports: ImportInfo[]): { modules: Record<string, any>; var
 /**
  * Create a handler context from script content
  * This evaluates the Svelte script and returns the handler functions and effects
+ * @param sourceDir - The directory of the source file (used for resolving relative imports)
  */
-export function createHandlerContext(scriptContent: string, initialData: Record<string, any> = {}, component?: any, ctx?: any): HandlerContextResult {
+export function createHandlerContext(scriptContent: string, initialData: Record<string, any> = {}, component?: any, ctx?: any, sourceDir?: string): HandlerContextResult {
   const handlers: Record<string, Function> = {};
   const effects: Function[] = [];
 
   try {
     // Parse and extract imports first
     const { imports, cleanedScript } = parseImports(scriptContent);
-    const { modules, varDeclarations } = loadModules(imports);
+    const { modules, varDeclarations } = loadModules(imports, sourceDir);
 
     // Extract only function declarations from the script
     const functionNames = extractFunctionNames(cleanedScript);

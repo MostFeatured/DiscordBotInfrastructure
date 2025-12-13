@@ -186,6 +186,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
   mode: 'svelte' | 'eta' = 'eta';
   private svelteComponentInfo: any = null;
   private _userOnExecute?: (ctx: IDBIHTMLComponentsV2ExecuteCtx<TNamespace>) => void;
+  /** The directory of the source file (used for resolving relative imports) */
+  private _sourceDir?: string;
 
   // Store handler contexts per ref for lifecycle management
   // Key: ref id, Value: handlerContext with lifecycle hooks
@@ -215,6 +217,12 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     this.name = args.name;
     this.handlers = args.handlers || [];
     this.mode = args.mode || 'eta';
+
+    // Store source directory for resolving relative imports in Svelte components
+    if (this.file) {
+      const path = require("path");
+      this._sourceDir = path.dirname(path.resolve(this.file));
+    }
 
     // Store user's onExecute callback if provided
     if (userOnExecute) {
@@ -316,7 +324,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       this.svelteComponentInfo!.scriptContent,
       typeof currentState === 'object' ? currentState : {},
       this,
-      ctx
+      ctx,
+      this._sourceDir
     );
 
     const handlerFn = handlerContext.handlers[handlerName];
@@ -381,7 +390,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       this.svelteComponentInfo!.scriptContent,
       typeof currentState === 'object' ? currentState : {},
       this,
-      ctx
+      ctx,
+      this._sourceDir
     );
 
     const handlerFn = handlerContext.handlers[handlerInfo.handlerName];
@@ -564,7 +574,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
         this.svelteComponentInfo.scriptContent,
         data,
         this,
-        fakeCtx
+        fakeCtx,
+        this._sourceDir
       );
 
       // Store the context for lifecycle management

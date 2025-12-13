@@ -1,6 +1,7 @@
 <script>
   /// <reference types="@mostfeatured/dbi/svelte" />
   import stuffs from "stuffs";
+  import { add } from "./test.js";
 
   let {
     products = [],
@@ -258,6 +259,8 @@
   }
 
   onMount(() => {
+    console.log(add(2, 3)); // Test the imported function
+
     data.elapsedTime = 0;
     const interval = setInterval(() => {
       // Use lowPriorityUpdate to skip render if a user interaction is in progress

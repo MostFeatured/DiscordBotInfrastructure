@@ -11,6 +11,8 @@ export interface SvelteRenderOptions {
   ttl?: number;
   /** If true, skips validation warnings (useful for production) */
   skipValidation?: boolean;
+  /** The file path of the Svelte component (used for resolving relative imports) */
+  filePath?: string;
 }
 
 export interface ModalDefinition {
@@ -37,7 +39,7 @@ export async function renderSvelteComponent(
   dbiName: string,
   options: SvelteRenderOptions = {}
 ): Promise<SvelteRenderResult> {
-  const { data = {}, ttl = 0, skipValidation = false } = options;
+  const { data = {}, ttl = 0, skipValidation = false, filePath } = options;
 
   // Parse the Svelte component to extract handlers
   // This also injects auto-generated names into elements without name attribute
@@ -106,7 +108,7 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   let html = "";
   try {
     const moduleContext = createModuleContext(dbi, data, ttl);
-    const Component = evaluateCompiledComponent(compiled.js.code, moduleContext);
+    const Component = evaluateCompiledComponent(compiled.js.code, moduleContext, filePath);
 
     // Svelte 5 SSR: Use render from svelte/server
     const { render } = require("svelte/server");
@@ -182,8 +184,12 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   const components = parseResult.components;
   const modals = parseResult.modals;
 
+  // Get source directory for resolving relative imports
+  const path = require("path");
+  const sourceDir = filePath ? path.dirname(path.resolve(filePath)) : undefined;
+
   // Create handler context (also captures $effect callbacks)
-  const handlerContext = createHandlerContext(componentInfo.scriptContent, data);
+  const handlerContext = createHandlerContext(componentInfo.scriptContent, data, undefined, undefined, sourceDir);
   const handlers = new Map<string, { handlerFn: Function, context: any }>();
 
   // Run effects on initial render
@@ -233,10 +239,14 @@ function createModuleContext(dbi: DBI<NamespaceEnums>, data: Record<string, any>
 /**
  * Evaluate the compiled Svelte component code
  */
-function evaluateCompiledComponent(code: string, context: Record<string, any>): any {
+function evaluateCompiledComponent(code: string, context: Record<string, any>, filePath?: string): any {
   try {
     // Load Svelte 5 internal runtime
     const svelteInternal = require("svelte/internal/server");
+    const path = require("path");
+
+    // Get the directory of the source file for resolving relative imports
+    const sourceDir = filePath ? path.dirname(path.resolve(filePath)) : process.cwd();
 
     // Process the code to work in our context
     let processedCode = code;
@@ -264,7 +274,11 @@ function evaluateCompiledComponent(code: string, context: Record<string, any>): 
         // Skip svelte imports
         if (modulePath.startsWith('svelte')) return '';
         try {
-          const mod = require(modulePath);
+          // Resolve relative paths from source file directory
+          const resolvedPath = modulePath.startsWith('.')
+            ? path.resolve(sourceDir, modulePath)
+            : modulePath;
+          const mod = require(resolvedPath);
           externalModules[varName] = mod.default || mod;
           return `const ${varName} = __externalModules.${varName};`;
         } catch (e) {
@@ -280,7 +294,11 @@ function evaluateCompiledComponent(code: string, context: Record<string, any>): 
         // Skip svelte imports
         if (modulePath.startsWith('svelte')) return '';
         try {
-          const mod = require(modulePath);
+          // Resolve relative paths from source file directory
+          const resolvedPath = modulePath.startsWith('.')
+            ? path.resolve(sourceDir, modulePath)
+            : modulePath;
+          const mod = require(resolvedPath);
           const importList = imports.split(',').map((i: string) => i.trim());
           importList.forEach((importName: string) => {
             const [name, alias] = importName.split(' as ').map(s => s.trim());
@@ -303,7 +321,11 @@ function evaluateCompiledComponent(code: string, context: Record<string, any>): 
         // Skip svelte imports
         if (modulePath.startsWith('svelte')) return '';
         try {
-          const mod = require(modulePath);
+          // Resolve relative paths from source file directory
+          const resolvedPath = modulePath.startsWith('.')
+            ? path.resolve(sourceDir, modulePath)
+            : modulePath;
+          const mod = require(resolvedPath);
           externalModules[varName] = mod;
           return `const ${varName} = __externalModules.${varName};`;
         } catch (e) {
@@ -389,5 +411,6 @@ export async function renderSvelteComponentFromFile(
 ): Promise<SvelteRenderResult> {
   const fs = require("fs");
   const source = fs.readFileSync(filePath, "utf-8");
-  return await renderSvelteComponent(dbi, source, dbiName, options);
+  // Pass filePath to options for resolving relative imports
+  return await renderSvelteComponent(dbi, source, dbiName, { ...options, filePath });
 }
