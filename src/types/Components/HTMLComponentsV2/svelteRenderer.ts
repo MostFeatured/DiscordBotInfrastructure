@@ -1,20 +1,31 @@
 import { compile } from "svelte/compiler";
 import { DBI } from "../../../DBI";
 import { NamespaceEnums } from "../../../../generated/namespaceData";
-import { parseHTMLComponentsV2 } from "./parser";
-import { parseSvelteComponent, createHandlerContext, SvelteComponentInfo, HandlerContextResult } from "./svelteParser";
+import { parseHTMLComponentsV2, parseHTMLComponentsV2Multi } from "./parser";
+import { parseSvelteComponent, createHandlerContext, SvelteComponentInfo, HandlerContextResult, validateSvelteComponent, logValidationWarnings } from "./svelteParser";
 import * as stuffs from "stuffs";
 import * as vm from "vm";
 
 export interface SvelteRenderOptions {
   data?: Record<string, any>;
   ttl?: number;
+  /** If true, skips validation warnings (useful for production) */
+  skipValidation?: boolean;
+}
+
+export interface ModalDefinition {
+  title: string;
+  customId: string;
+  components: any[];
+  modalId: string;
 }
 
 export interface SvelteRenderResult {
   components: any[];
   handlers: Map<string, { handlerFn: Function, context: any }>;
   componentInfo: SvelteComponentInfo;
+  /** Modal definitions parsed from <components type="modal"> elements */
+  modals: Map<string, ModalDefinition>;
 }
 
 /**
@@ -26,21 +37,70 @@ export async function renderSvelteComponent(
   dbiName: string,
   options: SvelteRenderOptions = {}
 ): Promise<SvelteRenderResult> {
-  const { data = {}, ttl = 0 } = options;
+  const { data = {}, ttl = 0, skipValidation = false } = options;
 
   // Parse the Svelte component to extract handlers
   // This also injects auto-generated names into elements without name attribute
   const componentInfo = await parseSvelteComponent(source, data);
 
+  // Validate the component and log warnings (only on first render, not re-renders)
+  if (!skipValidation && !data.$ref) {
+    const warnings = validateSvelteComponent(componentInfo, data, dbiName);
+    if (warnings.length > 0) {
+      logValidationWarnings(warnings);
+    }
+  }
+
   // Use the processed source (with auto-generated names injected)
   const processedSource = componentInfo.processedSource;
 
   // Compile the Svelte component for SSR (Svelte 5)
-  const compiled = compile(processedSource, {
-    generate: "server",
-    css: "injected",
-    dev: false,
-  } as any);
+  let compiled;
+  try {
+    compiled = compile(processedSource, {
+      generate: "server",
+      css: "injected",
+      dev: false,
+    } as any);
+  } catch (compileError: any) {
+    // Format Svelte compile error with helpful details
+    const errorMessage = compileError.message || 'Unknown compile error';
+    const location = compileError.start || compileError.loc || compileError.position;
+    let details = errorMessage;
+
+    if (location) {
+      const lines = processedSource.split('\n');
+      const lineNum = location.line || 1;
+      const column = location.column || 0;
+      const errorLine = lines[lineNum - 1] || '';
+      const prevLine = lines[lineNum - 2] || '';
+      const nextLine = lines[lineNum] || '';
+
+      details = `
+Svelte Compile Error at line ${lineNum}, column ${column}:
+${errorMessage}
+
+${lineNum > 1 ? `${lineNum - 1} | ${prevLine}\n` : ''}${lineNum} | ${errorLine}
+${' '.repeat(String(lineNum).length + 3 + column)}^
+${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
+`.trim();
+    }
+
+    // Check for common mistakes and add hints
+    let hint = '';
+    if (errorMessage.includes('Unexpected token')) {
+      hint = '\n\n💡 Hint: Check for missing closing tags, unclosed braces, or invalid JavaScript syntax.';
+    } else if (errorMessage.includes('is not defined')) {
+      hint = '\n\n💡 Hint: Make sure all variables are declared in $props() or as local variables.';
+    } else if (errorMessage.includes('Expected')) {
+      hint = '\n\n💡 Hint: There might be a syntax error in your template or script.';
+    }
+
+    const enhancedError = new Error(`[DBI-Svelte] Failed to compile component "${dbiName}":\n${details}${hint}`);
+    (enhancedError as any).originalError = compileError;
+    (enhancedError as any).type = 'svelte-compile-error';
+    throw enhancedError;
+  }
 
   // Create a module context for the compiled code
   let html = "";
@@ -53,8 +113,23 @@ export async function renderSvelteComponent(
     // Pass data properties as top-level props (Svelte 5 expects flat props object)
     const renderResult = render(Component, { props: data });
     html = renderResult.body || "";
-  } catch (error) {
-    throw error;
+  } catch (runtimeError: any) {
+    // Format runtime error with helpful details
+    const errorMessage = runtimeError.message || 'Unknown runtime error';
+    let hint = '';
+
+    if (errorMessage.includes('is not a function')) {
+      hint = '\n\n💡 Hint: A function you are trying to call is undefined. Check handler names.';
+    } else if (errorMessage.includes('Cannot read properties of undefined') || errorMessage.includes('undefined is not an object')) {
+      hint = '\n\n💡 Hint: You are trying to access a property of an undefined value. Check your data object.';
+    } else if (errorMessage.includes('is not defined')) {
+      hint = '\n\n💡 Hint: A variable is used but not declared. Make sure it is in $props() or declared locally.';
+    }
+
+    const enhancedError = new Error(`[DBI-Svelte] Runtime error in component "${dbiName}":\n${errorMessage}${hint}`);
+    (enhancedError as any).originalError = runtimeError;
+    (enhancedError as any).type = 'svelte-runtime-error';
+    throw enhancedError;
   }
 
   // For Svelte mode, inject state into interactive elements as a ref
@@ -102,8 +177,10 @@ export async function renderSvelteComponent(
     });
   }
 
-  // Parse the rendered HTML to Discord components
-  const components = parseHTMLComponentsV2(dbi, html, dbiName, { data, ttl });
+  // Parse the rendered HTML to Discord components (with modal support)
+  const parseResult = parseHTMLComponentsV2Multi(dbi, html, dbiName, { data, ttl });
+  const components = parseResult.components;
+  const modals = parseResult.modals;
 
   // Create handler context (also captures $effect callbacks)
   const handlerContext = createHandlerContext(componentInfo.scriptContent, data);
@@ -126,7 +203,8 @@ export async function renderSvelteComponent(
   return {
     components,
     handlers,
-    componentInfo
+    componentInfo,
+    modals
   };
 }
 

@@ -534,31 +534,161 @@ File attachment display.
 
 ### Modal Components
 
+Discord modals now support many interactive components beyond text inputs. Use the `<field>` wrapper component for the new structure.
+
+#### `<components type="modal">`
+
+Define a modal form that can be shown to users.
+
+```svelte
+<components
+  type="modal"
+  id="feedback-modal"
+  title="Submit Feedback"
+>
+  <!-- New Field wrapper structure (recommended) -->
+  <field label="Rating" description="How would you rate our service?">
+    <string-select id="rating" placeholder="Select rating">
+      <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+      <option value="4">⭐⭐⭐⭐ Great</option>
+      <option value="3">⭐⭐⭐ Good</option>
+      <option value="2">⭐⭐ Fair</option>
+      <option value="1">⭐ Poor</option>
+    </string-select>
+  </field>
+  <field label="Comments" description="Tell us more about your experience">
+    <text-input id="comments" style="Paragraph" placeholder="Your feedback..." />
+  </field>
+</components>
+```
+
+#### `<field>`
+
+Wrapper component for modal inputs (Discord's Label component, type 18). **Required for new modal structure.**
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `label` | string | Label text shown above component |
+| `description` | string | Optional description text |
+
 #### `<text-input>`
+
 Text input for modal forms.
 
 ```svelte
+<field label="Username" description="Enter your display name">
+  <text-input
+    id="username"
+    placeholder="Enter your username"
+    style="Short"
+    min-length="3"
+    max-length="32"
+    required
+  />
+</field>
+
+<!-- Legacy format still supported -->
 <text-input
   id="username"
   label="Username"
   placeholder="Enter your username"
   style="Short"
-  min-length="3"
-  max-length="32"
-  required
->Default value</text-input>
+/>
 ```
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `id` / `custom-id` | string | Input identifier |
-| `label` | string | Label above input |
+| `id` / `custom-id` / `name` | string | Input identifier |
+| `label` | string | Label (legacy format only) |
 | `placeholder` | string | Placeholder text |
 | `style` | "Short" \| "Paragraph" | Input style |
 | `min-length` | number | Minimum characters |
 | `max-length` | number | Maximum characters |
 | `required` | boolean | Is required |
 | `value` | string | Default value |
+
+#### `<string-select>` (in modals)
+
+Dropdown select menu in modals. Returns an **array** of selected values.
+
+```svelte
+<field label="Choose Bug Type" description="Select the bug category">
+  <string-select id="bug-type" placeholder="Select bug type">
+    <option value="ant" emoji="🐜">Ant</option>
+    <option value="beetle" emoji="🪲">Beetle</option>
+    <option value="spider" emoji="🕷️">Spider</option>
+  </string-select>
+</field>
+```
+
+#### `<user-select>`, `<role-select>`, `<mentionable-select>`, `<channel-select>` (in modals)
+
+Auto-populated select menus for modals. Returns an **array** of IDs.
+
+```svelte
+<field label="Assign To" description="Select team members">
+  <user-select id="assignees" placeholder="Choose users" max-values="3" />
+</field>
+
+<field label="Notification Channel" description="Where to post updates">
+  <channel-select id="channel" placeholder="Select channel" channel-types="0,5" />
+</field>
+```
+
+#### `<file-upload>` (in modals)
+
+File upload component for modals. Returns attachment objects.
+
+```svelte
+<field label="Attachments" description="Upload relevant files">
+  <file-upload id="files" min-values="0" max-values="5" />
+</field>
+```
+
+#### `<text-display>` (in modals)
+
+Show static text content in modals.
+
+```svelte
+<text-display>Please fill out all required fields below.</text-display>
+```
+
+### Using Modals with `showModal()`
+
+The `showModal()` function opens a modal and returns a Promise with the submitted values:
+
+```svelte
+<script>
+  async function openFeedbackModal(ctx) {
+    // Show modal and wait for submission
+    const { fields, interaction } = await showModal("feedback-modal");
+    
+    // Extract values
+    const rating = fields.rating[0]; // string-select returns array
+    const comments = fields.comments; // text-input returns string
+    
+    // Respond to the submission
+    interaction.reply({
+      content: `Thanks for your ${rating}-star feedback!`,
+      flags: ["Ephemeral"]
+    });
+  }
+</script>
+```
+
+### Modal Field Types
+
+Different modal components return different value types:
+
+| Component | Return Type | Example |
+|-----------|-------------|---------|
+| `text-input` | `string` | `"Hello world"` |
+| `string-select` | `string[]` | `["option1", "option2"]` |
+| `user-select` | `string[]` | `["123456789"]` (user IDs) |
+| `role-select` | `string[]` | `["987654321"]` (role IDs) |
+| `channel-select` | `string[]` | `["111222333"]` (channel IDs) |
+| `mentionable-select` | `{ values, users, roles }` | IDs with separated types |
+| `file-upload` | `Attachment[]` | Uploaded file objects |
 
 ---
 

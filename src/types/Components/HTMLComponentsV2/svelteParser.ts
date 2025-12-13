@@ -64,14 +64,33 @@ function walkSvelteAst(node: any, callback: (node: any) => void) {
 export interface SvelteHandlerInfo {
   name: string;
   handlerName: string;
-  eventType: string; // onclick, onchange, etc.
-  element: string; // button, string-select, etc.
+  eventType: string; // onclick, onchange, onsubmit, etc.
+  element: string; // button, string-select, components (for modal), etc.
+}
+
+export interface ModalHandlerInfo {
+  modalId: string;
+  onsubmitHandler?: string; // Handler function name for onsubmit
+}
+
+export interface SvelteValidationWarning {
+  type: 'missing-data' | 'unused-data' | 'undefined-handler' | 'syntax-error' | 'runtime-error';
+  message: string;
+  details?: string;
 }
 
 export interface SvelteComponentInfo {
   handlers: Map<string, SvelteHandlerInfo>;
+  /** Modal onsubmit handlers keyed by modal id */
+  modalHandlers: Map<string, ModalHandlerInfo>;
   scriptContent: string;
   processedSource: string; // Source with auto-generated names injected
+  /** Props extracted from $props() destructuring */
+  declaredProps: string[];
+  /** Props that have default values (don't require data) */
+  propsWithDefaults: string[];
+  /** Function names declared in the script */
+  declaredFunctions: string[];
 }
 
 /**
@@ -80,14 +99,53 @@ export interface SvelteComponentInfo {
  */
 export async function parseSvelteComponent(source: string, data?: Record<string, any>): Promise<SvelteComponentInfo> {
   await ensureImports();
-  const ast = _parse(source);
+
+  let ast;
+  try {
+    ast = _parse(source);
+  } catch (parseError: any) {
+    // Format Svelte parse error with helpful details
+    const errorMessage = parseError.message || 'Unknown parse error';
+    const location = parseError.start || parseError.loc;
+    let details = errorMessage;
+
+    if (location) {
+      const lines = source.split('\n');
+      const lineNum = location.line || 1;
+      const column = location.column || 0;
+      const errorLine = lines[lineNum - 1] || '';
+      const prevLine = lines[lineNum - 2] || '';
+      const nextLine = lines[lineNum] || '';
+
+      details = `
+Svelte Parse Error at line ${lineNum}, column ${column}:
+${errorMessage}
+
+${lineNum > 1 ? `${lineNum - 1} | ${prevLine}\n` : ''}${lineNum} | ${errorLine}
+${' '.repeat(String(lineNum).length + 3 + column)}^
+${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
+`.trim();
+    }
+
+    const enhancedError = new Error(`[DBI-Svelte] Failed to parse Svelte component:\n${details}`);
+    (enhancedError as any).originalError = parseError;
+    (enhancedError as any).type = 'svelte-parse-error';
+    throw enhancedError;
+  }
+
   const handlers = new Map<string, SvelteHandlerInfo>();
+  const modalHandlers = new Map<string, ModalHandlerInfo>();
   let scriptContent = "";
 
   // Extract script content
   if (ast.instance) {
     scriptContent = source.substring(ast.instance.content.start, ast.instance.content.end);
   }
+
+  // Debug: Log script extraction
+  console.log("[DBI-Svelte] parseSvelteComponent - ast.instance exists:", !!ast.instance);
+  console.log("[DBI-Svelte] parseSvelteComponent - scriptContent length:", scriptContent.length);
+  console.log("[DBI-Svelte] parseSvelteComponent - scriptContent includes 'onMount':", scriptContent.includes('onMount'));
 
   // Track elements that need auto-generated names (node -> name mapping)
   // We'll inject these into the source after the walk
@@ -98,6 +156,62 @@ export async function parseSvelteComponent(source: string, data?: Record<string,
   walkSvelteAst(ast.html || ast.fragment, (node: any) => {
     if (node.type === "Element" || node.type === "InlineComponent" || node.type === "RegularElement" || node.type === "Component") {
       const attributes = node.attributes || [];
+      const nodeName = node.name.toLowerCase();
+
+      // Special handling for <components type="modal"> elements
+      if (nodeName === "components") {
+        const typeAttr = attributes.find((attr: any) =>
+          attr.type === "Attribute" && attr.name === "type"
+        );
+        const typeValue = typeAttr ? getAttributeValue(typeAttr) : null;
+
+        if (typeValue === "modal") {
+          // This is a modal definition - extract id and onsubmit handler
+          const idAttr = attributes.find((attr: any) =>
+            attr.type === "Attribute" && attr.name === "id"
+          );
+          const modalId = idAttr ? getAttributeValue(idAttr) : null;
+
+          if (modalId) {
+            const modalInfo: ModalHandlerInfo = { modalId };
+
+            // Find onsubmit handler
+            for (const attr of attributes) {
+              const isOnSubmit = (attr.type === "Attribute" && attr.name === "onsubmit") ||
+                (attr.type === "EventHandler" && attr.name === "submit");
+
+              if (isOnSubmit) {
+                let handlerName = "";
+
+                if (attr.type === "Attribute" && Array.isArray(attr.value)) {
+                  const exprValue = attr.value.find((v: any) => v.type === "ExpressionTag" || v.type === "MustacheTag");
+                  if (exprValue && exprValue.expression) {
+                    if (exprValue.expression.type === "Identifier") {
+                      handlerName = exprValue.expression.name;
+                    } else if (exprValue.expression.type === "CallExpression" && exprValue.expression.callee) {
+                      handlerName = exprValue.expression.callee.name;
+                    }
+                  }
+                } else if (attr.expression) {
+                  if (attr.expression.type === "Identifier") {
+                    handlerName = attr.expression.name;
+                  } else if (attr.expression.type === "CallExpression" && attr.expression.callee) {
+                    handlerName = attr.expression.callee.name;
+                  }
+                }
+
+                if (handlerName) {
+                  modalInfo.onsubmitHandler = handlerName;
+                }
+                break;
+              }
+            }
+
+            modalHandlers.set(modalId, modalInfo);
+          }
+        }
+        return; // Don't process <components> as regular elements
+      }
 
       // Find name attribute
       const nameAttr = attributes.find((attr: any) =>
@@ -210,10 +324,48 @@ export async function parseSvelteComponent(source: string, data?: Record<string,
     processedSource = processedSource.slice(0, tagEnd) + ` name="${name}"` + processedSource.slice(tagEnd);
   }
 
+  // Extract declared props from $props() destructuring
+  const declaredProps: string[] = [];
+  const propsWithDefaults: string[] = [];
+  const propsMatch = scriptContent.match(/let\s+\{([\s\S]*?)\}\s*=\s*\$props\(\)/);
+  if (propsMatch) {
+    const propsContent = propsMatch[1];
+    // Remove comments first
+    const cleanedContent = propsContent
+      .replace(/\/\/.*$/gm, '')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    const props = parsePropsContent(cleanedContent);
+    for (const prop of props) {
+      if (prop.name) {
+        declaredProps.push(prop.name);
+        if (prop.defaultValue !== undefined) {
+          propsWithDefaults.push(prop.name);
+        }
+      }
+    }
+  }
+
+  // Extract declared function names
+  const declaredFunctions: string[] = [];
+  const funcRegex = /(?:async\s+)?function\s+(\w+)\s*\(/g;
+  let funcMatch;
+  while ((funcMatch = funcRegex.exec(scriptContent)) !== null) {
+    declaredFunctions.push(funcMatch[1]);
+  }
+  // Also match arrow functions assigned to variables: const/let/var name = (async) () =>
+  const arrowRegex = /(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/g;
+  while ((funcMatch = arrowRegex.exec(scriptContent)) !== null) {
+    declaredFunctions.push(funcMatch[1]);
+  }
+
   return {
     handlers,
+    modalHandlers,
     scriptContent,
-    processedSource
+    processedSource,
+    declaredProps,
+    propsWithDefaults,
+    declaredFunctions
   };
 }
 
@@ -263,6 +415,212 @@ function extractExpressionValue(expr: any): string {
     return String(expr.value);
   }
   return "";
+}
+
+/**
+ * Parse $props() destructuring content with proper brace/bracket counting
+ * Handles nested objects like: { name, options = { a: 1, b: [1, 2] }, count = 0 }
+ */
+function parsePropsContent(content: string): Array<{ name: string; defaultValue?: string }> {
+  const props: Array<{ name: string; defaultValue?: string }> = [];
+  let current = '';
+  let braceCount = 0;
+  let bracketCount = 0;
+  let parenCount = 0;
+  let inString: string | null = null;
+
+  for (let i = 0; i <= content.length; i++) {
+    const char = content[i];
+    const prevChar = i > 0 ? content[i - 1] : '';
+
+    // Handle string boundaries
+    if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+      if (inString === char) {
+        inString = null;
+      } else if (!inString) {
+        inString = char;
+      }
+    }
+
+    // Only process structural characters when not in a string
+    if (!inString) {
+      if (char === '{') braceCount++;
+      else if (char === '}') braceCount--;
+      else if (char === '[') bracketCount++;
+      else if (char === ']') bracketCount--;
+      else if (char === '(') parenCount++;
+      else if (char === ')') parenCount--;
+
+      // Split on comma only when at top level (no nested braces/brackets/parens)
+      if ((char === ',' || i === content.length) && braceCount === 0 && bracketCount === 0 && parenCount === 0) {
+        const trimmed = current.trim();
+        if (trimmed) {
+          // Parse "name = defaultValue" or just "name"
+          const equalsIndex = trimmed.indexOf('=');
+          if (equalsIndex > 0) {
+            const name = trimmed.substring(0, equalsIndex).trim();
+            const defaultValue = trimmed.substring(equalsIndex + 1).trim();
+            props.push({ name, defaultValue });
+          } else {
+            props.push({ name: trimmed });
+          }
+        }
+        current = '';
+        continue;
+      }
+    }
+
+    if (i < content.length) {
+      current += char;
+    }
+  }
+
+  return props;
+}
+
+/**
+ * Validate a Svelte component and return warnings
+ * Call this during development/registration to catch potential issues early
+ */
+export function validateSvelteComponent(
+  componentInfo: SvelteComponentInfo,
+  data: Record<string, any> = {},
+  componentName: string = 'unknown'
+): SvelteValidationWarning[] {
+  const warnings: SvelteValidationWarning[] = [];
+
+  // Skip internal props/data keys (used by the framework)
+  const internalKeys = ['$ref', '$unRef', '__unRefWrapped__', '$autoNames', 'data'];
+
+  // 1. Check for props declared but not provided in data (missing required data)
+  // Skip props that have default values - they don't require data
+  for (const prop of componentInfo.declaredProps) {
+    if (internalKeys.includes(prop)) continue;
+    if (componentInfo.propsWithDefaults.includes(prop)) continue; // Has default, not required
+    if (!(prop in data)) {
+      warnings.push({
+        type: 'missing-data',
+        message: `[${componentName}] Prop "${prop}" is declared in $props() without a default value but not provided in data`,
+        details: `Add "${prop}" to your data object or provide a default value in $props()`
+      });
+    }
+  }
+
+  // 2. Check for data provided but not declared in props (potential typo or unused)
+  for (const key of Object.keys(data)) {
+    if (internalKeys.includes(key)) continue;
+    if (key.startsWith('$')) continue; // Skip all $-prefixed internal keys
+    if (!componentInfo.declaredProps.includes(key)) {
+      warnings.push({
+        type: 'unused-data',
+        message: `[${componentName}] Data key "${key}" is provided but not declared in $props()`,
+        details: `This data won't be accessible in the component. Add it to $props() destructuring.`
+      });
+    }
+  }
+
+  // 3. Check for undefined handlers referenced in elements
+  for (const [elementName, handlerInfo] of componentInfo.handlers) {
+    if (!componentInfo.declaredFunctions.includes(handlerInfo.handlerName)) {
+      warnings.push({
+        type: 'undefined-handler',
+        message: `[${componentName}] Handler "${handlerInfo.handlerName}" referenced by <${handlerInfo.element} name="${elementName}"> is not defined`,
+        details: `Make sure to define "function ${handlerInfo.handlerName}(ctx) { ... }" in your script`
+      });
+    }
+  }
+
+  // 4. Check for undefined modal submit handlers
+  for (const [modalId, modalInfo] of componentInfo.modalHandlers) {
+    if (modalInfo.onsubmitHandler && !componentInfo.declaredFunctions.includes(modalInfo.onsubmitHandler)) {
+      warnings.push({
+        type: 'undefined-handler',
+        message: `[${componentName}] Modal submit handler "${modalInfo.onsubmitHandler}" for modal "${modalId}" is not defined`,
+        details: `Make sure to define "function ${modalInfo.onsubmitHandler}(ctx, fields) { ... }" in your script`
+      });
+    }
+  }
+
+  // 5. Check for modal handler signatures (ctx parameter is optional for regular handlers)
+  // Only modal handlers MUST have fields parameter to access submitted data
+  const handlerFunctionRegex = /(?:async\s+)?function\s+(\w+)\s*\(\s*(\w*)\s*(?:,\s*(\w+))?\s*\)/g;
+  let match;
+  const scriptContent = componentInfo.scriptContent;
+
+  while ((match = handlerFunctionRegex.exec(scriptContent)) !== null) {
+    const funcName = match[1];
+    const firstParam = match[2];
+    const secondParam = match[3];
+
+    // Only check modal handlers - they need 'fields' param to access form data
+    const isModalHandler = Array.from(componentInfo.modalHandlers.values()).some(m => m.onsubmitHandler === funcName);
+
+    if (isModalHandler && !secondParam) {
+      warnings.push({
+        type: 'syntax-error',
+        message: `[${componentName}] Modal handler "${funcName}" should have "ctx" and "fields" parameters`,
+        details: `Change to "function ${funcName}(ctx, fields) { ... }" to receive submitted form data`
+      });
+    }
+  }
+
+  // 6. Check for common template mistakes
+  const templateContent = componentInfo.processedSource;
+
+  // Check for onclick= without braces (common mistake)
+  const badOnClickRegex = /onclick\s*=\s*["']([^"']+)["']/gi;
+  while ((match = badOnClickRegex.exec(templateContent)) !== null) {
+    if (!match[1].startsWith('{')) {
+      warnings.push({
+        type: 'syntax-error',
+        message: `[${componentName}] onclick handler should use curly braces: onclick={${match[1]}}`,
+        details: `String values are not valid for event handlers. Use onclick={handlerName} syntax.`
+      });
+    }
+  }
+
+  // Check for undefined variables in {expression} blocks (basic check)
+  const expressionRegex = /\{([^}]+)\}/g;
+  const knownIdentifiers = new Set([
+    ...componentInfo.declaredProps,
+    ...componentInfo.declaredFunctions,
+    // Common Svelte/JS globals
+    'true', 'false', 'null', 'undefined', 'console', 'Math', 'JSON', 'Array', 'Object',
+    'Date', 'Number', 'String', 'Boolean', 'Promise', 'Map', 'Set',
+    // Common Svelte constructs
+    '#if', '/if', '#each', '/each', '#await', '/await', ':else', ':then', ':catch',
+    '@html', '@debug', '@const'
+  ]);
+
+  // Add variables from script (let, const, var declarations)
+  const varDeclRegex = /(?:let|const|var)\s+(\w+)/g;
+  while ((match = varDeclRegex.exec(scriptContent)) !== null) {
+    knownIdentifiers.add(match[1]);
+  }
+
+  return warnings;
+}
+
+/**
+ * Log validation warnings to console with colors
+ */
+export function logValidationWarnings(warnings: SvelteValidationWarning[]): void {
+  if (warnings.length === 0) return;
+
+  console.warn(`\n⚠️  Svelte Component Validation Warnings (${warnings.length}):`);
+
+  for (const warning of warnings) {
+    const icon = warning.type === 'missing-data' ? '❌' :
+      warning.type === 'unused-data' ? '⚠️' :
+        warning.type === 'undefined-handler' ? '🔗' :
+          warning.type === 'syntax-error' ? '💥' : '⚡';
+
+    console.warn(`  ${icon} ${warning.message}`);
+    if (warning.details) {
+      console.warn(`     └─ ${warning.details}`);
+    }
+  }
+  console.warn('');
 }
 
 export interface HandlerContextResult {
@@ -405,7 +763,15 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
     // 2. Remove $props destructuring
     // 3. Convert $effect to __registerEffect__
     // 4. Keep only function declarations
-    let processedScript = cleanedScript
+
+    // First, remove comments from the script to avoid regex issues with braces in comments
+    let scriptWithoutComments = cleanedScript
+      // Remove single-line comments (but preserve the newline)
+      .replace(/\/\/.*$/gm, '')
+      // Remove multi-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+
+    let processedScript = scriptWithoutComments
       // Remove $state declarations completely or make them var
       .replace(/let\s+(\w+)\s*=\s*\$state\(([^)]*)\);?/g, 'var $1 = $2;')
       // Remove $derived declarations but keep the value
@@ -413,36 +779,61 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       // Convert $effect calls to __registerEffect__ calls
       .replace(/\$effect\s*\(\s*((?:function\s*\([^)]*\)|\([^)]*\)\s*=>|\(\)\s*=>)[^}]*\{[\s\S]*?\}\s*)\);?/g, '__registerEffect__($1);')
       // Simpler $effect pattern: $effect(() => { ... })
-      .replace(/\$effect\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*\);?/g, '__registerEffect__(function() {$1});')
-      // Replace $props destructuring with data access (handles default values)
-      .replace(/let\s+\{\s*([^}]+)\s*\}\s*=\s*\$props\(\);?/g, (match, vars) => {
-        return vars.split(',').map((v: string) => {
-          v = v.trim();
-          // Skip empty strings and comments
-          if (!v || v.startsWith('//')) return '';
-          // Remove inline comments from the variable definition
-          v = v.replace(/\/\/.*$/, '').trim();
-          if (!v) return '';
-          // Skip 'data' prop as it's already defined in the wrapper
-          if (v === 'data') return '';
-          // Check if there's a default value: varName = defaultValue
-          const defaultMatch = v.match(/^(\w+)\s*=\s*(.+)$/);
-          if (defaultMatch) {
-            const [, varName, defaultValue] = defaultMatch;
-            // Skip 'data' prop even with default value
-            if (varName === 'data') return '';
-            // Clean default value from trailing comments
-            const cleanDefault = defaultValue.replace(/\/\/.*$/, '').trim();
-            return `var ${varName} = data.${varName} ?? ${cleanDefault};`;
+      .replace(/\$effect\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*\);?/g, '__registerEffect__(function() {$1});');
+
+    // Handle $props destructuring with proper brace counting (supports nested objects like { options = { a: 1 } })
+    processedScript = processedScript.replace(/let\s+\{([\s\S]*?)\}\s*=\s*\$props\(\);?/g, (match) => {
+      // Find the opening brace after 'let'
+      const letIndex = match.indexOf('{');
+      if (letIndex === -1) return match;
+
+      // Use brace counting to find the matching closing brace
+      let braceCount = 0;
+      let startIndex = letIndex;
+      let endIndex = -1;
+
+      for (let i = startIndex; i < match.length; i++) {
+        if (match[i] === '{') braceCount++;
+        else if (match[i] === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            endIndex = i;
+            break;
           }
-          return `var ${v} = data.${v};`;
-        }).filter(Boolean).join('\n');
-      });
+        }
+      }
+
+      if (endIndex === -1) return match;
+
+      // Extract the content between braces
+      const content = match.substring(startIndex + 1, endIndex);
+
+      // Parse props with proper handling of nested braces
+      const props = parsePropsContent(content);
+
+      return props.map(prop => {
+        if (!prop.name || prop.name === 'data') return '';
+        if (prop.defaultValue !== undefined) {
+          return `var ${prop.name} = data.${prop.name} ?? ${prop.defaultValue};`;
+        }
+        return `var ${prop.name} = data.${prop.name};`;
+      }).filter(Boolean).join('\n');
+    });
 
     // Add module variable declarations at the beginning of processed script
     if (varDeclarations) {
       processedScript = varDeclarations + '\n\n' + processedScript;
     }
+
+    // Debug: Log processed script to see if onMount is included
+    console.log("[DBI-Svelte] processedScript includes 'onMount':", processedScript.includes('onMount'));
+    if (processedScript.includes('onMount')) {
+      const onMountMatch = processedScript.match(/onMount\s*\([^)]*\)/);
+      console.log("[DBI-Svelte] onMount call found:", onMountMatch?.[0]);
+    }
+
+    // Debug: Log first 500 chars of processedScript to see what's being generated
+    console.log("[DBI-Svelte] processedScript (first 1000 chars):", processedScript.substring(0, 1000));
 
     // Wrap everything in an IIFE that takes data and component as parameters
     // This ensures data and 'this' are always available in the function scope
@@ -486,6 +877,102 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         // Lifecycle: onDestroy - called when ref is cleaned up
         function onDestroy(fn) {
           __destroyCallbacks__.push(fn);
+        }
+        
+        // Modal store - stores rendered modal definitions
+        var __modals__ = new Map();
+        
+        // Register a modal (called internally when modals are parsed)
+        function __registerModal__(modalId, modalDef) {
+          __modals__.set(modalId, modalDef);
+        }
+        
+        // Show a modal by ID and return a Promise that resolves with the submitted fields
+        // Modal definitions are rendered from <components type="modal" id="xxx">
+        // Usage: 
+        //   await showModal("edit-product"); // Just show, use onsubmit handler
+        //   const { fields, interaction } = await showModal("edit-product"); // Get response
+        //   await showModal("edit-product", { timeout: 60000 }); // 60 second timeout
+        //   await showModal("edit-product", { timeout: 0 }); // No timeout (unlimited)
+        function showModal(modalId, options) {
+          if (!__ctx__ || !__ctx__.interaction) {
+            return Promise.reject(new Error("showModal requires an interaction context"));
+          }
+          
+          // Default timeout: 10 minutes (600000ms), 0 = no timeout
+          var timeout = (options && typeof options.timeout === 'number') ? options.timeout : 600000;
+          
+          // Disable auto-render IMMEDIATELY since we're showing a modal
+          // This prevents flushRender from trying to update after modal is shown
+          __autoRenderEnabled__ = false;
+          __asyncInteractionCalled__ = true;
+          
+          // Create a promise that will be resolved when modal is submitted
+          return new Promise(async function(resolve, reject) {
+            var timeoutId = null;
+            var modal = null;
+            
+            try {
+              // Re-render to get latest modal definitions (reactive)
+              var renderResult = await __component__.toJSON({ data: __data__ });
+              
+              // Get modals from the render result stored on component
+              var modals = __component__.__lastRenderModals__;
+              if (!modals) {
+                reject(new Error("No modals defined in this component. Use <components type=\\"modal\\" id=\\"...\\">")); 
+                return;
+              }
+              
+              modal = modals.get(modalId);
+              if (!modal) {
+                reject(new Error("Modal '" + modalId + "' not found. Available modals: " + Array.from(modals.keys()).join(", ")));
+                return;
+              }
+              
+              // Wrapped resolve/reject to clear timeout
+              var wrappedResolve = function(result) {
+                if (timeoutId) clearTimeout(timeoutId);
+                resolve(result);
+              };
+              var wrappedReject = function(error) {
+                if (timeoutId) clearTimeout(timeoutId);
+                reject(error);
+              };
+              
+              // Store the promise resolver in component's pending modals map
+              // This will be resolved when modal submit interaction is received
+              __component__._pendingModals.set(modal.customId, { resolve: wrappedResolve, reject: wrappedReject });
+              
+              // Set up timeout if enabled (timeout > 0)
+              if (timeout > 0) {
+                timeoutId = setTimeout(function() {
+                  // Clean up pending modal
+                  __component__._pendingModals.delete(modal.customId);
+                  reject(new Error("Modal '" + modalId + "' timed out after " + timeout + "ms"));
+                }, timeout);
+              }
+              
+              // Show the modal using the interaction
+              var i = __ctx__.interaction;
+              
+              // Modal must be shown immediately - no deferral allowed
+              await i.showModal({
+                title: modal.title,
+                customId: modal.customId,
+                components: modal.components
+              });
+              
+              // Note: Promise resolves later when modal is submitted
+              // If you don't await for the response, the promise just hangs (which is fine)
+            } catch (err) {
+              // Clean up pending modal and timeout if show failed
+              if (timeoutId) clearTimeout(timeoutId);
+              if (modal && modal.customId) {
+                __component__._pendingModals.delete(modal.customId);
+              }
+              reject(new Error("Failed to show modal: " + (err.message || err)));
+            }
+          });
         }
         
         // Rate-limit aware edit function with retry
@@ -610,6 +1097,9 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         // Track if we're inside a handler execution
         var __inHandlerExecution__ = false;
         
+        // Track pending low-priority updates (from intervals/timeouts)
+        var __pendingLowPriorityRender__ = false;
+        
         // Mark that we have pending data changes
         function __markDataChanged__() {
           __hasDataChanges__ = true;
@@ -620,6 +1110,20 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             __hasDataChanges__ = false;
             __throttledRender__(false);
           }
+        }
+        
+        // Low-priority update - used for background tasks like intervals
+        // If a handler is currently running, skip this update (the handler's update will include our changes)
+        function lowPriorityUpdate(callback) {
+          if (__inHandlerExecution__) {
+            // Handler is running - just update data, skip render
+            // The handler will render when it finishes
+            if (callback) callback();
+            return;
+          }
+          
+          // No handler running - proceed with update
+          if (callback) callback();
         }
         
         // Flush pending render (called after interaction methods complete)
@@ -893,7 +1397,14 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
     const createHandlers = factoryFunc(console);
 
     // Execute with the actual data, component, ctx, and imported modules to get handlers with proper closure
-    const result = createHandlers(initialData, component, ctx, modules);
+    let result;
+    try {
+      result = createHandlers(initialData, component, ctx, modules);
+      console.log("[DBI-Svelte] createHandlers executed successfully, mountCallbacks:", result.mountCallbacks?.length);
+    } catch (execError) {
+      console.error("[DBI-Svelte] Error executing createHandlers:", execError);
+      throw execError;
+    }
 
     Object.assign(handlers, result.handlers || {});
     effects.push(...(result.effects || []));
@@ -924,7 +1435,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       setInHandler: result.setInHandler || (() => { })
     };
   } catch (error) {
-    // Silently fail and return fallback
+    // Log the error for debugging
+    console.error("[DBI-Svelte] createHandlerContext failed:", error);
   }
 
   // Function to run all effects (fallback)

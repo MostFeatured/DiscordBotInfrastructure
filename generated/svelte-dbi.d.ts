@@ -184,6 +184,102 @@ declare global {
   function destroy(): void;
 
   // ============================================
+  // MODAL HELPERS
+  // ============================================
+
+  /**
+   * Modal submit response from showModal()
+   */
+  interface ModalResponse {
+    /** Object containing text input values keyed by input id */
+    fields: Record<string, string>;
+    /** The Discord ModalSubmitInteraction */
+    interaction: import("discord.js").ModalSubmitInteraction;
+    /** Full execution context */
+    ctx: any;
+  }
+
+  /**
+   * Options for showModal()
+   */
+  interface ShowModalOptions {
+    /**
+     * Timeout in milliseconds. After this time, the Promise will reject with a timeout error.
+     * - Default: 600000 (10 minutes)
+     * - Set to 0 for no timeout (unlimited wait)
+     * 
+     * @example
+     * ```svelte
+     * // 1 minute timeout
+     * await showModal("my-modal", { timeout: 60000 });
+     * 
+     * // No timeout (unlimited)
+     * await showModal("my-modal", { timeout: 0 });
+     * ```
+     */
+    timeout?: number;
+  }
+
+  /**
+   * Shows a modal defined in the component and returns a Promise.
+   * Modals are defined using `<components type="modal" id="...">`.
+   * 
+   * You can use it in two ways:
+   * 1. With `onsubmit` handler on the modal - Promise resolves but you handle in callback
+   * 2. Without `onsubmit` - await the Promise to get fields directly
+   * 
+   * @param modalId - The id of the modal to show (from `<components type="modal" id="xxx">`)
+   * @returns Promise that resolves with { fields, interaction, ctx } when modal is submitted
+   * 
+   * @example
+   * ```svelte
+   * <script>
+   *   // Method 1: Using onsubmit handler
+   *   async function openEditModal() {
+   *     await showModal("edit-item");
+   *     // Modal was shown, handler will be called on submit
+   *   }
+   * 
+   *   function handleEditSubmit(ctx, fields) {
+   *     data.itemName = fields.name;
+   *     ctx.interaction.reply({ content: "Updated!", flags: ["Ephemeral"] });
+   *   }
+   * 
+   *   // Method 2: Await response directly (no onsubmit needed)
+   *   async function openReviewModal(ctx) {
+   *     data.editingProduct = products[currentIndex];
+   *     const { fields, interaction } = await showModal("review-modal");
+   *     
+   *     // Handle the response inline
+   *     data.reviews = [...reviews, { 
+   *       rating: fields.rating, 
+   *       review: fields.review 
+   *     }];
+   *     
+   *     interaction.reply({ content: "Thanks for your review!", flags: ["Ephemeral"] });
+   *   }
+   * </script>
+   * 
+   * <components>
+   *   <button onclick={openEditModal}>Edit (with handler)</button>
+   *   <button onclick={openReviewModal}>Review (inline)</button>
+   * </components>
+   * 
+   * <!-- With onsubmit handler -->
+   * <components type="modal" id="edit-item" title="Edit" onsubmit={handleEditSubmit}>
+   *   <text-input id="name" label="Name" required />
+   * </components>
+   * 
+   * <!-- Without onsubmit - use await to get response -->
+   * <components type="modal" id="review-modal" title="Review">
+   *   <text-input id="rating" label="Rating (1-5)" required />
+   *   <text-input id="review" label="Your Review" style="Paragraph" />
+   * </components>
+   * ```
+   */
+  function showModal(modalId: string, options?: ShowModalOptions): Promise<ModalResponse>;
+
+  // ============================================
   // REACTIVITY (Svelte 5 Runes)
   // ============================================
 
