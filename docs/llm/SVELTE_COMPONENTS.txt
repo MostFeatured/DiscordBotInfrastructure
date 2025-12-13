@@ -1,0 +1,566 @@
+================================================================================
+DBI - SVELTE COMPONENTS GUIDE - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Svelte 5 Integration Reference
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: OVERVIEW
+================================================================================
+
+DBI provides Svelte 5-based component system for Discord UI with Components V2.
+
+KEY FEATURES:
+- Svelte 5 Syntax with $props() runes
+- Auto-Reactivity when data changes
+- Lifecycle Hooks (onMount, onDestroy)
+- Throttled Rendering to prevent API abuse
+- Full TypeScript support
+
+================================================================================
+SECTION 2: QUICK START
+================================================================================
+
+STEP 1 - REGISTER SVELTE COMPONENT:
+-----------------------------------
+import { createDBI } from "@mostfeatured/dbi";
+import path from "path";
+
+dbi.register(({ HTMLComponentsV2 }) => {
+  HTMLComponentsV2({
+    name: "my-component",
+    mode: "svelte",
+    file: path.join(__dirname, "my-component.svelte"),
+  });
+});
+
+STEP 2 - CREATE SVELTE FILE:
+----------------------------
+<script>
+  let { count = 0 } = $props();
+
+  function increment() {
+    data.count++;
+  }
+</script>
+
+<components>
+  <text-display>Count: {count}</text-display>
+  <action-row>
+    <button style="Primary" handler={increment}>+1</button>
+  </action-row>
+</components>
+
+STEP 3 - SEND COMPONENT:
+------------------------
+ChatInput({
+  name: "counter",
+  description: "Interactive counter",
+  async onExecute({ interaction, dbi }) {
+    const component = dbi.interaction("my-component");
+    await component.send(interaction, {
+      data: { count: 0 }
+    });
+  }
+});
+
+================================================================================
+SECTION 3: COMPONENT STRUCTURE
+================================================================================
+
+A DBI Svelte component has two parts:
+
+SCRIPT BLOCK:
+-------------
+<script>
+  /// <reference types="@mostfeatured/dbi/svelte" />
+  import stuffs from "stuffs";
+
+  let {
+    products = [],
+    currentIndex = 0,
+    cart = [],
+    view = "browse",
+  } = $props();
+
+  function nextProduct() {
+    data.currentIndex = (currentIndex + 1) % products.length;
+  }
+
+  function addToCart(ctx) {
+    const product = products[currentIndex];
+    data.cart = [...cart, product];
+    ctx.interaction.reply({
+      content: "Added to cart!",
+      flags: ["Ephemeral"],
+    });
+  }
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      data.elapsedTime += 1;
+    }, 1000);
+    return () => clearInterval(interval);  // Cleanup
+  });
+</script>
+
+TEMPLATE BLOCK:
+---------------
+<components>
+  <container accent-color="5865F2">
+    <components>
+      <text-display>## Welcome!</text-display>
+      <action-row>
+        <button style="Primary" handler={nextProduct}>Next</button>
+      </action-row>
+    </components>
+  </container>
+</components>
+
+================================================================================
+SECTION 4: PROPS AND REACTIVITY
+================================================================================
+
+DECLARING PROPS:
+----------------
+<script>
+  let {
+    count = 0,
+    items = [],
+    settings = { theme: "dark" },
+  } = $props();
+</script>
+
+THE DATA OBJECT:
+----------------
+Use global `data` object to update state. Changes trigger re-renders:
+
+<script>
+  let { count = 0 } = $props();
+
+  function increment() {
+    data.count++;  // Triggers auto-render
+  }
+  
+  function reset() {
+    data.count = 0;
+  }
+</script>
+
+REACTIVE UPDATES:
+-----------------
+The `data` object is a Proxy that:
+1. Detects property changes
+2. Automatically re-renders the component
+3. Throttles updates (default: 250ms between renders)
+
+<script>
+  let { items = [] } = $props();
+
+  function addItem(ctx) {
+    // Arrays must be reassigned to trigger reactivity
+    data.items = [...items, { name: "New Item" }];
+  }
+</script>
+
+================================================================================
+SECTION 5: LIFECYCLE HOOKS
+================================================================================
+
+onMount:
+--------
+Runs when component is first sent. For timers, intervals, fetching data.
+
+<script>
+  let { seconds = 0 } = $props();
+
+  onMount(() => {
+    console.log("Component mounted!");
+    
+    const interval = setInterval(() => {
+      data.seconds++;
+    }, 1000);
+    
+    // Return cleanup function (optional)
+    return () => {
+      clearInterval(interval);
+      console.log("Timer cleared!");
+    };
+  });
+</script>
+
+onDestroy:
+----------
+Runs when component is destroyed (via $unRef or manual destroy() call).
+
+<script>
+  let timer;
+
+  onMount(() => {
+    timer = setInterval(() => data.count++, 1000);
+  });
+
+  onDestroy(() => {
+    clearInterval(timer);
+    console.log("Component destroyed, cleanup complete!");
+  });
+</script>
+
+MANUAL DESTRUCTION:
+-------------------
+<script>
+  function handleClose() {
+    destroy();  // Runs onDestroy callbacks, removes ref
+  }
+</script>
+
+<components>
+  <action-row>
+    <button style="Danger" handler={handleClose}>Close</button>
+  </action-row>
+</components>
+
+================================================================================
+SECTION 6: RENDER HELPERS
+================================================================================
+
+HELPER             | DESCRIPTION
+-------------------|--------------------------------------------------
+render()           | Force immediate render
+update()           | Update using interaction.update() - best for buttons
+rerender()         | Re-render using message.edit() - after reply/followUp
+noRender()         | Disable auto-render for current handler
+setThrottle()      | Set minimum interval between renders
+lowPriorityUpdate()| Background update that yields to handler interactions
+
+EXAMPLES:
+---------
+<script>
+  function forceUpdate() {
+    data.value = computeExpensiveValue();
+    render();  // Force immediate render
+  }
+
+  async function handleButton() {
+    data.count++;
+    await update();  // Uses interaction.update()
+  }
+
+  async function processData(ctx) {
+    await ctx.interaction.reply({ content: "Processing..." });
+    data.result = await fetchData();
+    await rerender();  // Uses message.edit()
+  }
+
+  function backgroundTask() {
+    noRender();  // Don't update UI
+    data.internalState = calculate();
+  }
+
+  // For timer that updates every second
+  setThrottle(1000);
+
+  // Low-priority update for intervals (won't conflict with button clicks)
+  onMount(() => {
+    const interval = setInterval(() => {
+      lowPriorityUpdate(() => {
+        data.seconds++;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+</script>
+
+================================================================================
+SECTION 7: HTML ELEMENTS REFERENCE
+================================================================================
+
+LAYOUT COMPONENTS:
+------------------
+ELEMENT          | DESCRIPTION
+-----------------|--------------------------------------------------
+<components>     | Root wrapper for all Discord components
+<action-row>     | Container for buttons (max 5) or single select menu
+<container>      | Colored container with accent-color attribute
+<section>        | Section with components and optional accessory
+<separator>      | Visual divider between components
+
+CONTAINER EXAMPLE:
+<container accent-color="5865F2" spoiler>
+  <components>
+    <!-- Content -->
+  </components>
+</container>
+
+SECTION EXAMPLE:
+<section>
+  <components>
+    <text-display>Main content</text-display>
+  </components>
+  <thumbnail url="https://example.com/image.png"></thumbnail>
+</section>
+
+SEPARATOR:
+<separator divider spacing="2"></separator>
+
+INTERACTIVE COMPONENTS:
+-----------------------
+BUTTON:
+<button 
+  style="Primary"
+  emoji="🚀"
+  handler={handleClick}
+  disabled
+>
+  Click Me
+</button>
+
+BUTTON STYLES: Primary, Secondary, Success, Danger, Link, Premium
+NOTE: Use `onclick` as alias for `handler`
+
+STRING SELECT:
+<string-select
+  placeholder="Choose an option..."
+  min-values="1"
+  max-values="3"
+  handler={handleSelect}
+>
+  <option value="a" description="First option" emoji="1️⃣" default>
+    Option A
+  </option>
+  <option value="b" description="Second option">
+    Option B
+  </option>
+</string-select>
+
+OTHER SELECT MENUS:
+<user-select placeholder="Select users..." handler={handleUsers}></user-select>
+<role-select placeholder="Select roles..." handler={handleRoles}></role-select>
+<channel-select placeholder="Select channels..." handler={handleChannels}></channel-select>
+<mentionable-select placeholder="Select..." handler={handleMentionables}></mentionable-select>
+
+DISPLAY COMPONENTS:
+-------------------
+TEXT DISPLAY:
+<text-display>
+  ## Heading
+  **Bold** and *italic* text
+  - List item 1
+  - List item 2
+</text-display>
+
+THUMBNAIL:
+<thumbnail url="https://example.com/image.png"></thumbnail>
+
+MEDIA GALLERY:
+<media-gallery>
+  <item url="https://example.com/1.png" description="Image 1"></item>
+  <item url="https://example.com/2.png" spoiler></item>
+</media-gallery>
+
+FILE:
+<file url="attachment://document.pdf" spoiler></file>
+
+================================================================================
+SECTION 8: MODAL COMPONENTS
+================================================================================
+
+MODAL DEFINITION:
+-----------------
+<components
+  type="modal"
+  id="feedback-modal"
+  title="Submit Feedback"
+>
+  <field label="Rating" description="How would you rate?">
+    <string-select id="rating" placeholder="Select rating">
+      <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+      <option value="4">⭐⭐⭐⭐ Great</option>
+      <option value="3">⭐⭐⭐ Good</option>
+    </string-select>
+  </field>
+  <field label="Comments" description="Tell us more">
+    <text-input id="comments" style="Paragraph" placeholder="Your feedback..." />
+  </field>
+</components>
+
+TEXT INPUT:
+-----------
+<field label="Username" description="Enter display name">
+  <text-input
+    id="username"
+    placeholder="Enter your username"
+    style="Short"
+    min-length="3"
+    max-length="32"
+    required
+  />
+</field>
+
+TEXT INPUT STYLES: Short, Paragraph
+
+USING showModal():
+------------------
+<script>
+  async function openFeedbackModal(ctx) {
+    const { fields, interaction } = await showModal("feedback-modal");
+    
+    const rating = fields.rating[0];  // string-select returns array
+    const comments = fields.comments;  // text-input returns string
+    
+    interaction.reply({
+      content: `Thanks for your ${rating}-star feedback!`,
+      flags: ["Ephemeral"]
+    });
+  }
+</script>
+
+MODAL FIELD RETURN TYPES:
+-------------------------
+COMPONENT           | RETURN TYPE
+--------------------|----------------------------------
+text-input          | string
+string-select       | string[]
+user-select         | string[] (user IDs)
+role-select         | string[] (role IDs)
+channel-select      | string[] (channel IDs)
+mentionable-select  | { values, users, roles }
+file-upload         | Attachment[]
+
+================================================================================
+SECTION 9: HANDLER FUNCTIONS
+================================================================================
+
+<script>
+  function handleButton(ctx) {
+    const { interaction } = ctx;
+    
+    ctx.interaction.reply({
+      content: "Button clicked!",
+      flags: ["Ephemeral"],
+    });
+    
+    const { dbi } = ctx;      // DBI instance
+    const { locale } = ctx;   // Locale helpers
+    const text = locale.user("greeting");
+  }
+  
+  // Handler without ctx - just updates data
+  function simpleHandler() {
+    data.count++;
+    // Auto-renders after handler completes
+  }
+</script>
+
+<components>
+  <action-row>
+    <button handler={handleButton}>With Context</button>
+    <button handler={simpleHandler}>Simple</button>
+  </action-row>
+</components>
+
+CONTEXT OBJECT:
+---------------
+PROPERTY    | TYPE                           | DESCRIPTION
+------------|--------------------------------|------------------------
+interaction | ButtonInteraction/SelectMenu   | Discord.js interaction
+dbi         | DBI                            | DBI instance
+locale      | object                         | Locale helpers
+
+================================================================================
+SECTION 10: USING EXTERNAL MODULES
+================================================================================
+
+<script>
+  import stuffs from "stuffs";
+  import lodash from "lodash";
+  import { someUtil } from "./utils";
+
+  function formatTime(seconds) {
+    return stuffs.formatSeconds(seconds);
+  }
+  
+  function sortItems() {
+    data.items = lodash.sortBy(items, "name");
+  }
+</script>
+
+Modules loaded via require() at runtime - must be installed in project.
+
+================================================================================
+SECTION 11: TYPE DEFINITIONS
+================================================================================
+
+Add type reference for IDE support:
+
+<script>
+  /// <reference types="@mostfeatured/dbi/svelte" />
+  
+  // Now you get autocomplete for:
+  // - render(), update(), rerender(), noRender(), setThrottle()
+  // - onMount(), onDestroy(), destroy()
+  // - ctx, data
+  // - All HTML elements
+</script>
+
+================================================================================
+SECTION 12: API REFERENCE
+================================================================================
+
+COMPONENT CLASS METHODS:
+------------------------
+const component = dbi.interaction("my-component");
+
+await component.send(interaction, { data: { count: 0 } });
+await component.send(channel, { data: { count: 0 } });
+component.destroy(refId);
+component.destroyAll();
+const json = component.toJSON({ data: { count: 0 } });
+
+SEND OPTIONS:
+-------------
+{
+  data?: Record<string, any>;  // Initial data
+  flags?: string[];            // Message flags
+  content?: string;            // Text content
+  ephemeral?: boolean;         // Ephemeral message
+  reply?: boolean;             // Force reply
+  followUp?: boolean;          // Use followUp instead
+}
+
+================================================================================
+SECTION 13: BEST PRACTICES
+================================================================================
+
+1. Use $props() for initial state - destructure with defaults
+2. Mutate `data` for updates - don't reassign entire data object
+3. Return cleanup from onMount - prevents memory leaks
+4. Use noRender() for background tasks - avoid unnecessary renders
+5. Set appropriate throttle - match your update frequency
+6. Use destroy() for cleanup - clean up timers when done
+7. Add type reference - get full IDE support
+
+================================================================================
+SECTION 14: TROUBLESHOOTING
+================================================================================
+
+COMPONENT NOT UPDATING?
+- Use data.property = value, not reassigning data
+- Check that noRender() wasn't called earlier
+
+TIMER KEEPS RUNNING AFTER MESSAGE DELETED?
+- Return cleanup function from onMount
+- Or use onDestroy to clear intervals
+
+RATE LIMITED BY DISCORD?
+- Increase throttle with setThrottle(500) or higher
+- System automatically retries on rate limits (max 3)
+
+IDE NOT SHOWING AUTOCOMPLETE?
+- Add /// <reference types="@mostfeatured/dbi/svelte" /> at top
+- Make sure @mostfeatured/dbi is installed
+
+================================================================================
+END OF DOCUMENT
+================================================================================

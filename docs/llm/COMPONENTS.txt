@@ -1,0 +1,595 @@
+================================================================================
+DBI - COMPONENTS GUIDE - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Interactive Components Reference
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: COMPONENT TYPES OVERVIEW
+================================================================================
+
+COMPONENT TYPE          | DESCRIPTION
+------------------------|--------------------------------------------------
+Button                  | Clickable button with various styles
+StringSelectMenu        | Dropdown with custom string options
+UserSelectMenu          | Dropdown to select users
+RoleSelectMenu          | Dropdown to select roles
+ChannelSelectMenu       | Dropdown to select channels
+MentionableSelectMenu   | Dropdown to select users or roles
+Modal                   | Popup form for user input
+
+================================================================================
+SECTION 2: BUTTONS
+================================================================================
+
+BASIC BUTTON STRUCTURE:
+-----------------------
+dbi.register(({ ChatInput, Button }) => {
+  Button({
+    name: "greet-button",
+    options: {
+      style: Discord.ButtonStyle.Primary,
+      label: "Click Me!",
+      emoji: "👋"
+    },
+    onExecute({ interaction }) {
+      interaction.reply({
+        content: "Hello! You clicked the button!",
+        ephemeral: true
+      });
+    }
+  });
+
+  ChatInput({
+    name: "greet",
+    description: "Get a greeting button",
+    onExecute({ interaction, dbi }) {
+      const button = dbi.interaction("greet-button").toJSON();
+      interaction.reply({
+        content: "Click the button below!",
+        components: [
+          {
+            type: Discord.ComponentType.ActionRow,
+            components: [button]
+          }
+        ]
+      });
+    }
+  });
+});
+
+BUTTON STYLES:
+--------------
+STYLE     | CONSTANT                    | COLOR/USE
+----------|-----------------------------|--------------------------
+Primary   | ButtonStyle.Primary         | Blue - Main action
+Secondary | ButtonStyle.Secondary       | Gray - Alternative action
+Success   | ButtonStyle.Success         | Green - Positive action
+Danger    | ButtonStyle.Danger          | Red - Destructive action
+Link      | ButtonStyle.Link            | Gray - External URL
+Premium   | ButtonStyle.Premium         | SKU-based button
+
+BUTTON WITH OVERRIDES:
+----------------------
+const button = dbi.interaction("action-button");
+
+interaction.reply({
+  content: "Choose an action:",
+  components: [
+    {
+      type: Discord.ComponentType.ActionRow,
+      components: [
+        button.toJSON({
+          overrides: {
+            label: "Accept",
+            style: Discord.ButtonStyle.Success,
+            emoji: "✅"
+          },
+          reference: { data: ["accept"] }
+        }),
+        button.toJSON({
+          overrides: {
+            label: "Decline",
+            style: Discord.ButtonStyle.Danger,
+            emoji: "❌"
+          },
+          reference: { data: ["decline"] }
+        })
+      ]
+    }
+  ]
+});
+
+LINK BUTTON (no handler needed):
+--------------------------------
+{
+  type: Discord.ComponentType.Button,
+  style: Discord.ButtonStyle.Link,
+  label: "Website",
+  url: "https://example.com",
+  emoji: "🌐"
+}
+
+DISABLED BUTTON:
+----------------
+button.toJSON({
+  overrides: { disabled: true, label: "Clicked!" }
+})
+
+================================================================================
+SECTION 3: SELECT MENUS
+================================================================================
+
+STRING SELECT MENU:
+-------------------
+StringSelectMenu({
+  name: "color-select",
+  options: {
+    placeholder: "Choose a color...",
+    minValues: 1,
+    maxValues: 1,
+    options: [
+      { label: "Red", value: "red", emoji: "🔴", description: "A warm color" },
+      { label: "Green", value: "green", emoji: "🟢", description: "Nature's color" },
+      { label: "Blue", value: "blue", emoji: "🔵", description: "The sky's color" }
+    ]
+  },
+  onExecute({ interaction }) {
+    const selected = interaction.values[0];
+    interaction.reply(`You selected: ${selected}`);
+  }
+});
+
+MULTI-SELECT:
+-------------
+StringSelectMenu({
+  name: "toppings-select",
+  options: {
+    placeholder: "Select toppings...",
+    minValues: 1,
+    maxValues: 5,
+    options: [
+      { label: "Cheese", value: "cheese", emoji: "🧀" },
+      { label: "Pepperoni", value: "pepperoni", emoji: "🍕" },
+      { label: "Mushrooms", value: "mushrooms", emoji: "🍄" }
+    ]
+  },
+  onExecute({ interaction }) {
+    const selected = interaction.values;
+    interaction.reply(`Toppings: ${selected.join(", ")}`);
+  }
+});
+
+USER SELECT MENU:
+-----------------
+UserSelectMenu({
+  name: "user-select",
+  options: {
+    placeholder: "Select a user...",
+    minValues: 1,
+    maxValues: 1
+  },
+  onExecute({ interaction }) {
+    const user = interaction.users.first();
+    interaction.reply(`You selected: ${user.tag}`);
+  }
+});
+
+ROLE SELECT MENU:
+-----------------
+RoleSelectMenu({
+  name: "role-select",
+  options: {
+    placeholder: "Select roles...",
+    minValues: 1,
+    maxValues: 10
+  },
+  onExecute({ interaction }) {
+    const roles = interaction.roles;
+    const roleNames = roles.map(r => r.name).join(", ");
+    interaction.reply(`Selected roles: ${roleNames}`);
+  }
+});
+
+CHANNEL SELECT MENU:
+--------------------
+ChannelSelectMenu({
+  name: "channel-select",
+  options: {
+    placeholder: "Select a channel...",
+    channelTypes: [
+      Discord.ChannelType.GuildText,
+      Discord.ChannelType.GuildVoice
+    ]
+  },
+  onExecute({ interaction }) {
+    const channel = interaction.channels.first();
+    interaction.reply(`Selected: ${channel.name}`);
+  }
+});
+
+MENTIONABLE SELECT MENU:
+------------------------
+MentionableSelectMenu({
+  name: "mentionable-select",
+  options: {
+    placeholder: "Select users or roles...",
+    minValues: 1,
+    maxValues: 5
+  },
+  onExecute({ interaction }) {
+    const users = interaction.users;
+    const roles = interaction.roles;
+    
+    let response = "";
+    if (users.size) response += `Users: ${users.map(u => u.tag).join(", ")}\n`;
+    if (roles.size) response += `Roles: ${roles.map(r => r.name).join(", ")}`;
+    
+    interaction.reply(response || "Nothing selected");
+  }
+});
+
+DYNAMIC SELECT OPTIONS:
+-----------------------
+const select = dbi.interaction("dynamic-select").toJSON({
+  overrides: {
+    placeholder: "Select an item to buy...",
+    options: items.map(item => ({
+      label: item.name,
+      value: item.id,
+      description: `$${item.price}`,
+      emoji: item.emoji
+    }))
+  },
+  reference: { data: ["shop"] }
+});
+
+================================================================================
+SECTION 4: MODALS
+================================================================================
+
+BASIC MODAL:
+------------
+Modal({
+  name: "feedback-modal",
+  options: {
+    title: "Send Feedback",
+    components: [
+      {
+        type: Discord.ComponentType.ActionRow,
+        components: [
+          {
+            type: Discord.ComponentType.TextInput,
+            customId: "subject",
+            label: "Subject",
+            style: Discord.TextInputStyle.Short,
+            placeholder: "Brief description",
+            required: true,
+            minLength: 5,
+            maxLength: 100
+          }
+        ]
+      },
+      {
+        type: Discord.ComponentType.ActionRow,
+        components: [
+          {
+            type: Discord.ComponentType.TextInput,
+            customId: "message",
+            label: "Message",
+            style: Discord.TextInputStyle.Paragraph,
+            placeholder: "Your detailed feedback...",
+            required: true,
+            minLength: 20,
+            maxLength: 2000
+          }
+        ]
+      }
+    ]
+  },
+  async onExecute({ interaction }) {
+    const subject = interaction.fields.getTextInputValue("subject");
+    const message = interaction.fields.getTextInputValue("message");
+    
+    await saveFeedback({ subject, message, userId: interaction.user.id });
+    
+    await interaction.reply({
+      content: "Thank you for your feedback!",
+      ephemeral: true
+    });
+  }
+});
+
+SHOWING A MODAL:
+----------------
+Button({
+  name: "feedback-button",
+  options: {
+    style: Discord.ButtonStyle.Primary,
+    label: "Send Feedback",
+    emoji: "📝"
+  },
+  async onExecute({ interaction, dbi }) {
+    const modal = dbi.interaction("feedback-modal").toJSON();
+    await interaction.showModal(modal);
+  }
+});
+
+MODAL WITH PRE-FILLED DATA:
+---------------------------
+const modal = dbi.interaction("edit-modal").toJSON({
+  overrides: {
+    components: [
+      {
+        type: Discord.ComponentType.ActionRow,
+        components: [{
+          type: Discord.ComponentType.TextInput,
+          customId: "name",
+          label: "Name",
+          style: Discord.TextInputStyle.Short,
+          value: item.name  // Pre-filled!
+        }]
+      }
+    ]
+  },
+  reference: { data: [itemId] }
+});
+
+await interaction.showModal(modal);
+
+TEXT INPUT STYLES:
+------------------
+STYLE     | CONSTANT                    | USE
+----------|-----------------------------|--------------------------
+Short     | TextInputStyle.Short        | Single line input
+Paragraph | TextInputStyle.Paragraph    | Multi-line textarea
+
+================================================================================
+SECTION 5: REFERENCE SYSTEM
+================================================================================
+
+PRIMITIVE REFERENCES (encoded in custom ID):
+--------------------------------------------
+DATA TYPE  | EXAMPLE
+-----------|----------------------------------
+String     | "123456789"
+Number     | 42
+Boolean    | true
+Timestamp  | Date.now()
+
+USAGE:
+const button = dbi.interaction("action-btn").toJSON({
+  reference: {
+    data: [
+      "123456789",    // string
+      42,             // number
+      true,           // boolean
+      Date.now()      // number
+    ]
+  }
+});
+
+RECEIVING DATA:
+onExecute({ interaction, data }) {
+  const [userId, actionType, isActive, timestamp] = data;
+}
+
+OBJECT REFERENCES (stored in memory):
+-------------------------------------
+const cart = {
+  items: ["item1", "item2", "item3"],
+  total: 99.99,
+  userId: "123456789"
+};
+
+const button = dbi.interaction("cart-btn").toJSON({
+  reference: {
+    data: [cart],  // Object stored in memory
+    ttl: 300000    // Auto-expire in 5 minutes
+  }
+});
+
+RECEIVING OBJECT DATA:
+onExecute({ interaction, data }) {
+  const [cart] = data;
+  console.log(cart.items);
+  console.log(cart.total);
+  
+  // Clean up when done
+  cart.$unRef();
+}
+
+REFERENCE TTL:
+--------------
+// Component-level TTL
+reference: {
+  data: [myData],
+  ttl: 60000  // Expires in 1 minute
+}
+
+// Global auto-clear in DBI config
+references: {
+  autoClear: {
+    ttl: 3600000,  // Default TTL: 1 hour
+    check: 60000   // Check every minute
+  }
+}
+
+================================================================================
+SECTION 6: INLINE COMPONENTS
+================================================================================
+
+INLINE BUTTON:
+--------------
+dbi.register(({ ChatInput, createInlineButton }) => {
+  ChatInput({
+    name: "confirm",
+    description: "Confirm an action",
+    async onExecute({ interaction }) {
+      const confirmBtn = createInlineButton({
+        options: {
+          style: Discord.ButtonStyle.Success,
+          label: "Confirm"
+        },
+        onExecute({ interaction }) {
+          interaction.reply("Action confirmed!");
+        }
+      });
+      
+      const cancelBtn = createInlineButton({
+        options: {
+          style: Discord.ButtonStyle.Danger,
+          label: "Cancel"
+        },
+        onExecute({ interaction }) {
+          interaction.reply("Action cancelled.");
+        }
+      });
+      
+      await interaction.reply({
+        content: "Are you sure?",
+        components: [
+          {
+            type: Discord.ComponentType.ActionRow,
+            components: [
+              confirmBtn.toJSON(),
+              cancelBtn.toJSON()
+            ]
+          }
+        ]
+      });
+    }
+  });
+});
+
+INLINE SELECT MENU:
+-------------------
+const select = createInlineStringSelectMenu({
+  options: {
+    placeholder: "Cast your vote...",
+    options: [
+      { label: "Option A", value: "a" },
+      { label: "Option B", value: "b" },
+      { label: "Option C", value: "c" }
+    ]
+  },
+  onExecute({ interaction }) {
+    const vote = interaction.values[0];
+    interaction.reply({ content: `You voted for ${vote}!`, ephemeral: true });
+  }
+});
+
+INLINE MODAL:
+-------------
+const modal = createInlineModal({
+  options: {
+    title: "Enter Information",
+    components: [
+      {
+        type: Discord.ComponentType.ActionRow,
+        components: [{
+          type: Discord.ComponentType.TextInput,
+          customId: "input",
+          label: "Your Input",
+          style: Discord.TextInputStyle.Short,
+          required: true
+        }]
+      }
+    ]
+  },
+  onExecute({ interaction }) {
+    const input = interaction.fields.getTextInputValue("input");
+    interaction.reply(`You entered: ${input}`);
+  }
+});
+
+await interaction.showModal(modal.toJSON());
+
+AVAILABLE INLINE CREATORS:
+--------------------------
+FUNCTION                           | CREATES
+-----------------------------------|---------------------------
+createInlineButton()               | Inline button
+createInlineStringSelectMenu()     | Inline string select
+createInlineUserSelectMenu()       | Inline user select
+createInlineRoleSelectMenu()       | Inline role select
+createInlineChannelSelectMenu()    | Inline channel select
+createInlineMentionableSelectMenu()| Inline mentionable select
+createInlineModal()                | Inline modal
+createInlineEvent()                | Inline event listener
+
+================================================================================
+SECTION 7: BUILDER PATTERN
+================================================================================
+
+BUTTON BUILDER:
+---------------
+const btn = dbi.interaction("builder-btn");
+
+const built = btn.createBuilder()
+  .setLabel("Custom Label")
+  .setEmoji("🎉")
+  .setStyle(Discord.ButtonStyle.Success)
+  .setReference(["data1", "data2"])
+  .setTTL(60000)
+  .toJSON();
+
+SELECT MENU BUILDER:
+--------------------
+const select = dbi.interaction("builder-select");
+
+const built = select.createBuilder()
+  .setPlaceholder("Choose items...")
+  .setMinValues(1)
+  .setMaxValues(3)
+  .setOptions([
+    { label: "A", value: "a" },
+    { label: "B", value: "b" },
+    { label: "C", value: "c" }
+  ])
+  .toJSON();
+
+================================================================================
+SECTION 8: COMPONENT EXECUTION CONTEXT
+================================================================================
+
+CONTEXT PROPERTIES:
+-------------------
+PROPERTY          | TYPE                              | DESCRIPTION
+------------------|-----------------------------------|------------------------
+interaction       | ButtonInteraction/SelectMenuInteraction | Discord.js interaction
+data              | any[]                             | Referenced data array
+dbi               | DBI                               | DBI instance
+dbiInteraction    | DBIButton/DBISelectMenu           | Registered interaction
+locale            | { user, guild? }                  | Locale helpers
+setRateLimit      | function                          | Rate limit setter
+other             | object                            | Custom shared data
+clientNamespace   | string                            | Multi-client namespace
+v2                | boolean                           | Components V2 enabled
+
+EXAMPLE:
+--------
+Button({
+  name: "context-demo",
+  options: { style: Discord.ButtonStyle.Primary, label: "Demo" },
+  onExecute(ctx) {
+    const {
+      interaction,
+      data,
+      dbi,
+      dbiInteraction,
+      locale,
+      setRateLimit,
+      other,
+      clientNamespace,
+      v2
+    } = ctx;
+    
+    interaction.reply("Demo!");
+  }
+});
+
+================================================================================
+END OF DOCUMENT
+================================================================================

@@ -347,6 +347,28 @@ Set minimum interval between renders:
 </script>
 ```
 
+### lowPriorityUpdate(callback)
+
+Low-priority update for background tasks. If a user interaction handler is running, the callback executes but rendering is skipped (the handler's render will include the changes).
+
+Use this to prevent interval/timeout updates from conflicting with button clicks:
+
+```svelte
+<script>
+  onMount(() => {
+    const interval = setInterval(() => {
+      // If user clicks a button during this interval tick,
+      // this update won't trigger a conflicting render
+      lowPriorityUpdate(() => {
+        data.elapsedTime += 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  });
+</script>
+```
+
 ---
 
 ## HTML Elements Reference

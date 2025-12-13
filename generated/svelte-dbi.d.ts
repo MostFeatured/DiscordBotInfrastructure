@@ -107,6 +107,32 @@ declare global {
    */
   function setThrottle(ms: number): void;
 
+  /**
+   * Low-priority update for background tasks like intervals.
+   * If a user interaction handler is currently running, the callback is executed
+   * but rendering is skipped (the handler's render will include these changes).
+   * 
+   * Use this to prevent interval updates from conflicting with button clicks.
+   * 
+   * @param callback - Function to execute that updates data
+   * 
+   * @example
+   * ```svelte
+   * onMount(() => {
+   *   const interval = setInterval(() => {
+   *     // If user clicks a button during this interval tick,
+   *     // this update won't trigger a conflicting render
+   *     lowPriorityUpdate(() => {
+   *       data.elapsedTime += 1;
+   *     });
+   *   }, 1000);
+   *   
+   *   return () => clearInterval(interval);
+   * });
+   * ```
+   */
+  function lowPriorityUpdate(callback: () => void): void;
+
   // ============================================
   // LIFECYCLE HOOKS
   // ============================================

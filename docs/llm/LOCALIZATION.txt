@@ -1,0 +1,501 @@
+================================================================================
+DBI - LOCALIZATION GUIDE - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Multi-Language Support Reference
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: CONTENT LOCALIZATION
+================================================================================
+
+BASIC LOCALE DEFINITION:
+------------------------
+dbi.register(({ Locale }) => {
+  // English locale
+  Locale({
+    name: "en",
+    data: {
+      greeting: "Hello!",
+      goodbye: "Goodbye!",
+      welcome: "Welcome to our server!",
+      help: {
+        title: "Help Menu",
+        description: "Here are the available commands:"
+      }
+    }
+  });
+  
+  // Turkish locale
+  Locale({
+    name: "tr",
+    data: {
+      greeting: "Merhaba!",
+      goodbye: "Hoşça kal!",
+      welcome: "Sunucumuza hoş geldiniz!",
+      help: {
+        title: "Yardım Menüsü",
+        description: "İşte mevcut komutlar:"
+      }
+    }
+  });
+  
+  // Spanish locale
+  Locale({
+    name: "es",
+    data: {
+      greeting: "¡Hola!",
+      goodbye: "¡Adiós!",
+      welcome: "¡Bienvenido a nuestro servidor!",
+      help: {
+        title: "Menú de Ayuda",
+        description: "Aquí están los comandos disponibles:"
+      }
+    }
+  });
+});
+
+================================================================================
+SECTION 2: USING VARIABLES IN TRANSLATIONS
+================================================================================
+
+Use {0}, {1}, etc. as placeholders:
+
+Locale({
+  name: "en",
+  data: {
+    // Simple variable
+    welcomeUser: "Welcome, {0}!",
+    
+    // Multiple variables
+    levelUp: "{0} reached level {1}!",
+    
+    // Complex message
+    orderConfirm: "Order #{0} confirmed. Total: ${1}. Ships to: {2}",
+    
+    // Nested with variables
+    messages: {
+      ban: "{0} has been banned by {1}. Reason: {2}",
+      kick: "{0} has been kicked by {1}."
+    }
+  }
+});
+
+Locale({
+  name: "tr",
+  data: {
+    welcomeUser: "Hoş geldin, {0}!",
+    levelUp: "{0} seviye {1}'e ulaştı!",
+    orderConfirm: "Sipariş #{0} onaylandı. Toplam: {1}₺. Teslimat: {2}",
+    messages: {
+      ban: "{0}, {1} tarafından yasaklandı. Sebep: {2}",
+      kick: "{0}, {1} tarafından atıldı."
+    }
+  }
+});
+
+================================================================================
+SECTION 3: NESTED LOCALE STRUCTURE
+================================================================================
+
+Locale({
+  name: "en",
+  data: {
+    commands: {
+      help: {
+        title: "Help",
+        description: "List of commands",
+        noCommands: "No commands available"
+      },
+      settings: {
+        title: "Settings",
+        language: "Language",
+        notifications: "Notifications"
+      }
+    },
+    errors: {
+      notFound: "Item not found",
+      noPermission: "You don't have permission",
+      cooldown: "Please wait {0} seconds"
+    },
+    success: {
+      saved: "Settings saved!",
+      deleted: "Item deleted!"
+    }
+  }
+});
+
+================================================================================
+SECTION 4: INTERACTION LOCALIZATION
+================================================================================
+
+Translates command names, descriptions, options as they appear in Discord UI:
+
+dbi.register(({ ChatInput, ChatInputOptions, InteractionLocale }) => {
+  // Define command with primary language
+  ChatInput({
+    name: "ayarlar",
+    description: "Bot ayarlarını değiştir",
+    options: [
+      ChatInputOptions.string({
+        name: "dil",
+        description: "Tercih ettiğiniz dil",
+        required: true,
+        choices: [
+          { name: "Türkçe", value: "tr" },
+          { name: "İngilizce", value: "en" }
+        ]
+      })
+    ],
+    onExecute({ interaction }) {
+      const lang = interaction.options.getString("dil");
+      interaction.reply(`Dil: ${lang}`);
+    }
+  });
+
+  // Add translations for other languages
+  InteractionLocale({
+    name: "ayarlar",  // Must match command name
+    data: {
+      en: {
+        name: "settings",
+        description: "Change bot settings",
+        options: {
+          dil: {
+            name: "language",
+            description: "Your preferred language",
+            choices: {
+              "Türkçe": "Turkish",
+              "İngilizce": "English"
+            }
+          }
+        }
+      },
+      es: {
+        name: "ajustes",
+        description: "Cambiar configuración del bot",
+        options: {
+          dil: {
+            name: "idioma",
+            description: "Tu idioma preferido",
+            choices: {
+              "Türkçe": "Turco",
+              "İngilizce": "Inglés"
+            }
+          }
+        }
+      }
+    }
+  });
+});
+
+INTERACTION LOCALE STRUCTURE:
+-----------------------------
+InteractionLocale({
+  name: "command-name",
+  data: {
+    "locale-code": {
+      name: "translated-name",
+      description: "translated-desc",
+      options: {
+        "original-option-name": {
+          name: "translated-option",
+          description: "translated-desc",
+          choices: {
+            "Original Choice": "Translated Choice"
+          }
+        }
+      }
+    }
+  }
+});
+
+================================================================================
+SECTION 5: SUPPORTED LOCALE CODES
+================================================================================
+
+CODE | LANGUAGE        CODE | LANGUAGE
+-----|-------------    -----|-------------
+en   | English         ja   | Japanese
+bg   | Bulgarian       ko   | Korean
+zh   | Chinese         no   | Norwegian
+hr   | Croatian        pl   | Polish
+cs   | Czech           pt   | Portuguese
+da   | Danish          ro   | Romanian
+nl   | Dutch           ru   | Russian
+fi   | Finnish         es   | Spanish
+fr   | French          sv   | Swedish
+de   | German          th   | Thai
+el   | Greek           tr   | Turkish
+hi   | Hindi           uk   | Ukrainian
+hu   | Hungarian       vi   | Vietnamese
+it   | Italian
+
+================================================================================
+SECTION 6: USING LOCALES IN INTERACTIONS
+================================================================================
+
+ACCESS THROUGH LOCALE OBJECT:
+-----------------------------
+dbi.register(({ ChatInput }) => {
+  ChatInput({
+    name: "greet",
+    description: "Greet the user",
+    onExecute({ interaction, locale }) {
+      // User's locale (based on Discord client language)
+      const userGreeting = locale.user.data.greeting();
+      
+      // Guild's locale (based on guild's preferred locale)
+      const guildGreeting = locale.guild?.data.greeting?.();
+      
+      interaction.reply(userGreeting);
+    }
+  });
+});
+
+FUNCTION-STYLE ACCESS WITH VARIABLES:
+-------------------------------------
+Locale({
+  name: "en",
+  data: {
+    welcome: "Welcome, {0}!",
+    levelUp: "{0} reached level {1}!"
+  }
+});
+
+ChatInput({
+  name: "welcome",
+  description: "Welcome someone",
+  onExecute({ interaction, locale }) {
+    const user = interaction.options.getUser("user");
+    
+    // Pass variables to the locale function
+    const message = locale.user.data.welcome(user.username);
+    
+    interaction.reply(message);
+    // Output: "Welcome, John!"
+  }
+});
+
+PATH-BASED ACCESS:
+------------------
+Locale({
+  name: "en",
+  data: {
+    commands: {
+      help: {
+        title: "Help Menu",
+        footer: "Page {0} of {1}"
+      }
+    }
+  }
+});
+
+ChatInput({
+  name: "help",
+  description: "Show help",
+  onExecute({ interaction, locale }) {
+    // Chain to access nested values
+    const title = locale.user.data.commands.help.title();
+    const footer = locale.user.data.commands.help.footer(1, 5);
+    
+    interaction.reply({
+      embeds: [{
+        title: title,
+        footer: { text: footer }
+      }]
+    });
+  }
+});
+
+ALTERNATIVE ACCESS METHODS:
+---------------------------
+// Using get() for dynamic paths
+const path = "commands.help.title";
+const value = locale.user.get(path);  // Returns raw string or null
+
+// Using format() for dynamic paths with variables
+const formatted = locale.user.format("commands.help.footer", 1, 5);
+
+ACCESSING LOCALE BY NAME:
+-------------------------
+ChatInput({
+  name: "translate",
+  description: "Show translation",
+  onExecute({ interaction, dbi }) {
+    const enLocale = dbi.locale("en");
+    const trLocale = dbi.locale("tr");
+    
+    const enGreeting = enLocale.data.greeting();
+    const trGreeting = trLocale.data.greeting();
+    
+    interaction.reply(`EN: ${enGreeting}\nTR: ${trGreeting}`);
+  }
+});
+
+================================================================================
+SECTION 7: DYNAMIC LOCALE SELECTION
+================================================================================
+
+BASED ON USER SETTINGS:
+-----------------------
+ChatInput({
+  name: "message",
+  description: "Send a message",
+  async onExecute({ interaction, dbi }) {
+    const userLang = await getUserLanguage(interaction.user.id);
+    const locale = dbi.locale(userLang) || dbi.locale("en");
+    const message = locale.data.welcomeMessage();
+    interaction.reply(message);
+  }
+});
+
+BASED ON GUILD SETTINGS:
+------------------------
+Event({
+  name: "guildMemberAdd",
+  id: "welcome-message",
+  async onExecute({ member, locale }) {
+    const guildLocale = locale?.guild || dbi.locale("en");
+    const message = guildLocale.data.welcome(member.user.username);
+    
+    const channel = member.guild.systemChannel;
+    if (channel) await channel.send(message);
+  }
+});
+
+================================================================================
+SECTION 8: MERGING LOCALES
+================================================================================
+
+Locales with the same name are automatically merged:
+
+// File 1: Base translations
+dbi.register(({ Locale }) => {
+  Locale({
+    name: "en",
+    data: {
+      common: { yes: "Yes", no: "No", cancel: "Cancel" }
+    }
+  });
+});
+
+// File 2: Feature-specific translations
+dbi.register(({ Locale }) => {
+  Locale({
+    name: "en",
+    data: {
+      shop: { buy: "Buy", sell: "Sell", cart: "Cart" }
+    }
+  });
+});
+
+// Result: Both 'common' and 'shop' available in 'en' locale
+
+================================================================================
+SECTION 9: HANDLING MISSING TRANSLATIONS
+================================================================================
+
+DEFAULT INVALID PATH HANDLER:
+-----------------------------
+const dbi = createDBI("my-bot", {
+  defaults: {
+    locale: {
+      name: "en",
+      invalidPath: ({ path, locale }) => {
+        console.warn(`Missing translation: ${path} in ${locale.name}`);
+        return `[Missing: ${path}]`;
+      }
+    }
+  }
+});
+
+FALLBACK TO DEFAULT LOCALE:
+---------------------------
+DBI automatically falls back to default locale when a path is missing:
+
+Locale({
+  name: "en",
+  data: { greeting: "Hello!", special: "Special message" }
+});
+
+Locale({
+  name: "tr",
+  data: { greeting: "Merhaba!" }
+  // 'special' is missing - will fall back to English
+});
+
+// In Turkish context:
+const message = locale.user.data.special();
+// Returns "Special message" (fallback to English)
+
+================================================================================
+SECTION 10: BEST PRACTICES
+================================================================================
+
+1. ORGANIZE BY FEATURE:
+src/locales/
+├── en/
+│   ├── common.js
+│   ├── commands.js
+│   └── errors.js
+└── tr/
+    ├── common.js
+    ├── commands.js
+    └── errors.js
+
+2. USE CONSISTENT KEYS:
+// GOOD
+data: {
+  commands: {
+    help: { title: "...", description: "..." },
+    settings: { title: "...", description: "..." }
+  }
+}
+
+// BAD
+data: {
+  helpTitle: "...",
+  help_description: "...",
+  settingsHeader: "..."
+}
+
+3. INCLUDE CONTEXT FOR TRANSLATORS:
+Locale({
+  name: "en",
+  data: {
+    // {0} = username, {1} = level number
+    levelUp: "{0} reached level {1}!",
+    // {0} = item name, {1} = price in dollars
+    itemPurchased: "Purchased {0} for ${1}!"
+  }
+});
+
+4. HANDLE PLURALIZATION:
+Locale({
+  name: "en",
+  data: {
+    items: {
+      one: "1 item",
+      many: "{0} items"
+    }
+  }
+});
+
+function formatItems(count, locale) {
+  if (count === 1) return locale.data.items.one();
+  return locale.data.items.many(count);
+}
+
+5. USE CONDITIONAL REGISTRATION:
+Locale({
+  name: "de",
+  flag: "german",
+  data: { greeting: "Hallo!" }
+});
+
+await dbi.load("german");  // Load with German locale
+
+================================================================================
+END OF DOCUMENT
+================================================================================

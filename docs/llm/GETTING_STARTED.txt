@@ -1,0 +1,296 @@
+================================================================================
+DBI - GETTING STARTED GUIDE - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Setup & Configuration Guide
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: PREREQUISITES
+================================================================================
+
+REQUIREMENT                | DETAILS
+---------------------------|--------------------------------------------------
+Node.js                    | Version 16.9.0 or higher
+Discord Application        | Create at https://discord.com/developers/applications
+JavaScript/TypeScript      | Basic knowledge required
+
+================================================================================
+SECTION 2: INSTALLATION
+================================================================================
+
+CREATE NEW PROJECT:
+mkdir my-discord-bot
+cd my-discord-bot
+npm init -y
+
+INSTALL DEPENDENCIES:
+npm install @mostfeatured/dbi discord.js
+
+FOR TYPESCRIPT:
+npm install -D typescript @types/node ts-node
+
+================================================================================
+SECTION 3: PROJECT STRUCTURE
+================================================================================
+
+my-discord-bot/
+├── package.json
+├── .env                    # Environment variables (SECRET!)
+├── dbi.js                  # DBI configuration
+├── login.js                # Bot startup script
+├── publish.js              # Command publishing script
+└── src/
+    ├── commands/           # Slash commands
+    │   └── ping.js
+    ├── components/         # Buttons, Select Menus, Modals
+    │   └── confirm.js
+    ├── events/             # Discord event handlers
+    │   └── ready.js
+    └── locales/            # Language files
+        └── en.js
+
+================================================================================
+SECTION 4: DBI CONFIGURATION (dbi.js)
+================================================================================
+
+FULL CONFIGURATION EXAMPLE:
+---------------------------
+const { createDBI } = require("@mostfeatured/dbi");
+
+const dbi = createDBI("my-bot", {
+  strict: true,
+  
+  discord: {
+    token: process.env.DISCORD_TOKEN,
+    options: {
+      intents: [
+        "Guilds",
+        "GuildMessages",
+        "MessageContent"
+      ]
+    }
+  },
+  
+  defaults: {
+    locale: {
+      name: "en",
+      invalidPath: (ctx) => `Missing translation: ${ctx.path}`
+    },
+    defaultMemberPermissions: ["SendMessages"],
+    directMessages: false
+  },
+  
+  references: {
+    autoClear: {
+      ttl: 60 * 60 * 1000,
+      check: 60 * 1000
+    }
+  },
+  
+  inlineListeners: {
+    autoClear: {
+      ttl: 15 * 60 * 1000,
+      check: 60 * 1000
+    }
+  }
+});
+
+module.exports = dbi;
+
+CONFIGURATION OPTIONS TABLE:
+----------------------------
+OPTION                           | TYPE              | DESCRIPTION
+---------------------------------|-------------------|----------------------------
+strict                           | boolean           | Throw errors for duplicates
+discord.token                    | string            | Bot token
+discord.options                  | ClientOptions     | Discord.js client options
+defaults.locale.name             | string            | Default locale name
+defaults.locale.invalidPath      | string|function   | Missing locale message
+defaults.defaultMemberPermissions| string[]          | Required permissions
+defaults.directMessages          | boolean           | Allow commands in DMs
+references.autoClear.ttl         | number            | Reference TTL (ms)
+references.autoClear.check       | number            | Cleanup interval (ms)
+sharding                         | "hybrid"|"default"|"off" | Sharding mode
+store                            | DBIStore          | Custom persistent store
+
+================================================================================
+SECTION 5: COMMAND EXAMPLE (src/commands/ping.js)
+================================================================================
+
+const dbi = require("../../dbi");
+
+dbi.register(({ ChatInput }) => {
+  ChatInput({
+    name: "ping",
+    description: "Check the bot's latency",
+    
+    async onExecute({ interaction, dbi }) {
+      const ws = dbi.client().client.ws.ping;
+      const start = Date.now();
+      
+      await interaction.deferReply();
+      const roundtrip = Date.now() - start;
+      
+      await interaction.editReply(
+        `Pong!\n` +
+        `> WebSocket: ${ws}ms\n` +
+        `> Roundtrip: ${roundtrip}ms`
+      );
+    }
+  });
+});
+
+================================================================================
+SECTION 6: EVENT HANDLER EXAMPLE (src/events/ready.js)
+================================================================================
+
+const dbi = require("../../dbi");
+
+dbi.register(({ Event }) => {
+  Event({
+    name: "clientReady",
+    id: "ready-handler",
+    
+    onExecute({ client }) {
+      console.log(`Bot is online!`);
+      console.log(`Serving ${client.guilds.cache.size} guilds`);
+      
+      client.user.setActivity({
+        name: "with DBI",
+        type: 0
+      });
+    }
+  });
+});
+
+================================================================================
+SECTION 7: LOGIN SCRIPT (login.js)
+================================================================================
+
+const { Utils } = require("@mostfeatured/dbi");
+const dbi = require("./dbi");
+
+async function start() {
+  try {
+    await Utils.recursiveImport("./src");
+    await dbi.load();
+    await dbi.login();
+    console.log(`Logged in as ${dbi.client().client.user.tag}`);
+  } catch (error) {
+    console.error("Failed to start bot:", error);
+    process.exit(1);
+  }
+}
+
+start();
+
+================================================================================
+SECTION 8: PUBLISH SCRIPT (publish.js)
+================================================================================
+
+const { Utils } = require("@mostfeatured/dbi");
+const dbi = require("./dbi");
+
+async function publish() {
+  try {
+    await Utils.recursiveImport("./src");
+    await dbi.load();
+    
+    // Development (instant updates):
+    await dbi.publish("Guild", "YOUR_GUILD_ID");
+    
+    // Production (up to 1 hour delay):
+    // await dbi.publish("Global");
+    
+    await dbi.unload();
+    console.log("Commands published successfully!");
+  } catch (error) {
+    console.error("Failed to publish commands:", error);
+    process.exit(1);
+  }
+}
+
+publish();
+
+================================================================================
+SECTION 9: ENVIRONMENT VARIABLES (.env)
+================================================================================
+
+CREATE .env FILE:
+DISCORD_TOKEN=your_bot_token_here
+
+LOAD IN dbi.js:
+require("dotenv").config();
+
+INSTALL DOTENV:
+npm install dotenv
+
+================================================================================
+SECTION 10: RUNNING THE BOT
+================================================================================
+
+STEP 1 - Publish commands:
+node publish.js
+
+STEP 2 - Start the bot:
+node login.js
+
+DEVELOPMENT TIP:
+Publish to guild instead of global for instant updates.
+
+================================================================================
+SECTION 11: TYPESCRIPT SETUP
+================================================================================
+
+tsconfig.json:
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
+
+================================================================================
+SECTION 12: TROUBLESHOOTING
+================================================================================
+
+PROBLEM: Commands not appearing
+SOLUTIONS:
+1. Run publish.js
+2. Wait up to 1 hour for global commands
+3. Check bot has applications.commands scope
+4. Verify bot is in the guild
+
+PROBLEM: Bot not responding
+SOLUTIONS:
+1. Check bot permissions
+2. Verify intents are configured
+3. Check console for errors
+4. Ensure dbi.load() before dbi.login()
+
+PROBLEM: "Missing Access" error
+SOLUTIONS:
+1. Invite bot with proper permissions
+2. Check channel permissions
+3. Verify bot role position
+
+PROBLEM: Token errors
+SOLUTIONS:
+1. Regenerate token in Discord Developer Portal
+2. Check .env file is loading
+3. No spaces around = in .env
+
+================================================================================
+END OF DOCUMENT
+================================================================================

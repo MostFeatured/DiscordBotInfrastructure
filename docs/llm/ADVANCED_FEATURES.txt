@@ -1,0 +1,521 @@
+================================================================================
+DBI - ADVANCED FEATURES - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Advanced Features Reference
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: MESSAGE COMMANDS
+================================================================================
+
+DBI can convert slash commands to message-based commands automatically.
+
+ENABLING MESSAGE COMMANDS:
+--------------------------
+const dbi = createDBI("my-bot", {
+  discord: {
+    token: process.env.DISCORD_TOKEN,
+    options: {
+      intents: ["Guilds", "GuildMessages", "MessageContent"]
+    }
+  },
+  
+  messageCommands: {
+    prefixes: ["!", ".", "?"],
+    
+    // Or dynamic prefixes:
+    // prefixes: async ({ message }) => {
+    //   const guildPrefix = await getGuildPrefix(message.guild?.id);
+    //   return [guildPrefix, "!"];
+    // },
+    
+    typeAliases: {
+      booleans: {
+        "yes": true, "no": false,
+        "true": true, "false": false,
+        "on": true, "off": false,
+        "1": true, "0": false
+      }
+    }
+  },
+  
+  defaults: {
+    messageCommands: {
+      deferReplyContent: "Processing..."
+    }
+  }
+});
+
+HOW IT WORKS:
+-------------
+!ping           → /ping
+!user info @John → /user info user:@John
+!ban @User spam  → /ban user:@User reason:spam
+
+MESSAGE COMMAND ALIASES:
+------------------------
+ChatInput({
+  name: "help",
+  description: "Show help",
+  other: {
+    messageCommand: {
+      aliases: ["h", "?", "commands", "cmds"],
+      ignore: false  // Set true to disable message command
+    }
+  },
+  onExecute({ interaction }) {
+    interaction.reply("Help information...");
+  }
+});
+
+// Now works with: !help, !h, !?, !commands, !cmds
+
+REST STRING ARGUMENTS:
+----------------------
+ChatInput({
+  name: "say",
+  description: "Make the bot say something",
+  options: [
+    ChatInputOptions.string({
+      name: "message",
+      description: "The message",
+      required: true,
+      messageCommands: {
+        rest: true  // Capture all remaining text
+      }
+    })
+  ],
+  onExecute({ interaction }) {
+    const message = interaction.options.getString("message");
+    interaction.reply(message);
+  }
+});
+
+// !say Hello world, how are you?
+// message = "Hello world, how are you?"
+
+================================================================================
+SECTION 2: REFERENCE SYSTEM
+================================================================================
+
+Pass data through Discord's component custom IDs.
+
+CUSTOM ID ENCODING:
+-------------------
+TYPE      | ENCODING      | EXAMPLE
+----------|---------------|---------------------------
+String    | Raw           | "hello" → hello
+Number    | π prefix      | 42 → π42
+BigInt    | ᙖ prefix      | 12345n → ᙖ12345
+Boolean   | 𝞫 prefix      | true → 𝞫1
+undefined | 🗶u            | undefined → 🗶u
+null      | 🗶n            | null → 🗶n
+Object    | ¤ + ref ID    | {...} → ¤abc123
+
+USING REFERENCES:
+-----------------
+Button({
+  name: "action",
+  options: { style: Discord.ButtonStyle.Primary, label: "Action" },
+  onExecute({ interaction, data }) {
+    const [userId, action, metadata] = data;
+    
+    console.log(`User: ${userId}`);      // string
+    console.log(`Action: ${action}`);    // string
+    console.log(`Metadata:`, metadata);  // object (if was object)
+    
+    if (metadata?.$ref) {
+      console.log(`Ref ID: ${metadata.$ref}`);
+      metadata.$unRef();  // Clean up when done
+    }
+    
+    interaction.reply("Done!");
+  }
+});
+
+// Creating the button:
+const button = dbi.interaction("action").toJSON({
+  reference: {
+    data: [
+      "123456789",                      // String - in custom ID
+      "approve",                        // String - in custom ID
+      { complex: "object", nested: {} } // Object - stored in memory
+    ],
+    ttl: 300000  // Optional: auto-expire in 5 minutes
+  }
+});
+
+REFERENCE CONFIGURATION:
+------------------------
+const dbi = createDBI("my-bot", {
+  references: {
+    autoClear: {
+      ttl: 3600000,   // Default TTL: 1 hour
+      check: 60000    // Check every minute
+    }
+  }
+});
+
+MANUAL REFERENCE MANAGEMENT:
+----------------------------
+const refs = dbi.data.refs;
+
+const ref = refs.get("refId");
+console.log(ref.value);  // Stored object
+console.log(ref.at);     // Timestamp
+console.log(ref.ttl);    // Time-to-live
+
+refs.delete("refId");
+refs.has("refId");
+
+================================================================================
+SECTION 3: RATE LIMITING
+================================================================================
+
+DECLARATIVE RATE LIMITS:
+------------------------
+ChatInput({
+  name: "daily",
+  description: "Claim daily reward",
+  rateLimits: [
+    {
+      type: "User",
+      duration: 86400000  // 24 hours in ms
+    }
+  ],
+  onExecute({ interaction }) {
+    interaction.reply("Here's your daily reward!");
+  }
+});
+
+RATE LIMIT TYPES:
+-----------------
+TYPE    | DESCRIPTION
+--------|----------------------------------
+User    | Per-user across all servers
+Channel | Per-channel
+Guild   | Per-server
+Member  | Per-member (user+guild combination)
+Message | Per-message
+
+DYNAMIC RATE LIMITS:
+--------------------
+async onExecute({ interaction, setRateLimit }) {
+  const isPremium = await checkPremium(interaction.user.id);
+  
+  if (isPremium) {
+    await setRateLimit("User", 30000);   // 30 seconds
+  } else {
+    await setRateLimit("User", 300000);  // 5 minutes
+  }
+  
+  interaction.reply("Done!");
+}
+
+================================================================================
+SECTION 4: MULTI-CLIENT SUPPORT
+================================================================================
+
+Run multiple Discord clients simultaneously.
+
+CONFIGURATION:
+--------------
+const dbi = createDBI("my-bot", {
+  discord: [
+    {
+      namespace: "main",
+      token: process.env.MAIN_BOT_TOKEN,
+      options: { intents: ["Guilds", "GuildMessages"] }
+    },
+    {
+      namespace: "music",
+      token: process.env.MUSIC_BOT_TOKEN,
+      options: { intents: ["Guilds", "GuildVoiceStates"] }
+    },
+    {
+      namespace: "moderation",
+      token: process.env.MOD_BOT_TOKEN,
+      options: { intents: ["Guilds", "GuildMembers", "GuildBans"] }
+    }
+  ]
+});
+
+ACCESSING CLIENTS:
+------------------
+const defaultClient = dbi.client();
+const musicClient = dbi.client("music");
+const modClient = dbi.client("moderation");
+
+const discordClient = musicClient.client;
+console.log(discordClient.user.tag);
+
+const allClients = dbi.data.clients;
+const nextClient = dbi.data.clients.next();
+const randomClient = dbi.data.clients.random();
+
+PUBLISHING TO SPECIFIC CLIENTS:
+-------------------------------
+ChatInput({
+  name: "play",
+  description: "Play music",
+  publish: "music",  // Only publish to music bot
+  onExecute({ interaction, clientNamespace }) {
+    console.log(`Handled by: ${clientNamespace}`);
+  }
+});
+
+EVENTS WITH MULTIPLE CLIENTS:
+-----------------------------
+Event({
+  name: "guildCreate",
+  id: "guild-logger",
+  triggerType: "OneByOneGlobal",  // Default
+  // triggerType: "Random",
+  // triggerType: "First",
+  onExecute({ guild, nextClient }) {
+    console.log(`${nextClient.namespace} joined: ${guild.name}`);
+  }
+});
+
+================================================================================
+SECTION 5: SHARDING
+================================================================================
+
+DEFAULT SHARDING:
+-----------------
+const dbi = createDBI("my-bot", {
+  sharding: "default",
+  discord: {
+    token: process.env.DISCORD_TOKEN,
+    options: { intents: ["Guilds"] }
+  }
+});
+
+HYBRID SHARDING (for large bots):
+---------------------------------
+const dbi = createDBI("my-bot", {
+  sharding: "hybrid",
+  discord: {
+    token: process.env.DISCORD_TOKEN,
+    options: { intents: ["Guilds"] }
+  }
+});
+
+if (dbi.cluster) {
+  console.log(`Cluster ID: ${dbi.cluster.id}`);
+  console.log(`Shard IDs: ${dbi.cluster.shards}`);
+}
+
+SHARD MANAGER (separate file):
+------------------------------
+const { ClusterManager } = require("discord-hybrid-sharding");
+
+const manager = new ClusterManager("./bot.js", {
+  totalShards: "auto",
+  shardsPerClusters: 2,
+  token: process.env.DISCORD_TOKEN
+});
+
+manager.on("clusterCreate", cluster => {
+  console.log(`Launched cluster ${cluster.id}`);
+});
+
+manager.spawn();
+
+================================================================================
+SECTION 6: HOT RELOADING
+================================================================================
+
+USING onUnload:
+---------------
+dbi.register(({ ChatInput, Event, onUnload }) => {
+  let interval;
+  
+  Event({
+    name: "clientReady",
+    id: "stats-updater",
+    onExecute({ client }) {
+      interval = setInterval(() => updateStats(client), 60000);
+    }
+  });
+  
+  onUnload(() => {
+    if (interval) clearInterval(interval);
+    console.log("Stats updater cleaned up");
+  });
+  
+  ChatInput({
+    name: "reload-safe",
+    description: "Safe command",
+    onExecute({ interaction }) {
+      interaction.reply("Hello!");
+    }
+  });
+});
+
+RELOAD FLOW:
+------------
+await dbi.unload();
+Utils.recursiveUnload("./src");
+await Utils.recursiveImport("./src");
+await dbi.load();
+console.log("Bot reloaded!");
+
+UTILS FOR HOT RELOADING:
+------------------------
+const { Utils } = require("@mostfeatured/dbi");
+
+await Utils.recursiveImport("./src");
+Utils.recursiveUnload("./src");
+Utils.unloadModule("./src/commands/ping.js");
+
+================================================================================
+SECTION 7: PERSISTENT STORE
+================================================================================
+
+DEFAULT MEMORYSTORE:
+--------------------
+const { MemoryStore } = require("@mostfeatured/dbi");
+
+const dbi = createDBI("my-bot", {
+  store: new MemoryStore()  // Default - not persistent
+});
+
+CUSTOM STORE IMPLEMENTATION:
+----------------------------
+class RedisStore {
+  constructor(redis) {
+    this.redis = redis;
+  }
+  
+  async get(key, defaultValue) {
+    const value = await this.redis.get(key);
+    return value ? JSON.parse(value) : defaultValue;
+  }
+  
+  async set(key, value) {
+    await this.redis.set(key, JSON.stringify(value));
+  }
+  
+  async delete(key) {
+    await this.redis.del(key);
+  }
+  
+  async has(key) {
+    return (await this.redis.exists(key)) === 1;
+  }
+}
+
+const dbi = createDBI("my-bot", {
+  store: new RedisStore(redisClient)
+});
+
+await dbi.config.store.set("key", { data: "value" });
+const data = await dbi.config.store.get("key");
+
+================================================================================
+SECTION 8: FLAG-BASED LOADING
+================================================================================
+
+DEFINING FLAGS:
+---------------
+dbi.register(({ ChatInput }) => {
+  // Always loaded
+  ChatInput({
+    name: "ping",
+    description: "Ping",
+    onExecute({ interaction }) {
+      interaction.reply("Pong!");
+    }
+  });
+  
+  // Only loaded with 'debug' flag
+  ChatInput({
+    name: "debug-info",
+    description: "Debug information",
+    flag: "debug",
+    onExecute({ interaction }) {
+      interaction.reply("Debug info...");
+    }
+  });
+  
+  // Only loaded with 'admin' flag
+  ChatInput({
+    name: "eval",
+    description: "Evaluate code",
+    flag: "admin",
+    onExecute({ interaction }) { /* Dangerous! */ }
+  });
+});
+
+LOADING WITH FLAGS:
+-------------------
+await dbi.load();                   // Only non-flagged
+await dbi.load("debug");            // With debug flag
+await dbi.load("debug", "admin");   // With both flags
+await dbi.load("all");              // Everything
+
+================================================================================
+SECTION 9: DATA MANAGEMENT
+================================================================================
+
+USING dbi.data.other:
+---------------------
+dbi.set("config", { prefix: "!", language: "en" });
+dbi.set("cache.users", new Map());
+
+const config = dbi.get("config");
+const cache = dbi.get("cache.users");
+
+const settings = dbi.get("settings", { theme: "dark" });  // With default
+
+if (dbi.has("config")) { /* ... */ }
+dbi.delete("cache");
+
+CONSTRUCTOR DATA:
+-----------------
+const dbi = createDBI("my-bot", {
+  data: {
+    other: {
+      startTime: Date.now(),
+      version: "1.0.0",
+      customData: {}
+    },
+    refs: new Map()
+  }
+});
+
+ACCESSING REGISTERED FEATURES:
+------------------------------
+const ping = dbi.interaction("ping");
+const button = dbi.interaction("my-button");
+const readyEvent = dbi.event("ready-handler");
+const enLocale = dbi.locale("en");
+
+const allInteractions = dbi.data.interactions;  // Discord.Collection
+const allEvents = dbi.data.events;
+const allLocales = dbi.data.locales;
+
+================================================================================
+SECTION 10: STRICT MODE
+================================================================================
+
+const dbi = createDBI("my-bot", {
+  strict: true  // Default is true
+});
+
+WITH STRICT MODE:
+- Duplicate interaction names throw errors
+- Duplicate event IDs throw errors
+- Duplicate locale names throw errors
+- Custom IDs over 100 characters throw errors
+- Missing event IDs throw errors
+
+WITHOUT STRICT MODE:
+- Duplicates silently ignored/overwritten
+- Long custom IDs truncated
+
+================================================================================
+END OF DOCUMENT
+================================================================================

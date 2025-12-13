@@ -1,0 +1,514 @@
+================================================================================
+DBI - CHAT INPUT COMMANDS - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Slash Commands Reference
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: BASIC COMMAND STRUCTURE
+================================================================================
+
+SIMPLE COMMAND:
+---------------
+dbi.register(({ ChatInput }) => {
+  ChatInput({
+    name: "hello",
+    description: "Say hello!",
+    onExecute({ interaction }) {
+      interaction.reply("Hello, World!");
+    }
+  });
+});
+
+ASYNC COMMAND:
+--------------
+dbi.register(({ ChatInput }) => {
+  ChatInput({
+    name: "fetch-data",
+    description: "Fetch some data",
+    async onExecute({ interaction }) {
+      await interaction.deferReply();
+      const data = await fetchSomeData();
+      await interaction.editReply(`Data: ${data}`);
+    }
+  });
+});
+
+================================================================================
+SECTION 2: COMMAND OPTIONS (ChatInputOptions)
+================================================================================
+
+OPTION TYPE          | METHOD                    | KEY OPTIONS
+---------------------|---------------------------|---------------------------
+String               | string()                  | minLength, maxLength
+String with Choices  | stringChoices()           | choices[]
+String Autocomplete  | stringAutocomplete()      | onComplete()
+Integer              | integer()                 | minValue, maxValue
+Integer with Choices | integerChoices()          | choices[]
+Integer Autocomplete | integerAutocomplete()     | onComplete()
+Number (decimal)     | number()                  | minValue, maxValue
+Number with Choices  | numberChoices()           | choices[]
+Number Autocomplete  | numberAutocomplete()      | onComplete()
+Boolean              | boolean()                 | -
+User                 | user()                    | -
+Channel              | channel()                 | channelTypes[]
+Role                 | role()                    | -
+Mentionable          | mentionable()             | -
+Attachment           | attachment()              | -
+
+================================================================================
+SECTION 3: STRING OPTIONS
+================================================================================
+
+BASIC STRING:
+-------------
+ChatInputOptions.string({
+  name: "message",
+  description: "The message to echo",
+  required: true,
+  minLength: 1,
+  maxLength: 2000
+})
+
+USAGE:
+const message = interaction.options.getString("message");
+
+STRING WITH CHOICES:
+--------------------
+ChatInputOptions.stringChoices({
+  name: "color",
+  description: "Choose your favorite color",
+  required: true,
+  choices: [
+    { name: "Red", value: "red" },
+    { name: "Green", value: "green" },
+    { name: "Blue", value: "blue" }
+  ]
+})
+
+USAGE:
+const color = interaction.options.getString("color");
+
+================================================================================
+SECTION 4: NUMBER OPTIONS
+================================================================================
+
+INTEGER:
+--------
+ChatInputOptions.integer({
+  name: "sides",
+  description: "Number of sides",
+  required: true,
+  minValue: 2,
+  maxValue: 100
+})
+
+USAGE:
+const sides = interaction.options.getInteger("sides");
+
+NUMBER (DECIMAL):
+-----------------
+ChatInputOptions.number({
+  name: "multiplier",
+  description: "Multiplier (decimal)",
+  required: false,
+  minValue: 0.1,
+  maxValue: 10.0
+})
+
+USAGE:
+const multiplier = interaction.options.getNumber("multiplier") ?? 1;
+
+================================================================================
+SECTION 5: BOOLEAN OPTIONS
+================================================================================
+
+ChatInputOptions.boolean({
+  name: "mention-everyone",
+  description: "Ping @everyone?",
+  required: false
+})
+
+USAGE:
+const mention = interaction.options.getBoolean("mention-everyone");
+
+================================================================================
+SECTION 6: USER/ROLE/CHANNEL OPTIONS
+================================================================================
+
+USER:
+-----
+ChatInputOptions.user({
+  name: "user",
+  description: "Target user",
+  required: true
+})
+
+USAGE:
+const user = interaction.options.getUser("user");
+
+ROLE:
+-----
+ChatInputOptions.role({
+  name: "role",
+  description: "Target role",
+  required: false
+})
+
+USAGE:
+const role = interaction.options.getRole("role");
+
+CHANNEL:
+--------
+ChatInputOptions.channel({
+  name: "channel",
+  description: "Target channel",
+  required: false,
+  channelTypes: ["GuildText", "GuildVoice"]
+})
+
+USAGE:
+const channel = interaction.options.getChannel("channel");
+
+MENTIONABLE:
+------------
+ChatInputOptions.mentionable({
+  name: "target",
+  description: "User or role to mention",
+  required: true
+})
+
+USAGE:
+const mentionable = interaction.options.getMentionable("target");
+
+================================================================================
+SECTION 7: ATTACHMENT OPTIONS
+================================================================================
+
+ChatInputOptions.attachment({
+  name: "file",
+  description: "The file to upload",
+  required: true
+})
+
+USAGE:
+const file = interaction.options.getAttachment("file");
+// file.name, file.size, file.url
+
+================================================================================
+SECTION 8: AUTOCOMPLETE
+================================================================================
+
+STRING AUTOCOMPLETE:
+--------------------
+ChatInputOptions.stringAutocomplete({
+  name: "query",
+  description: "Search query",
+  required: true,
+  
+  async onComplete({ value, interaction }) {
+    const items = await searchDatabase(value);
+    return items.slice(0, 25).map(item => ({
+      name: item.displayName,
+      value: item.id
+    }));
+  },
+  
+  async validate({ value, step }) {
+    if (step === "Autocomplete") return true;
+    const item = await getItemById(value);
+    return item !== null;
+  }
+})
+
+NUMBER AUTOCOMPLETE:
+--------------------
+ChatInputOptions.integerAutocomplete({
+  name: "amount",
+  description: "Amount to select",
+  required: true,
+  
+  onComplete({ value }) {
+    const suggestions = [1, 5, 10, 25, 50, 100];
+    const typed = parseInt(value) || 0;
+    return suggestions
+      .filter(n => n.toString().startsWith(typed.toString()))
+      .map(n => ({ name: `${n} items`, value: n }));
+  }
+})
+
+================================================================================
+SECTION 9: SUBCOMMANDS
+================================================================================
+
+BASIC SUBCOMMANDS:
+------------------
+const Discord = require("discord.js");
+
+ChatInput({
+  name: "config",
+  description: "Bot configuration",
+  options: [
+    {
+      type: Discord.ApplicationCommandOptionType.Subcommand,
+      name: "view",
+      description: "View current configuration"
+    },
+    {
+      type: Discord.ApplicationCommandOptionType.Subcommand,
+      name: "set",
+      description: "Change a setting",
+      options: [
+        ChatInputOptions.string({
+          name: "key",
+          description: "Setting name",
+          required: true
+        }),
+        ChatInputOptions.string({
+          name: "value",
+          description: "New value",
+          required: true
+        })
+      ]
+    }
+  ],
+  
+  onExecute({ interaction }) {
+    const subcommand = interaction.options.getSubcommand();
+    
+    switch (subcommand) {
+      case "view":
+        interaction.reply("Current config: ...");
+        break;
+      case "set":
+        const key = interaction.options.getString("key");
+        const value = interaction.options.getString("value");
+        interaction.reply(`Set ${key} = ${value}`);
+        break;
+    }
+  }
+});
+
+SUBCOMMAND GROUPS:
+------------------
+options: [
+  {
+    type: Discord.ApplicationCommandOptionType.SubcommandGroup,
+    name: "user",
+    description: "User management",
+    options: [
+      {
+        type: Discord.ApplicationCommandOptionType.Subcommand,
+        name: "ban",
+        description: "Ban a user",
+        options: [/* ... */]
+      },
+      {
+        type: Discord.ApplicationCommandOptionType.Subcommand,
+        name: "kick",
+        description: "Kick a user",
+        options: [/* ... */]
+      }
+    ]
+  }
+]
+
+HANDLING SUBCOMMAND GROUPS:
+const group = interaction.options.getSubcommandGroup();
+const subcommand = interaction.options.getSubcommand();
+
+switch (`${group}/${subcommand}`) {
+  case "user/ban": /* ... */ break;
+  case "user/kick": /* ... */ break;
+}
+
+================================================================================
+SECTION 10: PERMISSIONS
+================================================================================
+
+DEFAULT MEMBER PERMISSIONS:
+---------------------------
+ChatInput({
+  name: "ban",
+  description: "Ban a user",
+  defaultMemberPermissions: ["BanMembers"],
+  async onExecute({ interaction }) {
+    // Only users with BanMembers can reach here
+  }
+});
+
+ALLOW DIRECT MESSAGES:
+----------------------
+ChatInput({
+  name: "help",
+  description: "Get help",
+  directMessages: true,
+  onExecute({ interaction }) {
+    interaction.reply("Help information...");
+  }
+});
+
+================================================================================
+SECTION 11: CONTEXT MENUS
+================================================================================
+
+MESSAGE CONTEXT MENU:
+---------------------
+dbi.register(({ MessageContextMenu }) => {
+  MessageContextMenu({
+    name: "Report Message",
+    async onExecute({ interaction }) {
+      const message = interaction.targetMessage;
+      await interaction.reply({
+        content: `Reported message by ${message.author.tag}`,
+        ephemeral: true
+      });
+    }
+  });
+});
+
+USER CONTEXT MENU:
+------------------
+dbi.register(({ UserContextMenu }) => {
+  UserContextMenu({
+    name: "View Profile",
+    async onExecute({ interaction }) {
+      const user = interaction.targetUser;
+      await interaction.reply({
+        content: `Profile: ${user.tag}\nID: ${user.id}`,
+        ephemeral: true
+      });
+    }
+  });
+});
+
+================================================================================
+SECTION 12: EXECUTION CONTEXT
+================================================================================
+
+CONTEXT OBJECT PROPERTIES:
+--------------------------
+PROPERTY          | TYPE                       | DESCRIPTION
+------------------|----------------------------|----------------------------
+interaction       | ChatInputCommandInteraction| Discord.js interaction
+dbi               | DBI                        | DBI instance
+dbiInteraction    | DBIChatInput               | Registered interaction object
+locale.user       | DBILocale                  | User's preferred locale
+locale.guild      | DBILocale | undefined      | Guild's preferred locale
+setRateLimit      | function                   | Set rate limit
+other             | object                     | Shared custom data
+clientNamespace   | string                     | Multi-client namespace
+v2                | boolean                    | Components V2 enabled
+
+USAGE EXAMPLE:
+--------------
+async onExecute(ctx) {
+  const {
+    interaction,
+    dbi,
+    dbiInteraction,
+    locale,
+    setRateLimit,
+    other,
+    clientNamespace,
+    v2
+  } = ctx;
+  
+  const greeting = locale.user.data.greeting();
+  await setRateLimit("User", 60000);
+  const button = dbi.interaction("my-button");
+  await interaction.reply(greeting);
+}
+
+================================================================================
+SECTION 13: RATE LIMITING
+================================================================================
+
+DECLARATIVE RATE LIMITS:
+------------------------
+ChatInput({
+  name: "daily",
+  description: "Daily reward",
+  rateLimits: [
+    {
+      type: "User",
+      duration: 86400000  // 24 hours
+    }
+  ],
+  async onExecute({ interaction }) {
+    interaction.reply("Here's your daily reward!");
+  }
+});
+
+RATE LIMIT TYPES:
+-----------------
+TYPE    | DESCRIPTION
+--------|----------------------------------
+User    | Per-user rate limit
+Channel | Per-channel rate limit
+Guild   | Per-guild rate limit
+Member  | Per-member (user+guild) rate limit
+Message | Per-message rate limit
+
+DYNAMIC RATE LIMITING:
+----------------------
+async onExecute({ interaction, setRateLimit }) {
+  const isPremium = await checkPremium(interaction.user.id);
+  await setRateLimit("User", isPremium ? 60000 : 300000);
+  interaction.reply("Action performed!");
+}
+
+================================================================================
+SECTION 14: MESSAGE COMMAND ALIASES
+================================================================================
+
+ChatInput({
+  name: "help",
+  description: "Get help",
+  other: {
+    messageCommand: {
+      aliases: ["h", "?", "commands"],
+      ignore: false
+    }
+  },
+  onExecute({ interaction }) {
+    interaction.reply("Help information...");
+  }
+});
+
+================================================================================
+SECTION 15: PUBLISHING OPTIONS
+================================================================================
+
+PUBLISH TO SPECIFIC CLIENT:
+---------------------------
+ChatInput({
+  name: "admin-only",
+  description: "Admin bot command",
+  publish: "admin",
+  onExecute({ interaction }) {
+    // Only available on admin bot
+  }
+});
+
+CONDITIONAL REGISTRATION WITH FLAGS:
+------------------------------------
+ChatInput({
+  name: "debug",
+  description: "Debug command",
+  flag: "debug",
+  onExecute({ interaction }) {
+    // Debug info...
+  }
+});
+
+// Load with flag:
+await dbi.load("debug");
+
+// Load without debug commands:
+await dbi.load();
+
+================================================================================
+END OF DOCUMENT
+================================================================================

@@ -1,0 +1,659 @@
+================================================================================
+DBI - API REFERENCE - LLM REFERENCE DOCUMENT
+================================================================================
+
+DOCUMENT TYPE: Complete API Documentation
+PACKAGE: @mostfeatured/dbi
+
+================================================================================
+SECTION 1: createDBI FUNCTION
+================================================================================
+
+SIGNATURE:
+----------
+function createDBI<TNamespace, TOtherType>(
+  namespace: TNamespace,
+  config: DBIConfigConstructor<TNamespace, TOtherType>
+): DBI<TNamespace, TOtherType>
+
+PARAMETERS:
+-----------
+PARAMETER | TYPE                  | DESCRIPTION
+----------|----------------------|---------------------------
+namespace | string               | Unique identifier for bot
+config    | DBIConfigConstructor | Configuration object
+
+================================================================================
+SECTION 2: CONFIG OPTIONS
+================================================================================
+
+interface DBIConfigConstructor {
+  discord: {
+    token: string;
+    options: Discord.ClientOptions;
+  } | Array<{
+    namespace: string;
+    token: string;
+    options: Discord.ClientOptions;
+  }>;
+  
+  defaults?: {
+    locale?: {
+      name?: string;
+      invalidPath?: string | ((ctx) => string);
+    };
+    directMessages?: boolean;
+    defaultMemberPermissions?: Discord.PermissionsString[];
+    messageCommands?: {
+      deferReplyContent?: string | ((ctx) => string | Promise<string>);
+    };
+  };
+  
+  sharding?: "hybrid" | "default" | "off";
+  store?: DBIStore;
+  
+  references?: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    };
+  };
+  
+  inlineListeners?: {
+    autoClear?: {
+      check: number;
+      ttl: number;
+    };
+  };
+  
+  data?: {
+    other?: Record<string, any>;
+    refs?: Map<string, { at: number; value: any; ttl?: number }>;
+  };
+  
+  strict?: boolean;
+  
+  messageCommands?: {
+    prefixes: string[] | ((ctx) => string[] | Promise<string[]>);
+    typeAliases?: {
+      booleans?: Record<string, boolean>;
+    };
+  };
+}
+
+================================================================================
+SECTION 3: DBI CLASS PROPERTIES
+================================================================================
+
+PROPERTY         | TYPE                  | DESCRIPTION
+-----------------|----------------------|---------------------------
+namespace        | string               | Bot namespace
+config           | DBIConfig            | Configuration object
+data             | DBIData              | Data storage
+events           | Events               | Event system
+cluster          | ClusterClient?       | Hybrid sharding cluster
+loaded           | boolean              | Whether DBI is loaded
+
+DATA OBJECT:
+------------
+interface DBIData {
+  interactions: Discord.Collection<string, TDBIInteractions>;
+  events: Discord.Collection<string, DBIEvent>;
+  locales: Discord.Collection<string, DBILocale>;
+  interactionLocales: Discord.Collection<string, DBIInteractionLocale>;
+  other: Record<string, any>;
+  eventMap: Record<string, string[]>;
+  customEventNames: Set<string>;
+  unloaders: Set<() => void>;
+  registers: Set<Function>;
+  registerUnloaders: Set<Function>;
+  refs: Map<string, { at: number; value: any; ttl?: number }>;
+  clients: ClientsArray;
+}
+
+================================================================================
+SECTION 4: DBI CLASS METHODS
+================================================================================
+
+register(callback):
+-------------------
+async register(
+  callback: (api: DBIRegisterAPI) => void | Promise<void>
+): Promise<void>
+
+load(...flags):
+---------------
+async load(...flags: string[]): Promise<boolean>
+
+unload():
+---------
+async unload(): Promise<boolean>
+
+login():
+--------
+async login(): Promise<void>
+
+publish(type, guildId?, clear?):
+--------------------------------
+async publish(type: "Global", clear?: boolean): Promise<void>
+async publish(type: "Guild", guildId: string, clear?: boolean): Promise<void>
+
+interaction(name):
+------------------
+interaction<T>(name: T): TDBIInteractions
+
+event(name):
+------------
+event(name: string): DBIEvent
+
+locale(name):
+-------------
+locale(name: string): DBILocale
+
+client(namespace?):
+-------------------
+client(namespace?: string): TDBIClientData
+
+emit(name, args):
+-----------------
+emit(name: string, args: object): void
+
+get(key, defaultValue?):
+------------------------
+get<K>(key: K, defaultValue?: any): any
+
+set(key, value):
+----------------
+set<K>(key: K, value: any): void
+
+has(key):
+---------
+has(key: string): boolean
+
+delete(key):
+------------
+delete(key: string): boolean
+
+================================================================================
+SECTION 5: REGISTER API - CHATINPUT
+================================================================================
+
+ChatInput(config: {
+  name: string;
+  description: string;
+  options?: any[];
+  directMessages?: boolean;
+  defaultMemberPermissions?: Discord.PermissionsString[];
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  publish?: string;
+  other?: {
+    messageCommand?: {
+      aliases?: string[];
+      ignore?: boolean;
+    };
+  };
+  onExecute: (ctx: IDBIChatInputExecuteCtx) => void | Promise<void>;
+}): DBIChatInput
+
+================================================================================
+SECTION 6: REGISTER API - CHATINPUTOPTIONS
+================================================================================
+
+class ChatInputOptions {
+  string(config): ApplicationCommandOption
+  stringChoices(config): ApplicationCommandOption
+  stringAutocomplete(config): ApplicationCommandOption
+  integer(config): ApplicationCommandOption
+  integerChoices(config): ApplicationCommandOption
+  integerAutocomplete(config): ApplicationCommandOption
+  number(config): ApplicationCommandOption
+  numberChoices(config): ApplicationCommandOption
+  numberAutocomplete(config): ApplicationCommandOption
+  boolean(config): ApplicationCommandOption
+  user(config): ApplicationCommandOption
+  channel(config): ApplicationCommandOption
+  role(config): ApplicationCommandOption
+  mentionable(config): ApplicationCommandOption
+  attachment(config): ApplicationCommandOption
+}
+
+================================================================================
+SECTION 7: REGISTER API - BUTTON
+================================================================================
+
+Button(config: {
+  name: string;
+  options?: {
+    style: Discord.ButtonStyle;
+    label?: string;
+    emoji?: string;
+    disabled?: boolean;
+    url?: string;
+  };
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  ttl?: number;
+  onExecute: (ctx: IDBIButtonExecuteCtx) => void | Promise<void>;
+}): DBIButton
+
+================================================================================
+SECTION 8: REGISTER API - SELECT MENUS
+================================================================================
+
+StringSelectMenu(config: {
+  name: string;
+  options?: {
+    placeholder?: string;
+    minValues?: number;
+    maxValues?: number;
+    disabled?: boolean;
+    options: Array<{
+      label: string;
+      value: string;
+      description?: string;
+      emoji?: string;
+      default?: boolean;
+    }>;
+  };
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  ttl?: number;
+  onExecute: (ctx) => void | Promise<void>;
+}): DBIStringSelectMenu
+
+UserSelectMenu, RoleSelectMenu, ChannelSelectMenu, MentionableSelectMenu:
+Similar to StringSelectMenu but for user/role/channel/mentionable selection.
+
+================================================================================
+SECTION 9: REGISTER API - MODAL
+================================================================================
+
+Modal(config: {
+  name: string;
+  options?: {
+    title: string;
+    components: Discord.ActionRowData<Discord.ModalActionRowComponentData>[];
+  };
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  ttl?: number;
+  onExecute: (ctx: IDBIModalExecuteCtx) => void | Promise<void>;
+}): DBIModal
+
+================================================================================
+SECTION 10: REGISTER API - CONTEXT MENUS
+================================================================================
+
+MessageContextMenu(config: {
+  name: string;
+  directMessages?: boolean;
+  defaultMemberPermissions?: Discord.PermissionsString[];
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  publish?: string;
+  onExecute: (ctx) => void | Promise<void>;
+}): DBIMessageContextMenu
+
+UserContextMenu(config: {
+  name: string;
+  directMessages?: boolean;
+  defaultMemberPermissions?: Discord.PermissionsString[];
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  publish?: string;
+  onExecute: (ctx) => void | Promise<void>;
+}): DBIUserContextMenu
+
+================================================================================
+SECTION 11: REGISTER API - EVENT
+================================================================================
+
+Event(config: {
+  name: keyof ClientEvents;
+  id?: string;
+  disabled?: boolean;
+  triggerType?: "OneByOne" | "OneByOneGlobal" | "Random" | "First";
+  ordered?: {
+    await?: boolean;
+    delayBefore?: number;
+    delayAfter?: number;
+  };
+  flag?: string;
+  ttl?: number;
+  onExecute: (ctx) => void | Promise<void>;
+}): DBIEvent
+
+================================================================================
+SECTION 12: REGISTER API - LOCALE
+================================================================================
+
+Locale(config: {
+  name: TDBILocaleString;
+  data: Record<string, any>;
+  flag?: string;
+}): DBILocale
+
+InteractionLocale(config: {
+  name: string;
+  data: Record<string, {
+    name: string;
+    description: string;
+    options?: Record<string, {
+      name: string;
+      description: string;
+      choices?: Record<string, string>;
+    }>;
+  }>;
+  flag?: string;
+}): DBIInteractionLocale
+
+================================================================================
+SECTION 13: REGISTER API - CUSTOM EVENT
+================================================================================
+
+CustomEvent(config: {
+  name: string;
+  map: Record<string, string>;
+}): DBICustomEvent
+
+================================================================================
+SECTION 14: REGISTER API - HTMLCOMPONENTSV2
+================================================================================
+
+HTMLComponentsV2(config: {
+  name: string;
+  mode?: "svelte" | "eta";
+  template?: string;
+  file?: string;
+  handlers?: any[];
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  onExecute?: (ctx) => void;
+}): DBIHTMLComponentsV2
+
+================================================================================
+SECTION 15: INLINE CREATORS
+================================================================================
+
+createInlineButton(config): DBIButton
+createInlineStringSelectMenu(config): DBIStringSelectMenu
+createInlineUserSelectMenu(config): DBIUserSelectMenu
+createInlineRoleSelectMenu(config): DBIRoleSelectMenu
+createInlineChannelSelectMenu(config): DBIChannelSelectMenu
+createInlineMentionableSelectMenu(config): DBIMentionableSelectMenu
+createInlineModal(config): DBIModal
+createInlineEvent(config): DBIEvent
+
+================================================================================
+SECTION 16: onUnload
+================================================================================
+
+onUnload(callback: () => void | Promise<void>): void
+
+================================================================================
+SECTION 17: INTERACTION CLASSES
+================================================================================
+
+class DBIBaseInteraction {
+  dbi: DBI;
+  name: string;
+  description: string;
+  type: TDBIInteractionTypes;
+  options?: any;
+  other?: Record<string, any>;
+  rateLimits?: DBIRateLimit[];
+  flag?: string;
+  publish?: string;
+  ttl?: number;
+  at?: number;
+  
+  toJSON(args?: IDBIToJSONArgs): any;
+  onExecute(ctx: IDBIBaseExecuteCtx): void | Promise<void>;
+}
+
+toJSON OPTIONS:
+---------------
+interface IDBIToJSONArgs {
+  overrides?: Record<string, any>;
+  reference?: {
+    data?: any[];
+    ttl?: number;
+  };
+}
+
+EXECUTION CONTEXT:
+------------------
+interface IDBIBaseExecuteCtx {
+  interaction: Discord.Interaction;
+  locale: {
+    user: DBILocale;
+    guild?: DBILocale;
+  };
+  dbi: DBI;
+  dbiInteraction: TDBIInteractions;
+  setRateLimit: (type: TDBIRateLimitTypes, duration: number) => Promise<void>;
+  other: Record<string, any>;
+  clientNamespace: string;
+  v2: boolean;
+}
+
+BUILDER METHODS:
+----------------
+const builder = dbi.interaction("my-btn").createBuilder();
+builder.setLabel("Label")
+       .setEmoji("🎉")
+       .setStyle(Discord.ButtonStyle.Primary)
+       .setReference(["data"])
+       .setTTL(60000)
+       .toJSON();
+
+const selectBuilder = dbi.interaction("my-select").createBuilder();
+selectBuilder.setPlaceholder("Select...")
+             .setMinValues(1)
+             .setMaxValues(3)
+             .setOptions([...])
+             .toJSON();
+
+================================================================================
+SECTION 18: EVENT CLASSES
+================================================================================
+
+class DBIEvent {
+  type: "Event";
+  id?: string;
+  name: string;
+  other?: Record<string, any>;
+  triggerType?: "OneByOne" | "OneByOneGlobal" | "Random" | "First";
+  ordered?: TDBIEventOrder;
+  dbi: DBI;
+  disabled: boolean;
+  flag?: string;
+  ttl?: number;
+  at?: number;
+  
+  toggle(disabled?: boolean): this;
+  onExecute(ctx): void | Promise<void>;
+}
+
+EVENTS CLASS:
+-------------
+class Events {
+  on(
+    eventName: TDBIEventNames,
+    handler: (data: any) => boolean | Promise<boolean>,
+    options?: { once: boolean }
+  ): () => void;  // Returns unsubscribe function
+  
+  trigger(
+    name: TDBIEventNames,
+    data?: any,
+    ignoreResponse?: boolean
+  ): Promise<boolean>;
+}
+
+DBI EVENT NAMES:
+----------------
+"beforeInteraction" | "afterInteraction" | "interactionRateLimit"
+"beforeEvent" | "afterEvent" | "interactionError" | "eventError"
+"messageCommandArgumentError" | "messageCommandDirectMessageUsageError"
+"messageCommandDefaultMemberPermissionsError" | "clientsReady"
+
+================================================================================
+SECTION 19: LOCALE CLASSES
+================================================================================
+
+class DBILocale {
+  name: TDBILocaleString;
+  data: InfinitePathProxy;  // Auto-callable nested object
+  _data: Record<string, any>;  // Raw data
+  dbi: DBI;
+  flag?: string;
+  
+  mergeLocale(locale: DBILocale): DBILocale;
+  get(path: string): string | null;
+  format(path: string, ...args: any[]): string;
+}
+
+USAGE:
+------
+locale.data.greeting();           // "Hello!"
+locale.data.welcome("John");      // "Welcome, John!"
+locale.data.nested.path("a", "b"); // "a and b"
+locale.get("greeting");           // "Hello!"
+locale.format("welcome", "John"); // "Welcome, John!"
+
+================================================================================
+SECTION 20: UTILITY FUNCTIONS
+================================================================================
+
+const { Utils } = require("@mostfeatured/dbi");
+
+await Utils.recursiveImport(path: string): Promise<void>
+Utils.parseCustomId(dbi, customId: string): { name, data, v2 }
+Utils.buildCustomId(dbi, name, data, ttl?, v2?): string
+Utils.unloadModule(path: string): void
+Utils.recursiveUnload(path: string): void
+
+MEMORYSTORE:
+------------
+class MemoryStore {
+  async get(key: string, defaultValue?: any): Promise<any>
+  async set(key: string, value: any): Promise<void>
+  async delete(key: string): Promise<void>
+  async has(key: string): Promise<boolean>
+}
+
+================================================================================
+SECTION 21: TYPES
+================================================================================
+
+RATE LIMIT TYPES:
+-----------------
+type TDBIRateLimitTypes = "User" | "Channel" | "Guild" | "Member" | "Message";
+
+interface DBIRateLimit {
+  type: TDBIRateLimitTypes;
+  duration: number;
+}
+
+INTERACTION TYPES:
+------------------
+type TDBIInteractionTypes =
+  | "ChatInput" | "UserContextMenu" | "MessageContextMenu"
+  | "Modal" | "Autocomplete" | "StringSelectMenu" | "UserSelectMenu"
+  | "ChannelSelectMenu" | "MentionableSelectMenu" | "RoleSelectMenu"
+  | "Button" | "HTMLComponentsV2";
+
+LOCALE STRINGS:
+---------------
+type TDBILocaleString =
+  | "en" | "bg" | "zh" | "hr" | "cs" | "da" | "nl"
+  | "fi" | "fr" | "de" | "el" | "hi" | "hu" | "it"
+  | "ja" | "ko" | "no" | "pl" | "pt" | "ro" | "ru"
+  | "es" | "sv" | "th" | "tr" | "uk" | "vi";
+
+STORE INTERFACE:
+----------------
+interface DBIStore {
+  get(key: string, defaultValue?: any): Promise<any>;
+  set(key: string, value: any): Promise<void>;
+  delete(key: string): Promise<void>;
+  has(key: string): Promise<boolean>;
+}
+
+CLIENT DATA:
+------------
+interface TDBIClientData {
+  namespace: string;
+  token: string;
+  options: Discord.ClientOptions;
+  client: Discord.Client<true>;
+}
+
+interface ClientsArray extends Array<TDBIClientData> {
+  next(key?: string): TDBIClientData;
+  random(): TDBIClientData;
+  random(size: number): TDBIClientData[];
+  first(): TDBIClientData;
+  get(namespace: string): TDBIClientData;
+  indexes: Record<string, number>;
+}
+
+REFERENCED DATA:
+----------------
+type TDBIReferencedData = 
+  | string 
+  | number 
+  | {
+      [key: string]: any;
+      $ref: string;
+      $unRef(): boolean;
+    };
+
+================================================================================
+SECTION 22: HTMLCOMPONENTSV2 (SVELTE) METHODS
+================================================================================
+
+class DBIHTMLComponentsV2 {
+  async send(
+    target: Discord.Interaction | Discord.TextChannel,
+    options?: {
+      data?: Record<string, any>;
+      flags?: string[];
+      content?: string;
+      ephemeral?: boolean;
+      reply?: boolean;
+      followUp?: boolean;
+    }
+  ): Promise<void>
+  
+  destroy(refId: string): void
+  destroyAll(): void
+  toJSON(args?: { data?: Record<string, any> }): object
+}
+
+SVELTE GLOBALS:
+---------------
+let { prop1, prop2 } = $props();
+const data: Record<string, any>;
+
+function render(): void;
+function update(): Promise<void>;
+function rerender(): Promise<void>;
+function noRender(): void;
+function setThrottle(ms: number): void;
+
+function onMount(callback: () => void | (() => void)): void;
+function onDestroy(callback: () => void): void;
+function destroy(): void;
+
+interface HandlerContext {
+  interaction: Discord.ButtonInteraction | Discord.SelectMenuInteraction;
+  dbi: DBI;
+  locale: { user: DBILocale; guild?: DBILocale };
+}
+
+================================================================================
+END OF DOCUMENT
+================================================================================
