@@ -142,11 +142,6 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
     scriptContent = source.substring(ast.instance.content.start, ast.instance.content.end);
   }
 
-  // Debug: Log script extraction
-  console.log("[DBI-Svelte] parseSvelteComponent - ast.instance exists:", !!ast.instance);
-  console.log("[DBI-Svelte] parseSvelteComponent - scriptContent length:", scriptContent.length);
-  console.log("[DBI-Svelte] parseSvelteComponent - scriptContent includes 'onMount':", scriptContent.includes('onMount'));
-
   // Track elements that need auto-generated names (node -> name mapping)
   // We'll inject these into the source after the walk
   const elementsNeedingNames: Array<{ node: any; name: string; handlerName: string; eventType: string; element: string }> = [];
@@ -825,16 +820,6 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       processedScript = varDeclarations + '\n\n' + processedScript;
     }
 
-    // Debug: Log processed script to see if onMount is included
-    console.log("[DBI-Svelte] processedScript includes 'onMount':", processedScript.includes('onMount'));
-    if (processedScript.includes('onMount')) {
-      const onMountMatch = processedScript.match(/onMount\s*\([^)]*\)/);
-      console.log("[DBI-Svelte] onMount call found:", onMountMatch?.[0]);
-    }
-
-    // Debug: Log first 500 chars of processedScript to see what's being generated
-    console.log("[DBI-Svelte] processedScript (first 1000 chars):", processedScript.substring(0, 1000));
-
     // Wrap everything in an IIFE that takes data and component as parameters
     // This ensures data and 'this' are always available in the function scope
     // Also provides helper functions: render(), update() and rerender()
@@ -1400,9 +1385,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
     let result;
     try {
       result = createHandlers(initialData, component, ctx, modules);
-      console.log("[DBI-Svelte] createHandlers executed successfully, mountCallbacks:", result.mountCallbacks?.length);
     } catch (execError) {
-      console.error("[DBI-Svelte] Error executing createHandlers:", execError);
       throw execError;
     }
 

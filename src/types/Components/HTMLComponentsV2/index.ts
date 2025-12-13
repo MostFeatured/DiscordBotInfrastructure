@@ -243,9 +243,6 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       await this._initPromise;
     }
 
-    console.log("[DBI-Svelte] _handleExecute called, mode:", this.mode, "svelteComponentInfo:", !!this.svelteComponentInfo);
-    console.log("[DBI-Svelte] ctx.data:", ctx.data);
-
     // Call user's onExecute callback first if provided
     if (this._userOnExecute) {
       this._userOnExecute(ctx);
@@ -254,12 +251,10 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     // If using Svelte mode, find and execute the handler
     if (this.mode === 'svelte' && this.svelteComponentInfo) {
       const [elementName, ...handlerData] = ctx.data;
-      console.log("[DBI-Svelte] elementName:", elementName, "handlerData:", handlerData);
 
       if (typeof elementName === 'string') {
         // Check if this is a modal submit (elementName is the modal id)
         const modalHandlerInfo = this.svelteComponentInfo.modalHandlers.get(elementName);
-        console.log("[DBI-Svelte] modalHandlerInfo for", elementName, ":", modalHandlerInfo);
 
         if (modalHandlerInfo) {
           // This is a modal submit - execute the onsubmit handler (or just resolve promise if no handler)
@@ -269,17 +264,11 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
 
         // Find the handler info for this element (button, select, etc.)
         const handlerInfo = this.svelteComponentInfo.handlers.get(elementName);
-        console.log("[DBI-Svelte] handlerInfo for", elementName, ":", handlerInfo);
-        console.log("[DBI-Svelte] Available handlers:", [...this.svelteComponentInfo.handlers.keys()]);
 
         if (handlerInfo) {
           this._executeElementHandler(ctx, handlerInfo, handlerData);
-        } else {
-          console.log("[DBI-Svelte] No handler found for element:", elementName);
         }
       }
-    } else {
-      console.log("[DBI-Svelte] Not executing Svelte handler: mode=", this.mode, "svelteComponentInfo=", !!this.svelteComponentInfo);
     }
   }
 
@@ -526,9 +515,6 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     // Render components (toJSON is async) - this also creates $ref in data if not present
     const components = await this.toJSON({ data });
 
-    console.log("[DBI-Svelte] send() - data.$ref after toJSON:", data.$ref);
-    console.log("[DBI-Svelte] send() - mode:", this.mode, "svelteComponentInfo:", !!this.svelteComponentInfo);
-
     // Build message options
     const messageOptions: any = { components, flags };
     if (content) messageOptions.content = content;
@@ -564,7 +550,6 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     // After toJSON, data.$ref is guaranteed to exist (created in renderSvelteComponent)
     if (this.mode === 'svelte' && this.svelteComponentInfo && data.$ref) {
       const refId = data.$ref;
-      console.log("[DBI-Svelte] send() - Creating handler context for ref:", refId);
 
       // Create handler context with a fake ctx that has the message
       const fakeCtx = {
@@ -598,13 +583,10 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       }
 
       // Run onMount callbacks
-      console.log("[DBI-Svelte] send() - Running onMount, mountCallbacks:", handlerContext.mountCallbacks?.length);
       handlerContext.runMount();
 
       // Run initial effects
       handlerContext.runEffects();
-    } else {
-      console.log("[DBI-Svelte] send() - NOT creating handler context: mode=", this.mode, "svelteComponentInfo=", !!this.svelteComponentInfo, "data.$ref=", data.$ref);
     }
 
     return message;
