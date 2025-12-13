@@ -664,7 +664,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
     if (modalInteraction.fields && modalInteraction.fields.fields) {
       for (const [customId, field] of modalInteraction.fields.fields) {
         // Text input - field.value is the string
-        fields[customId] = field.value;
+        // For select menus, value might be an array
+        fields[customId] = field.values || field.value;
       }
     }
 
@@ -675,7 +676,39 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       this._extractFieldsFromComponents(data.components, fields);
     }
 
+    // Also check for components directly on the interaction (some Discord.js versions)
+    if (modalInteraction.components && Array.isArray(modalInteraction.components)) {
+      this._extractFieldsFromInteractionComponents(modalInteraction.components, fields);
+    }
+
     return fields;
+  }
+
+  /**
+   * Extract fields from Discord.js style interaction components (ActionRow objects)
+   */
+  private _extractFieldsFromInteractionComponents(components: any[], fields: Record<string, any>) {
+    for (const row of components) {
+      // ActionRow has components property
+      const rowComponents = row.components || [];
+      for (const component of rowComponents) {
+        const customId = component.customId || component.custom_id || component.id;
+        if (!customId) continue;
+
+        // Check component type
+        const type = component.type;
+
+        // Text Input (type 4)
+        if (type === 4 || component.value !== undefined) {
+          fields[customId] = component.value || '';
+        }
+
+        // Select menus (types 3, 5, 6, 7, 8) - check for values array
+        if (component.values !== undefined) {
+          fields[customId] = component.values;
+        }
+      }
+    }
   }
 
   /**
@@ -684,11 +717,17 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
   private _extractFieldsFromComponents(components: any[], fields: Record<string, any>) {
     for (const component of components) {
       const type = component.type;
-      const customId = component.custom_id;
+      // Support both custom_id and id for backward compatibility
+      const customId = component.custom_id || component.id;
 
-      // Type 18 = Label - has nested component
-      if (type === 18 && component.component) {
-        this._extractFieldsFromComponents([component.component], fields);
+      // Type 18 = Label/Field - can have nested component or components
+      if (type === 18) {
+        if (component.component) {
+          this._extractFieldsFromComponents([component.component], fields);
+        }
+        if (component.components) {
+          this._extractFieldsFromComponents(component.components, fields);
+        }
         continue;
       }
 
