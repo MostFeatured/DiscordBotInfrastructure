@@ -21,7 +21,15 @@ const dbi = createDBI("svelte", {
   }
 });
 
-dbi.register(({ ChatInput, HTMLComponentsV2 }) => {
+dbi.register(({ ChatInput, HTMLComponentsV2, Event }) => {
+
+  Event({
+    name: "messageCreate",
+    onExecute({ message }) {
+
+    }
+  })
+
   // Svelte product showcase with Components V2
   HTMLComponentsV2({
     name: "product-showcase",

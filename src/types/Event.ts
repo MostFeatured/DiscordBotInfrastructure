@@ -1,5 +1,5 @@
 import Discord from "discord.js";
-import { NamespaceEnums, NamespaceData } from "../../generated/namespaceData";
+import { NamespaceEnums } from "../../generated/namespaceData";
 import { DBI, TDBIClientData } from "../DBI";
 import { DBILocale } from "./other/Locale";
 export interface ClientEvents {
@@ -93,12 +93,23 @@ export interface ClientEvents {
   guildAuditLogEntryCreate: { auditLogEntry: Discord.GuildAuditLogsEntry, guild: Discord.Guild };
 }
 
+// Use keyof ClientEvents directly - this preserves the literal union type
+type ClientEventNames = keyof ClientEvents;
+
+// Direct entry type for ClientEvents
+type DBIClientEventEntry<TNamespace extends NamespaceEnums, K extends ClientEventNames> = {
+  name: K;
+  onExecute: (ctx: ClientEvents[K] & {
+    other: Record<string, any>;
+    locale?: { guild: DBILocale<TNamespace> };
+    eventName: K;
+    nextClient: TDBIClientData<TNamespace>;
+  }) => Promise<any> | any;
+};
+
 export type DBIEventCombinations<TNamespace extends NamespaceEnums> = {
-  [K in keyof (ClientEvents & NamespaceData[TNamespace]["customEvents"])]: {
-    name: K,
-    onExecute: (ctx: (ClientEvents & NamespaceData[TNamespace]["customEvents"])[K] & { other: Record<string, any>, locale?: { guild: DBILocale<TNamespace> }, eventName: string, nextClient: TDBIClientData<TNamespace> }) => Promise<any> | any
-  }
-}[keyof (ClientEvents) | keyof NamespaceData[TNamespace]["customEvents"]];
+  [K in ClientEventNames]: DBIClientEventEntry<TNamespace, K>
+}[ClientEventNames];
 
 export type TDBIEventOmitted<TNamespace extends NamespaceEnums> = Omit<DBIEvent<TNamespace>, "type" | "name" | "onExecute" | "client" | "dbi" | "toggle" | "disabled" | "at"> & { disabled?: boolean } & DBIEventCombinations<TNamespace>;
 
