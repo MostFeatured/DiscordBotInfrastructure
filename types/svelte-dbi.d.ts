@@ -181,6 +181,51 @@ declare global {
    */
   function onDestroy(callback: () => void): void;
 
+  /**
+   * Registers an async callback to run BEFORE each render.
+   * All onPreRender callbacks are awaited before the component renders.
+   * Use for data preparation, API calls, or async state updates.
+   * 
+   * @param callback - Async function to run before render
+   * 
+   * @example
+   * ```svelte
+   * onPreRender(async () => {
+   *   // Fetch fresh data before rendering
+   *   const response = await fetch('/api/data');
+   *   data.items = await response.json();
+   * });
+   * 
+   * // Or for data validation/transformation
+   * onPreRender(async () => {
+   *   data.processedItems = await processItems(data.items);
+   * });
+   * ```
+   */
+  function onPreRender(callback: () => Promise<void> | void): void;
+
+  /**
+   * Registers a callback to run AFTER each render completes.
+   * Use for logging, analytics, or side effects that should happen after UI update.
+   * 
+   * @param callback - Function to run after render
+   * 
+   * @example
+   * ```svelte
+   * onAfterRender(() => {
+   *   console.log("Render completed at:", new Date().toISOString());
+   * });
+   * 
+   * // Track render count
+   * let renderCount = 0;
+   * onAfterRender(() => {
+   *   renderCount++;
+   *   console.log(`Rendered ${renderCount} times`);
+   * });
+   * ```
+   */
+  function onAfterRender(callback: () => void): void;
+
   // ============================================
   // COMPONENT CONTROL
   // ============================================

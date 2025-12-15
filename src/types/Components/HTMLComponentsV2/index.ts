@@ -176,6 +176,21 @@ export interface TDBIHTMLComponentsV2SendOptions {
   followUp?: boolean;
 }
 
+/**
+ * Result object returned by send() method
+ * Includes the Discord message and a render() method for manual re-rendering
+ */
+export interface TDBIHTMLComponentsV2SendResult {
+  /** The Discord message object returned from send/reply/followUp */
+  message: any;
+  /** The data object with reactive state (includes $ref) */
+  data: Record<string, any>;
+  /** Manually trigger a re-render of the component */
+  render: () => Promise<void>;
+  /** Destroy this component instance (clears intervals, timers, removes ref) */
+  destroy: () => boolean;
+}
+
 export interface IDBIHTMLComponentsV2ExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
   data: TDBIReferencedData[];
 }
@@ -508,13 +523,16 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
    * await showcase.send(interaction, { data: { count: 0 } });
    * 
    * // Send to a channel directly
-   * await showcase.send(channel, { data: { count: 0 } });
+   * const result = await showcase.send(channel, { data: { count: 0 } });
    * 
    * // Send as followUp (if already replied)
-   * await showcase.send(interaction, { data: { count: 0 }, followUp: true });
+   * const result = await showcase.send(interaction, { data: { count: 0 }, followUp: true });
+   * 
+   * // Manual re-render from outside
+   * await result.render();
    * ```
    */
-  async send(target: any, options: TDBIHTMLComponentsV2SendOptions = {}): Promise<any> {
+  async send(target: any, options: TDBIHTMLComponentsV2SendOptions = {}): Promise<TDBIHTMLComponentsV2SendResult> {
     // Wait for Svelte component initialization if not yet completed
     if (this._initPromise) {
       await this._initPromise;
@@ -598,9 +616,43 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
 
       // Run initial effects
       handlerContext.runEffects();
+
+      // Return result object with render() method for manual re-rendering
+      const component = this;
+      return {
+        message,
+        data,
+        render: async () => {
+          // Run pre-render callbacks (async)
+          await handlerContext.runPreRender();
+
+          // Re-render the component
+          const components = await component.toJSON({ data });
+          await message.edit({
+            components,
+            flags: ["IsComponentsV2"],
+          });
+
+          // Run after-render callbacks
+          handlerContext.runAfterRender();
+        },
+        destroy: () => component.destroy(data)
+      } as TDBIHTMLComponentsV2SendResult;
     }
 
-    return message;
+    // For non-Svelte mode, return simple result object
+    return {
+      message,
+      data,
+      render: async () => {
+        const components = await this.toJSON({ data });
+        await message.edit({
+          components,
+          flags: ["IsComponentsV2"],
+        });
+      },
+      destroy: () => this.destroy(data)
+    } as TDBIHTMLComponentsV2SendResult;
   }
 
   /**

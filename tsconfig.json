@@ -40,12 +40,15 @@
     // Include DBI Svelte type definitions
     "typeRoots": [
       "./node_modules/@types",
-      "./generated"
+      "types"
     ]
   },
   "include": [
     "src/**/*",
     "test/**/*",
-    "generated/**/*"
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

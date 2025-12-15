@@ -628,10 +628,16 @@ export interface HandlerContextResult {
   // Lifecycle hooks
   mountCallbacks: Function[];
   destroyCallbacks: Function[];
+  preRenderCallbacks: Function[];
+  afterRenderCallbacks: Function[];
   runMount: () => void;
   runDestroy: () => void;
+  runPreRender: () => Promise<void>;
+  runAfterRender: () => void;
   // Handler execution tracking
   setInHandler: (value: boolean) => void;
+  // Manual render function
+  render: (immediate?: boolean) => Promise<void>;
 }
 
 /**
@@ -843,6 +849,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         // Lifecycle callbacks
         var __mountCallbacks__ = [];
         var __destroyCallbacks__ = [];
+        var __preRenderCallbacks__ = [];
+        var __afterRenderCallbacks__ = [];
         var __isMounted__ = false;
         
         // Store last message reference for background updates (intervals, timeouts)
@@ -868,6 +876,38 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         // Lifecycle: onDestroy - called when ref is cleaned up
         function onDestroy(fn) {
           __destroyCallbacks__.push(fn);
+        }
+        
+        // Lifecycle: onPreRender - called before each render (async, awaited)
+        function onPreRender(fn) {
+          __preRenderCallbacks__.push(fn);
+        }
+        
+        // Lifecycle: onAfterRender - called after each render completes
+        function onAfterRender(fn) {
+          __afterRenderCallbacks__.push(fn);
+        }
+        
+        // Run all pre-render callbacks (async)
+        async function __runPreRender__() {
+          for (var i = 0; i < __preRenderCallbacks__.length; i++) {
+            try {
+              await __preRenderCallbacks__[i]();
+            } catch (err) {
+              // Pre-render callback failed
+            }
+          }
+        }
+        
+        // Run all after-render callbacks
+        function __runAfterRender__() {
+          for (var i = 0; i < __afterRenderCallbacks__.length; i++) {
+            try {
+              __afterRenderCallbacks__[i]();
+            } catch (err) {
+              // After-render callback failed
+            }
+          }
         }
         
         // Modal store - stores rendered modal definitions
@@ -1031,7 +1071,11 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         
         // Actual render execution
         async function __executeRender__() {
+          // Run pre-render callbacks (async, awaited)
+          await __runPreRender__();
+          
           var components = await __component__.toJSON({ data: __data__ });
+          var result;
           
           // Try to use current interaction if available
           if (__ctx__ && __ctx__.interaction) {
@@ -1045,7 +1089,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
               
               if (i.replied || i.deferred) {
                 // Already replied, use message.edit with rate limit handling
-                return __safeEdit__(function() {
+                result = await __safeEdit__(function() {
                   return i.message.edit({
                     components: components,
                     flags: ["IsComponentsV2"],
@@ -1053,13 +1097,17 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 });
               } else {
                 // Not replied yet, use update with rate limit handling
-                return __safeEdit__(function() {
+                result = await __safeEdit__(function() {
                   return i.update({
                     components: components,
                     flags: ["IsComponentsV2"],
                   });
                 });
               }
+              
+              // Run after-render callbacks
+              __runAfterRender__();
+              return result;
             } catch (err) {
               // Silently fail
             }
@@ -1067,12 +1115,16 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
           
           // Fallback: Use last message reference (for intervals/timeouts outside interaction)
           if (__lastMessage__) {
-            return __safeEdit__(function() {
+            result = await __safeEdit__(function() {
               return __lastMessage__.edit({
                 components: components,
                 flags: ["IsComponentsV2"],
               });
             });
+            
+            // Run after-render callbacks
+            __runAfterRender__();
+            return result;
           }
           
           return Promise.resolve();
@@ -1376,9 +1428,14 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
           wrappedCtx: ctx,
           mountCallbacks: __mountCallbacks__,
           destroyCallbacks: __destroyCallbacks__,
+          preRenderCallbacks: __preRenderCallbacks__,
+          afterRenderCallbacks: __afterRenderCallbacks__,
           runMount: __runMount__,
           runDestroy: __runDestroy__,
-          setInHandler: __setInHandler__
+          runPreRender: __runPreRender__,
+          runAfterRender: __runAfterRender__,
+          setInHandler: __setInHandler__,
+          render: render
         };
       };
     `;
@@ -1419,9 +1476,14 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       wrappedCtx: result.wrappedCtx || ctx,
       mountCallbacks: result.mountCallbacks || [],
       destroyCallbacks: result.destroyCallbacks || [],
+      preRenderCallbacks: result.preRenderCallbacks || [],
+      afterRenderCallbacks: result.afterRenderCallbacks || [],
       runMount: result.runMount || (() => { }),
       runDestroy: result.runDestroy || (() => { }),
-      setInHandler: result.setInHandler || (() => { })
+      runPreRender: result.runPreRender || (async () => { }),
+      runAfterRender: result.runAfterRender || (() => { }),
+      setInHandler: result.setInHandler || (() => { }),
+      render: result.render || (() => Promise.resolve())
     };
   } catch (error) {
     // Log the error for debugging
@@ -1448,9 +1510,14 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
     wrappedCtx: ctx,
     mountCallbacks: [],
     destroyCallbacks: [],
+    preRenderCallbacks: [],
+    afterRenderCallbacks: [],
     runMount: () => { },
     runDestroy: () => { },
-    setInHandler: () => { }
+    runPreRender: async () => { },
+    runAfterRender: () => { },
+    setInHandler: () => { },
+    render: () => Promise.resolve()
   };
 }
 
