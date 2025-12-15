@@ -15,7 +15,7 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "typesVersions": {
@@ -38,7 +38,7 @@
   "private": false,
   "scripts": {
     "test": "npx tsc && node dist/test",
-    "build": "npx tsc && node -e \"require('fs-extra').copySync('types', 'dist/types')\" || (npx tsc && xcopy /E /I /Y types dist\\types)",
+    "build": "npx tsc && xcopy /E /I /Y types dist\\types",
     "prepublish": "npm run build",
     "publish:dev": "npm run build && npm publish --tag dev",
     "publish:release": "npm run build && npm publish"
