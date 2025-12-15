@@ -433,10 +433,19 @@ declare global {
 // MODULE DECLARATIONS
 // ============================================
 
-declare module "*.svelte" {
-  import type { Component } from "svelte";
+/**
+ * Generic Svelte component type (compatible with Svelte 5)
+ */
+type SvelteComponent<Props = any, Exports = any, Bindings = any> = new (options: {
+  target: any;
+  props?: Props;
+}) => {
+  $set?(props: Partial<Props>): void;
+  $on?(event: string, handler: (e: any) => void): () => void;
+};
 
-  const component: Component<any, any, any>;
+declare module "*.svelte" {
+  const component: SvelteComponent<any, any, any>;
   export default component;
 }
 
