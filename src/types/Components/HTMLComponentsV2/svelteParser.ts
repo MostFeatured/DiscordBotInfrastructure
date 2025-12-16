@@ -127,6 +127,8 @@ export interface SvelteHandlerInfo {
   inlineCode?: string;
   /** Whether this handler is an inline arrow function or function expression */
   isInline?: boolean;
+  /** Whether this handler has a dynamic name (inside {#each}) - use prefix matching */
+  isDynamicName?: boolean;
 }
 
 export interface ModalHandlerInfo {
@@ -421,6 +423,7 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
         element: node.name.toLowerCase(),
         inlineCode: foundHandler.inlineCode,
         isInline: foundHandler.isInline,
+        isDynamicName: isInsideEach,
       });
     }
   });

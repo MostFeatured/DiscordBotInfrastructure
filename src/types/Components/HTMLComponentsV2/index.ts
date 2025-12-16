@@ -158,7 +158,17 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
         }
 
         // Find the handler info for this element (button, select, etc.)
-        const handlerInfo = this.svelteComponentInfo.handlers.get(elementName);
+        let handlerInfo = this.svelteComponentInfo.handlers.get(elementName);
+
+        // If not found by exact match, try prefix matching for dynamic names (from {#each})
+        if (!handlerInfo) {
+          for (const [key, info] of this.svelteComponentInfo.handlers) {
+            if (info.isDynamicName && elementName.startsWith(key + '_')) {
+              handlerInfo = info;
+              break;
+            }
+          }
+        }
 
         if (handlerInfo) {
           this._executeElementHandler(ctx, handlerInfo, handlerData);

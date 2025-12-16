@@ -15,7 +15,7 @@
     "tslib": "^2.6.3"
   },
   "name": "@mostfeatured/dbi",
-  "version": "0.2.30",
+  "version": "0.2.31",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "typesVersions": {

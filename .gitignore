@@ -130,3 +130,5 @@ out
 
 examples/modal/package-lock.json
 yarn.lock
+
+exp.svelte
