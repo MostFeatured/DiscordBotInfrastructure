@@ -53,8 +53,10 @@ function getCleanTextContent(element: Element): string {
 function parseCustomIdAttributes(dbi: DBI<NamespaceEnums>, dbiName: string, element: Element): string {
   let customId = element.getAttribute("custom-id");
   if (!customId) {
-    let name = element.getAttribute("name");
-    if (!name) throw new Error("Element must have a name or custom-id attribute.");
+    let name = element.getAttribute("name") || element.getAttribute("id") || element.getAttribute("custom-id");
+    if (!name) throw new Error(`Element must have a name, id, or custom-id attribute to build custom_id.\n${element.outerHTML}`, {
+      cause: element.outerHTML
+    });
     customId = buildCustomId(
       dbi,
       dbiName,

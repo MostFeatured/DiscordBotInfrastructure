@@ -322,7 +322,7 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   // Extract declared props from $props() destructuring
   const declaredProps: string[] = [];
   const propsWithDefaults: string[] = [];
-  const propsMatch = scriptContent.match(/let\s+\{([\s\S]*?)\}\s*=\s*\$props\(\)/);
+  const propsMatch = scriptContent.match(/(?:const|let)\s+\{([\s\S]*?)\}\s*=\s*\$props\(\)/);
   if (propsMatch) {
     const propsContent = propsMatch[1];
     // Remove comments first
@@ -780,17 +780,17 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
 
     let processedScript = scriptWithoutComments
       // Remove $state declarations completely or make them var
-      .replace(/let\s+(\w+)\s*=\s*\$state\(([^)]*)\);?/g, 'var $1 = $2;')
+      .replace(/(?:const|let)\s+(\w+)\s*=\s*\$state\(([^)]*)\);?/g, 'var $1 = $2;')
       // Remove $derived declarations but keep the value
-      .replace(/let\s+(\w+)\s*=\s*\$derived\(([^)]+)\);?/g, 'var $1 = $2;')
+      .replace(/(?:const|let)\s+(\w+)\s*=\s*\$derived\(([^)]+)\);?/g, 'var $1 = $2;')
       // Convert $effect calls to __registerEffect__ calls
       .replace(/\$effect\s*\(\s*((?:function\s*\([^)]*\)|\([^)]*\)\s*=>|\(\)\s*=>)[^}]*\{[\s\S]*?\}\s*)\);?/g, '__registerEffect__($1);')
       // Simpler $effect pattern: $effect(() => { ... })
       .replace(/\$effect\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*\);?/g, '__registerEffect__(function() {$1});');
 
     // Handle $props destructuring with proper brace counting (supports nested objects like { options = { a: 1 } })
-    processedScript = processedScript.replace(/let\s+\{([\s\S]*?)\}\s*=\s*\$props\(\);?/g, (match) => {
-      // Find the opening brace after 'let'
+    processedScript = processedScript.replace(/(?:const|let)\s+\{([\s\S]*?)\}\s*=\s*\$props\(\);?/g, (match) => {
+      // Find the opening brace after 'const' or 'let'
       const letIndex = match.indexOf('{');
       if (letIndex === -1) return match;
 

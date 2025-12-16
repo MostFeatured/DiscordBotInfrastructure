@@ -1,5 +1,5 @@
 <script>
-  /// <reference types="@mostfeatured/dbi/svelte" />
+  // <reference types="@mostfeatured/dbi/svelte" />
   
   import stuffs from "stuffs";
   import { add } from "./test.js";
