@@ -188,8 +188,8 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   const path = require("path");
   const sourceDir = filePath ? path.dirname(path.resolve(filePath)) : undefined;
 
-  // Create handler context (also captures $effect callbacks)
-  const handlerContext = createHandlerContext(componentInfo.scriptContent, data, undefined, undefined, sourceDir);
+  // Create handler context (also captures $effect callbacks and inline handlers)
+  const handlerContext = createHandlerContext(componentInfo.scriptContent, data, undefined, undefined, sourceDir, componentInfo.inlineHandlers);
   const handlers = new Map<string, { handlerFn: Function, context: any }>();
 
   // Run effects on initial render

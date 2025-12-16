@@ -340,7 +340,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       typeof currentState === 'object' ? currentState : {},
       this,
       ctx,
-      this._sourceDir
+      this._sourceDir,
+      this.svelteComponentInfo!.inlineHandlers
     );
 
     const handlerFn = handlerContext.handlers[handlerName];
@@ -371,7 +372,9 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
           handlerContext.flushRender();
         }
       } catch (error) {
-        // Modal handler execution failed
+        // Re-throw the error so it's visible to the developer
+        console.error(`[DBI-Svelte] Modal handler "${handlerName}" failed:`, error);
+        throw error;
       }
     }
   }
@@ -406,7 +409,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       typeof currentState === 'object' ? currentState : {},
       this,
       ctx,
-      this._sourceDir
+      this._sourceDir,
+      this.svelteComponentInfo!.inlineHandlers
     );
 
     const handlerFn = handlerContext.handlers[handlerInfo.handlerName];
@@ -468,7 +472,9 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
           handlerContext.flushRender();
         }
       } catch (error) {
-        // Handler execution failed
+        // Re-throw the error so it's visible to the developer
+        console.error(`[DBI-Svelte] Handler "${handlerInfo.handlerName}" failed:`, error);
+        throw error;
       }
     }
   }
@@ -593,7 +599,8 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
         data,
         this,
         fakeCtx,
-        this._sourceDir
+        this._sourceDir,
+        this.svelteComponentInfo.inlineHandlers
       );
 
       // Store the context for lifecycle management

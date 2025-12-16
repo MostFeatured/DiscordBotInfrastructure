@@ -66,6 +66,10 @@ export interface SvelteHandlerInfo {
   handlerName: string;
   eventType: string; // onclick, onchange, onsubmit, etc.
   element: string; // button, string-select, components (for modal), etc.
+  /** If this is an inline handler, contains the extracted source code */
+  inlineCode?: string;
+  /** Whether this handler is an inline arrow function or function expression */
+  isInline?: boolean;
 }
 
 export interface ModalHandlerInfo {
@@ -91,6 +95,8 @@ export interface SvelteComponentInfo {
   propsWithDefaults: string[];
   /** Function names declared in the script */
   declaredFunctions: string[];
+  /** Inline handler code extracted from template (keyed by generated handler name) */
+  inlineHandlers: Map<string, string>;
 }
 
 /**
@@ -146,6 +152,10 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   // We'll inject these into the source after the walk
   const elementsNeedingNames: Array<{ node: any; name: string; handlerName: string; eventType: string; element: string }> = [];
   let autoNameCounter = 0;
+
+  // Track inline handlers (arrow functions or function expressions in event attributes)
+  const inlineHandlers = new Map<string, string>();
+  let inlineHandlerCounter = 0;
 
   // Walk through HTML nodes to find event handlers
   walkSvelteAst(ast.html || ast.fragment, (node: any) => {
@@ -214,7 +224,7 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
       );
 
       // Check if element has an onclick/onchange/handler and get the handler info
-      let foundHandler: { eventType: string; handlerName: string } | null = null;
+      let foundHandler: { eventType: string; handlerName: string; inlineCode?: string; isInline?: boolean } | null = null;
 
       for (const attr of attributes) {
         const isEventHandler = attr.type === "EventHandler";
@@ -236,6 +246,8 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
             }
           }
           let handlerName = "";
+          let inlineCode: string | undefined;
+          let isInline = false;
 
           if (attr.type === "Attribute" && Array.isArray(attr.value)) {
             const exprValue = attr.value.find((v: any) => v.type === "ExpressionTag" || v.type === "MustacheTag");
@@ -244,6 +256,15 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
                 handlerName = exprValue.expression.name;
               } else if (exprValue.expression.type === "CallExpression" && exprValue.expression.callee) {
                 handlerName = exprValue.expression.callee.name;
+              } else if (exprValue.expression.type === "ArrowFunctionExpression" || exprValue.expression.type === "FunctionExpression") {
+                // Inline arrow function or function expression - extract the code
+                isInline = true;
+                handlerName = `__inline_handler_${inlineHandlerCounter++}`;
+                // Extract the source code from the expression
+                const expr = exprValue.expression;
+                if (expr.start !== undefined && expr.end !== undefined) {
+                  inlineCode = source.substring(expr.start, expr.end);
+                }
               }
             }
           } else if (attr.expression) {
@@ -253,11 +274,24 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
               handlerName = attr.expression.callee.name;
             } else if (attr.expression.type === "MemberExpression") {
               handlerName = extractMemberExpressionName(attr.expression);
+            } else if (attr.expression.type === "ArrowFunctionExpression" || attr.expression.type === "FunctionExpression") {
+              // Inline arrow function or function expression - extract the code
+              isInline = true;
+              handlerName = `__inline_handler_${inlineHandlerCounter++}`;
+              // Extract the source code from the expression
+              const expr = attr.expression;
+              if (expr.start !== undefined && expr.end !== undefined) {
+                inlineCode = source.substring(expr.start, expr.end);
+              }
             }
           }
 
           if (handlerName) {
-            foundHandler = { eventType, handlerName };
+            foundHandler = { eventType, handlerName, inlineCode, isInline };
+            // If it's an inline handler, store the code
+            if (isInline && inlineCode) {
+              inlineHandlers.set(handlerName, inlineCode);
+            }
             break;
           }
         }
@@ -303,6 +337,8 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
         handlerName: foundHandler.handlerName,
         eventType: foundHandler.eventType,
         element: node.name.toLowerCase(),
+        inlineCode: foundHandler.inlineCode,
+        isInline: foundHandler.isInline,
       });
     }
   });
@@ -360,7 +396,8 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
     processedSource,
     declaredProps,
     propsWithDefaults,
-    declaredFunctions
+    declaredFunctions,
+    inlineHandlers
   };
 }
 
@@ -515,7 +552,10 @@ export function validateSvelteComponent(
   }
 
   // 3. Check for undefined handlers referenced in elements
+  // Skip inline handlers (they are extracted from template, not defined in script)
   for (const [elementName, handlerInfo] of componentInfo.handlers) {
+    // Skip inline handlers - they are defined in the template, not the script
+    if (handlerInfo.isInline) continue;
     if (!componentInfo.declaredFunctions.includes(handlerInfo.handlerName)) {
       warnings.push({
         type: 'undefined-handler',
@@ -749,8 +789,9 @@ function loadModules(imports: ImportInfo[], sourceDir?: string): { modules: Reco
  * Create a handler context from script content
  * This evaluates the Svelte script and returns the handler functions and effects
  * @param sourceDir - The directory of the source file (used for resolving relative imports)
+ * @param inlineHandlers - Map of inline handler names to their source code (extracted from template)
  */
-export function createHandlerContext(scriptContent: string, initialData: Record<string, any> = {}, component?: any, ctx?: any, sourceDir?: string): HandlerContextResult {
+export function createHandlerContext(scriptContent: string, initialData: Record<string, any> = {}, component?: any, ctx?: any, sourceDir?: string, inlineHandlers?: Map<string, string>): HandlerContextResult {
   const handlers: Record<string, Function> = {};
   const effects: Function[] = [];
 
@@ -894,7 +935,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             try {
               await __preRenderCallbacks__[i]();
             } catch (err) {
-              // Pre-render callback failed
+              console.error("[DBI-Svelte] Pre-render callback failed:", err);
+              throw err;
             }
           }
         }
@@ -905,7 +947,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             try {
               __afterRenderCallbacks__[i]();
             } catch (err) {
-              // After-render callback failed
+              console.error("[DBI-Svelte] After-render callback failed:", err);
+              throw err;
             }
           }
         }
@@ -1087,8 +1130,9 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 __lastMessage__ = i.message;
               }
               
-              if (i.replied || i.deferred) {
-                // Already replied, use message.edit with rate limit handling
+              // Check if interaction was deferred (our flag) or Discord.js flags
+              if (i.replied || i.deferred || __interactionDeferred__) {
+                // Already replied/deferred, use message.edit with rate limit handling
                 result = await __safeEdit__(function() {
                   return i.message.edit({
                     components: components,
@@ -1109,7 +1153,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
               __runAfterRender__();
               return result;
             } catch (err) {
-              // Silently fail
+              console.error("[DBI-Svelte] Render failed:", err);
+              throw err;
             }
           }
           
@@ -1219,6 +1264,9 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         // Track if an async interaction method was called
         var __asyncInteractionCalled__ = false;
         
+        // Track if interaction was deferred (deferUpdate/deferReply)
+        var __interactionDeferred__ = false;
+        
         // Wrap interaction methods to auto-render after completion
         var interaction = null;
         var ctx = null;
@@ -1241,6 +1289,11 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                   // Mark that async interaction was called - this prevents sync flush at handler end
                   __asyncInteractionCalled__ = true;
                   
+                  // Mark as deferred for deferUpdate/deferReply
+                  if (prop === 'deferUpdate' || prop === 'deferReply') {
+                    __interactionDeferred__ = true;
+                  }
+                  
                   var result = value.apply(target, arguments);
                   // After the reply completes, flush any pending renders using throttled render
                   if (result && typeof result.then === 'function') {
@@ -1251,7 +1304,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                         __throttledRender__(false);
                       }
                     }).catch(function(err) {
-                      // Silently fail
+                      console.error("[DBI-Svelte] Render after " + prop + " failed:", err);
                     });
                   }
                   return result;
@@ -1393,7 +1446,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 __destroyCallbacks__.push(result);
               }
             } catch (err) {
-              // Mount callback failed
+              console.error("[DBI-Svelte] onMount callback failed:", err);
+              throw err;
             }
           }
         }
@@ -1404,7 +1458,8 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
             try {
               __destroyCallbacks__[i]();
             } catch (err) {
-              // Destroy callback failed
+              console.error("[DBI-Svelte] onDestroy callback failed:", err);
+              throw err;
             }
           }
           // Clear pending timeouts
@@ -1420,8 +1475,31 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         }
         
         ${processedScript}
+        
+        // Inline handlers from template (extracted arrow functions/function expressions)
+        ${Array.from(inlineHandlers || new Map()).map(([name, code]) => {
+      // Wrap the inline code as a named function
+      // If it's an arrow function, convert to regular function for proper 'this' binding
+      if (code.trim().startsWith('async')) {
+        // async arrow function or async function
+        if (code.includes('=>')) {
+          // async arrow function: async (ctx) => { ... } or async () => { ... }
+          return `var ${name} = ${code};`;
+        } else {
+          // async function expression: async function(ctx) { ... }
+          return `var ${name} = ${code};`;
+        }
+      } else if (code.includes('=>')) {
+        // Regular arrow function: (ctx) => { ... } or () => { ... }
+        return `var ${name} = ${code};`;
+      } else {
+        // Regular function expression: function(ctx) { ... }
+        return `var ${name} = ${code};`;
+      }
+    }).join('\n')}
+        
         return { 
-          handlers: { ${functionNames.length > 0 ? functionNames.join(", ") : ''} },
+          handlers: { ${[...functionNames, ...Array.from(inlineHandlers || new Map()).map(([name]) => name)].filter(Boolean).join(", ")} },
           effects: __effects__,
           hasPendingRender: __hasPendingRender__,
           flushRender: __syncFlushRender__,
@@ -1486,39 +1564,10 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       render: result.render || (() => Promise.resolve())
     };
   } catch (error) {
-    // Log the error for debugging
+    // Re-throw the error so it's visible to the developer
     console.error("[DBI-Svelte] createHandlerContext failed:", error);
+    throw error;
   }
-
-  // Function to run all effects (fallback)
-  const runEffects = () => {
-    for (const effect of effects) {
-      try {
-        effect();
-      } catch (error) {
-        // Effect failed
-      }
-    }
-  };
-
-  return {
-    handlers,
-    effects,
-    runEffects,
-    hasPendingRender: () => false,
-    flushRender: () => Promise.resolve(),
-    wrappedCtx: ctx,
-    mountCallbacks: [],
-    destroyCallbacks: [],
-    preRenderCallbacks: [],
-    afterRenderCallbacks: [],
-    runMount: () => { },
-    runDestroy: () => { },
-    runPreRender: async () => { },
-    runAfterRender: () => { },
-    setInHandler: () => { },
-    render: () => Promise.resolve()
-  };
 }
 
 /**
