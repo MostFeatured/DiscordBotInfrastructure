@@ -11,53 +11,110 @@ async function ensureImports() {
 }
 
 /**
- * Simple AST walker for Svelte AST nodes
+ * Context passed to walker callback containing parent information
  */
-function walkSvelteAst(node: any, callback: (node: any) => void) {
+interface WalkContext {
+  /** Stack of parent nodes from root to current */
+  parents: any[];
+  /** Information about enclosing {#each} blocks */
+  eachBlocks: Array<{
+    node: any;
+    /** The iteration variable name (e.g., "item" in {#each items as item}) */
+    iterVar: string;
+    /** The index variable name if specified (e.g., "i" in {#each items as item, i}) */
+    indexVar?: string;
+    /** Expression for unique key (iterVar.id, iterVar.name, or index) */
+    keyExpr: string;
+  }>;
+}
+
+/**
+ * Simple AST walker for Svelte AST nodes with parent tracking
+ */
+function walkSvelteAst(node: any, callback: (node: any, context: WalkContext) => void, context?: WalkContext) {
   if (!node || typeof node !== 'object') return;
 
-  callback(node);
+  // Initialize context if not provided
+  const ctx: WalkContext = context || { parents: [], eachBlocks: [] };
+
+  callback(node, ctx);
+
+  // Create new context for children with this node as parent
+  const childContext: WalkContext = {
+    parents: [...ctx.parents, node],
+    eachBlocks: [...ctx.eachBlocks]
+  };
+
+  // If this is an EachBlock, add it to the context for children
+  if (node.type === 'EachBlock') {
+    const iterVar = node.context?.name || node.context?.type === 'Identifier' ? node.context.name : 'item';
+    const indexVar = node.index;
+
+    // Determine best key expression for unique naming
+    // Priority: explicit key > iter.id > iter.name > index > counter
+    let keyExpr = indexVar || `__idx_${ctx.eachBlocks.length}`;
+
+    childContext.eachBlocks = [...ctx.eachBlocks, {
+      node,
+      iterVar,
+      indexVar,
+      keyExpr
+    }];
+  }
 
   // Walk children based on node type
   if (node.children && Array.isArray(node.children)) {
     for (const child of node.children) {
-      walkSvelteAst(child, callback);
+      walkSvelteAst(child, callback, childContext);
     }
   }
   if (node.fragment && node.fragment.nodes) {
     for (const child of node.fragment.nodes) {
-      walkSvelteAst(child, callback);
+      walkSvelteAst(child, callback, childContext);
     }
   }
   if (node.nodes && Array.isArray(node.nodes)) {
     for (const child of node.nodes) {
-      walkSvelteAst(child, callback);
+      walkSvelteAst(child, callback, childContext);
+    }
+  }
+  // Handle {#each} body
+  if (node.body && node.type === 'EachBlock') {
+    if (node.body.nodes) {
+      for (const child of node.body.nodes) {
+        walkSvelteAst(child, callback, childContext);
+      }
+    } else if (Array.isArray(node.body)) {
+      for (const child of node.body) {
+        walkSvelteAst(child, callback, childContext);
+      }
+    } else {
+      walkSvelteAst(node.body, callback, childContext);
+    }
+  } else if (node.body) {
+    if (Array.isArray(node.body)) {
+      for (const child of node.body) {
+        walkSvelteAst(child, callback, childContext);
+      }
+    } else {
+      walkSvelteAst(node.body, callback, childContext);
     }
   }
   // Handle other potential child properties
   if (node.else) {
-    walkSvelteAst(node.else, callback);
+    walkSvelteAst(node.else, callback, childContext);
   }
   if (node.consequent) {
-    walkSvelteAst(node.consequent, callback);
+    walkSvelteAst(node.consequent, callback, childContext);
   }
   if (node.alternate) {
-    walkSvelteAst(node.alternate, callback);
+    walkSvelteAst(node.alternate, callback, childContext);
   }
   if (node.then) {
-    walkSvelteAst(node.then, callback);
+    walkSvelteAst(node.then, callback, childContext);
   }
   if (node.catch) {
-    walkSvelteAst(node.catch, callback);
-  }
-  if (node.body) {
-    if (Array.isArray(node.body)) {
-      for (const child of node.body) {
-        walkSvelteAst(child, callback);
-      }
-    } else {
-      walkSvelteAst(node.body, callback);
-    }
+    walkSvelteAst(node.catch, callback, childContext);
   }
 }
 
@@ -150,7 +207,19 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
 
   // Track elements that need auto-generated names (node -> name mapping)
   // We'll inject these into the source after the walk
-  const elementsNeedingNames: Array<{ node: any; name: string; handlerName: string; eventType: string; element: string }> = [];
+  const elementsNeedingNames: Array<{
+    node: any;
+    name: string;
+    handlerName: string;
+    eventType: string;
+    element: string;
+    /** If inside {#each}, contains info for dynamic name generation */
+    eachContext?: Array<{
+      iterVar: string;
+      indexVar?: string;
+      keyExpr: string;
+    }>;
+  }> = [];
   let autoNameCounter = 0;
 
   // Track inline handlers (arrow functions or function expressions in event attributes)
@@ -158,7 +227,7 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   let inlineHandlerCounter = 0;
 
   // Walk through HTML nodes to find event handlers
-  walkSvelteAst(ast.html || ast.fragment, (node: any) => {
+  walkSvelteAst(ast.html || ast.fragment, (node: any, walkContext: WalkContext) => {
     if (node.type === "Element" || node.type === "InlineComponent" || node.type === "RegularElement" || node.type === "Component") {
       const attributes = node.attributes || [];
       const nodeName = node.name.toLowerCase();
@@ -300,25 +369,33 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
       if (!foundHandler) return; // No handler found, skip
 
       let componentName: string;
+      const isInsideEach = walkContext.eachBlocks.length > 0;
+
       if (nameAttr) {
         componentName = getAttributeValue(nameAttr);
       } else {
-        // No name attribute - generate a deterministic one based on position
-        // Use the handler name and counter for deterministic naming
+        // No name attribute - generate one
+        // If inside {#each}, we need a DYNAMIC name using the loop variable
         const positionKey = `${node.name.toLowerCase()}_${autoNameCounter++}`;
 
-        // If data is provided, use/store in $autoNames for persistence across re-renders
-        if (data) {
-          if (!data.$autoNames) {
-            data.$autoNames = {};
-          }
-          if (!data.$autoNames[positionKey]) {
-            data.$autoNames[positionKey] = `__auto_${positionKey}`;
-          }
-          componentName = data.$autoNames[positionKey];
-        } else {
-          // No data - use deterministic name based on position
+        if (isInsideEach) {
+          // Inside {#each} - we'll inject a dynamic name expression
+          // The actual name will be generated at runtime using loop variables
           componentName = `__auto_${positionKey}`;
+        } else {
+          // Not in loop - use static deterministic name
+          // If data is provided, use/store in $autoNames for persistence across re-renders
+          if (data) {
+            if (!data.$autoNames) {
+              data.$autoNames = {};
+            }
+            if (!data.$autoNames[positionKey]) {
+              data.$autoNames[positionKey] = `__auto_${positionKey}`;
+            }
+            componentName = data.$autoNames[positionKey];
+          } else {
+            componentName = `__auto_${positionKey}`;
+          }
         }
 
         // Track this element for source injection
@@ -327,7 +404,12 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
           name: componentName,
           handlerName: foundHandler.handlerName,
           eventType: foundHandler.eventType,
-          element: node.name.toLowerCase()
+          element: node.name.toLowerCase(),
+          eachContext: isInsideEach ? walkContext.eachBlocks.map(b => ({
+            iterVar: b.iterVar,
+            indexVar: b.indexVar,
+            keyExpr: b.keyExpr
+          })) : undefined
         });
       }
 
@@ -348,11 +430,39 @@ ${nextLine ? `${lineNum + 1} | ${nextLine}` : ''}
   let processedSource = source;
   const sortedElements = [...elementsNeedingNames].sort((a, b) => b.node.start - a.node.start);
 
-  for (const { node, name } of sortedElements) {
+  for (const { node, name, eachContext } of sortedElements) {
     // Find the position right after the opening tag name
     // e.g., <button ...> -> insert after "button"
     const tagEnd = node.start + 1 + node.name.length; // +1 for '<'
-    processedSource = processedSource.slice(0, tagEnd) + ` name="${name}"` + processedSource.slice(tagEnd);
+
+    let nameAttrValue: string;
+
+    if (eachContext && eachContext.length > 0) {
+      // Inside {#each} - generate dynamic name expression using loop variables
+      // Build a unique key from all nested loop contexts
+      // Priority: item.id > item.name > index
+      const keyParts: string[] = [name];
+
+      for (let i = 0; i < eachContext.length; i++) {
+        const ctx = eachContext[i];
+        // Use index variable if available, otherwise use a property from iter var
+        if (ctx.indexVar) {
+          keyParts.push(`\${${ctx.indexVar}}`);
+        } else {
+          // Try common unique identifiers: id, name, key, value
+          // Using the iter var directly as fallback
+          keyParts.push(`\${${ctx.iterVar}?.id ?? ${ctx.iterVar}?.name ?? ${ctx.iterVar}?.key ?? ${ctx.iterVar}?.value ?? JSON.stringify(${ctx.iterVar}).slice(0,20)}`);
+        }
+      }
+
+      // Use backtick template literal for dynamic name
+      nameAttrValue = `{\`${keyParts.join('_')}\`}`;
+    } else {
+      // Static name - use quotes
+      nameAttrValue = `"${name}"`;
+    }
+
+    processedSource = processedSource.slice(0, tagEnd) + ` name=${nameAttrValue}` + processedSource.slice(tagEnd);
   }
 
   // Extract declared props from $props() destructuring
