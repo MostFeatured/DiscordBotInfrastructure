@@ -4,150 +4,22 @@ import { DBIBaseInteraction, DBIRateLimit, IDBIBaseExecuteCtx, TDBIReferencedDat
 import { parseHTMLComponentsV2 } from "./parser";
 import { renderSvelteComponent, renderSvelteComponentFromFile, SvelteRenderResult } from "./svelteRenderer";
 import { parseSvelteComponent, createHandlerContext, HandlerContextResult } from "./svelteParser";
+import { createEnhancedError, isComponentValidationError, parseDiscordComponentError, ComponentErrorInfo, ParsedDiscordError } from "./errorParser";
 import fs from "fs";
+
+// Re-export error parser utilities for external use
+export { createEnhancedError, isComponentValidationError, parseDiscordComponentError, ComponentErrorInfo, ParsedDiscordError } from "./errorParser";
 
 /**
  * Parse Discord API error and provide helpful context about which HTML element caused the error
+ * Uses the enhanced error parser for detailed, developer-friendly messages
  */
-function parseDiscordAPIError(error: any, source?: string, componentName?: string): Error {
-  // Check if it's a Discord API error with form body issues
-  const message = error.message || '';
-  const rawError = error.rawError || error;
-
-  // Extract the path from error message like "data.components[0].components[0].accessory.media.url"
-  const pathMatch = message.match(/data\.components(\[[^\]]+\](?:\.[^\[\s\[]+|\[[^\]]+\])*)/);
-
-  if (!pathMatch) {
-    return error; // Not a parseable Discord API error
+function parseDiscordAPIError(error: any, source?: string, componentName?: string, components?: any[]): Error {
+  // Use the new enhanced error parser
+  if (isComponentValidationError(error)) {
+    return createEnhancedError(error, components, source, componentName);
   }
-
-  const errorPath = pathMatch[1];
-  const errorCode = message.match(/\[([A-Z_]+)\]/)?.[1] || 'UNKNOWN';
-
-  // Parse the path to understand the component structure
-  // e.g., "[0].components[0].accessory.media.url" -> component index 0, child 0, accessory.media.url
-  const parts = errorPath.split(/\.|\[|\]/).filter(Boolean);
-
-  // Build a human-readable path description
-  let description = '';
-  let elementHint = '';
-  let currentPath = [];
-
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    if (!isNaN(Number(part))) {
-      currentPath.push(`[${part}]`);
-    } else {
-      currentPath.push(part);
-
-      // Provide hints based on known Discord component structure
-      if (part === 'accessory') {
-        elementHint = '<section> element\'s accessory (thumbnail/button)';
-      } else if (part === 'media') {
-        elementHint = '<thumbnail> or <media-gallery> element';
-      } else if (part === 'url') {
-        elementHint = 'media URL attribute';
-      } else if (part === 'components') {
-        // Skip, it's container
-      } else if (part === 'content') {
-        elementHint = 'text content of a <text-display> element';
-      } else if (part === 'label') {
-        elementHint = 'label attribute of a <button> or <option>';
-      } else if (part === 'custom_id') {
-        elementHint = 'name attribute of an interactive element';
-      } else if (part === 'placeholder') {
-        elementHint = 'placeholder attribute of a select menu';
-      } else if (part === 'title') {
-        elementHint = 'title attribute of a <modal> or <section>';
-      } else if (part === 'options') {
-        elementHint = '<option> elements inside a <string-select>';
-      } else if (part === 'value') {
-        elementHint = 'value attribute of an <option> or <text-input>';
-      } else if (part === 'description') {
-        elementHint = 'description attribute of an <option>';
-      }
-    }
-  }
-
-  // Map error codes to helpful messages
-  const errorMessages: Record<string, string> = {
-    'BASE_TYPE_REQUIRED': 'This field is required but was empty or undefined',
-    'STRING_TYPE_REQUIRED': 'This field must be a string',
-    'NUMBER_TYPE_REQUIRED': 'This field must be a number',
-    'BOOLEAN_TYPE_REQUIRED': 'This field must be a boolean',
-    'INVALID_URL': 'The URL provided is not valid',
-    'MAX_LENGTH': 'The value exceeds the maximum allowed length',
-    'MIN_LENGTH': 'The value is shorter than the minimum required length',
-    'CHOICE_NOT_FOUND': 'The selected value is not in the list of options',
-  };
-
-  const errorExplanation = errorMessages[errorCode] || `Error code: ${errorCode}`;
-
-  // Build the enhanced error message
-  let enhancedMessage = `
-╔══════════════════════════════════════════════════════════════╗
-║  Discord API Error - Invalid Component Data                   ║
-╚══════════════════════════════════════════════════════════════╝
-
-📍 Component: ${componentName || 'unknown'}
-📍 Error Path: data.components${errorPath}
-📍 Error Code: ${errorCode}
-
-❌ ${errorExplanation}
-${elementHint ? `\n💡 This error is likely in: ${elementHint}` : ''}
-
-🔍 What to check:
-`;
-
-  // Add specific suggestions based on error type
-  if (errorPath.includes('media.url')) {
-    enhancedMessage += `   • Make sure the image/media URL is provided and valid
-   • Check that the data property used for the image exists
-   • Example: <thumbnail media={product?.image}> - is product.image defined?
-`;
-  } else if (errorPath.includes('accessory')) {
-    enhancedMessage += `   • The <section> element requires valid content in its accessory
-   • If using <thumbnail>, ensure the media URL is valid
-`;
-  } else if (errorPath.includes('content')) {
-    enhancedMessage += `   • Text content cannot be empty or undefined
-   • Check your template expressions like {variable?.property}
-`;
-  } else if (errorPath.includes('options')) {
-    enhancedMessage += `   • Select menu options must have valid value and label
-   • Each <option> needs: value="..." and text content
-`;
-  } else if (errorPath.includes('label') || errorPath.includes('custom_id')) {
-    enhancedMessage += `   • Interactive elements (buttons, selects) need valid labels/names
-   • Check that text content and name attributes are not empty
-`;
-  }
-
-  // If we have source, try to highlight relevant section
-  if (source && elementHint) {
-    const elementType = elementHint.match(/<(\w+-?\w*)>/)?.[1];
-    if (elementType) {
-      const elementRegex = new RegExp(`<${elementType}[^>]*>`, 'g');
-      const matches = source.match(elementRegex);
-      if (matches && matches.length > 0) {
-        enhancedMessage += `\n📝 Found ${matches.length} <${elementType}> element(s) in template:`;
-        matches.slice(0, 3).forEach((m, i) => {
-          enhancedMessage += `\n   ${i + 1}. ${m.substring(0, 80)}${m.length > 80 ? '...' : ''}`;
-        });
-        if (matches.length > 3) {
-          enhancedMessage += `\n   ... and ${matches.length - 3} more`;
-        }
-      }
-    }
-  }
-
-  const enhancedError = new Error(enhancedMessage);
-  (enhancedError as any).originalError = error;
-  (enhancedError as any).type = 'discord-api-error';
-  (enhancedError as any).path = errorPath;
-  (enhancedError as any).code = errorCode;
-
-  return enhancedError;
+  return error;
 }
 
 export type TDBIHTMLComponentsV2Omitted<TNamespace extends NamespaceEnums> = Omit<DBIHTMLComponentsV2<TNamespace>, "type" | "dbi" | "toJSON" | "description" | "send" | "destroy" | "destroyAll" | "__lastRenderModals__" | "_pendingModals" | "_initPromise"> & {
@@ -575,7 +447,7 @@ export class DBIHTMLComponentsV2<TNamespace extends NamespaceEnums> extends DBIB
       // Check if it's a Discord API error and enhance it with helpful context
       if (error.code || error.rawError || (error.message && error.message.includes('Invalid Form Body'))) {
         const source = this.file ? fs.readFileSync(this.file, 'utf-8') : this.template;
-        throw parseDiscordAPIError(error, source, this.name);
+        throw parseDiscordAPIError(error, source, this.name, components);
       }
       throw error;
     }

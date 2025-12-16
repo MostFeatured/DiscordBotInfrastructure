@@ -859,13 +859,18 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
       // Parse props with proper handling of nested braces
       const props = parsePropsContent(content);
 
-      return props.map(prop => {
+      // Generate prop accessors that read from data at access time
+      // Use a special pattern: define both the initial var AND a __propGetters__ object
+      // that inline handlers can use to get current values
+      const propDefs = props.map(prop => {
         if (!prop.name || prop.name === 'data') return '';
         if (prop.defaultValue !== undefined) {
-          return `var ${prop.name} = data.${prop.name} ?? ${prop.defaultValue};`;
+          return `var ${prop.name} = data.${prop.name} ?? ${prop.defaultValue}; __propGetters__.${prop.name} = function() { return data.${prop.name} ?? ${prop.defaultValue}; };`;
         }
-        return `var ${prop.name} = data.${prop.name};`;
+        return `var ${prop.name} = data.${prop.name}; __propGetters__.${prop.name} = function() { return data.${prop.name}; };`;
       }).filter(Boolean).join('\n');
+
+      return propDefs;
     });
 
     // Add module variable declarations at the beginning of processed script
@@ -886,6 +891,9 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
         var __renderPending__ = false;
         var __autoRenderEnabled__ = true;
         var __hasDataChanges__ = false;
+        
+        // Prop getters for accessing current data values (used by inline handlers)
+        var __propGetters__ = {};
         
         // Lifecycle callbacks
         var __mountCallbacks__ = [];
@@ -1049,12 +1057,14 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
           });
         }
         
-        // Rate-limit aware edit function with retry
-        function __safeEdit__(editFn, retryCount) {
+        // Rate-limit aware edit function with retry and enhanced error handling
+        function __safeEdit__(editFn, retryCount, componentsForError) {
           retryCount = retryCount || 0;
           var maxRetries = 3;
           
-          return editFn().catch(function(err) {
+          return editFn().then(function(result) {
+            return result;
+          }).catch(function(err) {
             // Check for rate limit (429)
             if (err.status === 429 || (err.message && err.message.includes('rate limit'))) {
               var retryAfter = err.retry_after || err.retryAfter || 1;
@@ -1065,14 +1075,60 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 setTimeout(function() {
                   __isRateLimited__ = false;
                   if (retryCount < maxRetries) {
-                    resolve(__safeEdit__(editFn, retryCount + 1));
+                    resolve(__safeEdit__(editFn, retryCount + 1, componentsForError));
                   } else {
                     resolve();
                   }
                 }, retryAfter * 1000);
               });
             }
-            return Promise.resolve();
+            
+            // Check if it's a component validation error and enhance it
+            if (err.code === 50035 || err.rawError?.code === 50035 || 
+                (err.message && (err.message.includes('Invalid Form Body') || err.message.includes('BASE_TYPE')))) {
+              // Create enhanced error message
+              var errorMsg = err.message || '';
+              var enhancedMsg = '\\n╔══════════════════════════════════════════════════════════════╗\\n';
+              enhancedMsg += '║           Discord Components V2 Validation Error             ║\\n';
+              enhancedMsg += '╠══════════════════════════════════════════════════════════════╣\\n';
+              
+              // Parse error paths from message
+              var errorLines = errorMsg.split('\\n');
+              for (var i = 0; i < errorLines.length; i++) {
+                var line = errorLines[i];
+                var match = line.match(/([\\w\\[\\]\\.]+)\\[([A-Z_]+)\\]:\\s*(.+)/);
+                if (match) {
+                  var path = match[1];
+                  var code = match[2];
+                  var msg = match[3];
+                  
+                  enhancedMsg += '║\\n';
+                  enhancedMsg += '║ ❌ Path: ' + path + '\\n';
+                  enhancedMsg += '║ ├─ Code: ' + code + '\\n';
+                  enhancedMsg += '║ ├─ Message: ' + msg + '\\n';
+                  
+                  // Add helpful hints based on error code
+                  if (code === 'BASE_TYPE_REQUIRED') {
+                    enhancedMsg += '║ └─ Fix: This field is required - check if the element has all required attributes\\n';
+                  } else if (code === 'BASE_TYPE_BAD_LENGTH') {
+                    enhancedMsg += '║ └─ Fix: Wrong number of items - Discord has min/max limits for components\\n';
+                  } else if (code.includes('MAX_LENGTH') || code.includes('MIN_LENGTH')) {
+                    enhancedMsg += '║ └─ Fix: Content length issue - adjust text or number of items\\n';
+                  }
+                }
+              }
+              
+              enhancedMsg += '║\\n';
+              enhancedMsg += '╚══════════════════════════════════════════════════════════════╝';
+              
+              var enhancedError = new Error('[DBI-Svelte] Component validation error:\\n' + enhancedMsg + '\\n\\nOriginal: ' + errorMsg);
+              enhancedError.originalError = err;
+              enhancedError.type = 'discord-component-validation';
+              throw enhancedError;
+            }
+            
+            // Re-throw other errors
+            throw err;
           });
         }
         
@@ -1138,7 +1194,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                     components: components,
                     flags: ["IsComponentsV2"],
                   });
-                });
+                }, 0, components);
               } else {
                 // Not replied yet, use update with rate limit handling
                 result = await __safeEdit__(function() {
@@ -1146,7 +1202,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                     components: components,
                     flags: ["IsComponentsV2"],
                   });
-                });
+                }, 0, components);
               }
               
               // Run after-render callbacks
@@ -1165,7 +1221,7 @@ export function createHandlerContext(scriptContent: string, initialData: Record<
                 components: components,
                 flags: ["IsComponentsV2"],
               });
-            });
+            }, 0, components);
             
             // Run after-render callbacks
             __runAfterRender__();
