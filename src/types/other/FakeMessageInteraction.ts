@@ -39,6 +39,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
   dbiChatInput: TDBIInteractions<NamespaceEnums>;
   dbiChatInputOptions: any[];
   fake: boolean = true;
+  commandMessage: Message;
   _hoistedOptions: any;
   _initialized: boolean = false;
   _lastAction: string | undefined;
@@ -70,6 +71,7 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
     this.fullCommandName = chatInput.name;
     this.dbiChatInput = chatInput;
     this.dbiChatInputOptions = chatInput.options ? chatInput.options.map(i => ({ ...i })) : [];
+    this.commandMessage = message;
 
     {
       const argContent = message.content.slice(usedPrefix.length + commandName.length).replace(/ +/, " ").trim();
@@ -157,8 +159,12 @@ export class FakeMessageInteraction /* implements ChatInputCommandInteraction */
           if (self.guildId && (c as any).guildId && (c as any).guildId !== self.guildId) return false;
           return (c as any).name === value;
         });
+<<<<<<< HEAD
         // @ts-ignore
         if (channelType && channel?.type !== channelType && !channelType?.includes?.(channel?.type)) return null;
+=======
+        if (channelType && channel?.type !== channelType && !channelType.includes(channel?.type)) return null;
+>>>>>>> 21e367f786e8c3cfdf2c57577f3a2a901a335414
         return channel;
       },
       getString(name: string) {
