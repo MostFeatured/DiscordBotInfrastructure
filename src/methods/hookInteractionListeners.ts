@@ -76,7 +76,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     let data = parsedId?.data;
     let v2 = parsedId?.v2 || false;
 
-    let other = {};
+    let other = { ...(dbiInter.other ?? {}) };
 
     if (
       !(await dbi.events.trigger("beforeInteraction", {
