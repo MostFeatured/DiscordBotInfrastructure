@@ -76,7 +76,7 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
     let data = parsedId?.data;
     let v2 = parsedId?.v2 || false;
 
-    let other = {};
+    let other = { ...(dbiInter.other ?? {}) };
 
     if (
       !(await dbi.events.trigger("beforeInteraction", {
@@ -231,6 +231,9 @@ export function hookInteractionListeners(dbi: DBI<NamespaceEnums>): () => any {
       v2
     };
 
+    if (inter.isChatInputCommand() && !(inter as any).fake) {
+      (inter as any).commandMessage = null;
+    }
 
     if (dbiInter.type === "HTMLComponentsV2") {
       // For HTMLComponentsV2, first element of data is the element name (button name, etc.)
