@@ -2,9 +2,10 @@ import Discord from "discord.js";
 import { NamespaceEnums } from "../../../generated/namespaceData";
 import { DBI } from "../../DBI";
 import { DBIBaseInteraction, IDBIBaseExecuteCtx } from "../Interaction";
+import { FakeMessageInteraction } from "../other/FakeMessageInteraction";
 
 export interface IDBIChatInputExecuteCtx<TNamespace extends NamespaceEnums> extends IDBIBaseExecuteCtx<TNamespace> {
-  interaction: Discord.ChatInputCommandInteraction<"cached">;
+  interaction: (Discord.ChatInputCommandInteraction<"cached"> & { commandMessage: null }) | (FakeMessageInteraction & { commandMessage: Discord.Message });
 }
 
 export type TDBIChatInputOmitted<TNamespace extends NamespaceEnums> = Omit<DBIChatInput<TNamespace>, "type" | "dbi" | "ttl" | "at" | "toJSON">;
